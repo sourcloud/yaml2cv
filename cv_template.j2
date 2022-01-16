@@ -1,0 +1,64 @@
+\documentclass[a4paper, 11pt, sans, color, final]{moderncv}
+
+\usepackage[utf8]{inputenc}
+\usepackage[scale=0.8]{geometry}
+
+\moderncvtheme[ {{- cv_data['cv']['color'] -}} ]{ {{- cv_data['cv']['theme'] -}} }
+
+\renewcommand*{\addresssymbol}       {}
+\renewcommand*{\mobilephonesymbol}   {}
+\renewcommand*{\fixedphonesymbol}    {}
+\renewcommand*{\faxphonesymbol}      {}
+\renewcommand*{\emailsymbol}         {}
+\renewcommand*{\homepagesymbol}      {}
+\renewcommand*{\linkedinsocialsymbol}{}
+\renewcommand*{\twittersocialsymbol} {}
+\renewcommand*{\githubsocialsymbol}  {}
+
+\firstname{ {{- cv_data['personal']['firstname'] -}} }
+\familyname{ {{- cv_data['personal']['lastname'] -}} }
+
+\title{ {{- cv_data['cv_title'] -}} }
+
+\address{ {{- cv_data['address']['street'] -}} }{ {{- cv_data['address']['city'] -}} }
+\phone{ {{- cv_data['contact']['phone'] -}} }
+\email{ {{- cv_data['contact']['email'] -}} }
+
+\nopagenumbers{}
+
+\begin{document}
+
+\maketitle
+
+{% for section in cv_data['sections'] %}
+\section{ {{- section['name'] -}} }
+
+{% for entry in section['entries'] %}
+\cventry
+{ {{- entry['timespan'] -}} }
+{ {{- entry['title'] -}} }
+{ {{- entry['organization'] -}} }
+{ {{- entry['city'] -}} }
+{}
+{ 
+{%- if entry['bullets'] -%}
+\begin{itemize}
+    {% for bullet in entry['bullets'] %}
+    \item {{ bullet }}
+    {% endfor -%} 
+\end{itemize}
+{%- endif-%}
+}
+{% endfor %}
+\closesection
+{% endfor %}
+
+{% if cv_data['language_section'] %}
+\section{ {{- cv_data['language_section']['name'] -}} }
+    {% for language in cv_data['language_section']['languages'] %}
+    \cvlanguage{ {{- language['name'] -}} }{ {{- language['level']-}} }{}
+    {% endfor %}
+\closesection
+{% endif %}
+
+\end{document}

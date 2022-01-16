@@ -1,0 +1,72 @@
+cv_data:
+
+  cv:
+    theme: classic
+    color: blue
+    title: My personal CV
+
+  personal:
+    firstname: John
+    lastname: Doe
+
+  address:
+    street: 1234 Main Street
+    city: 98765 Example City
+
+  contact:
+    phone: 0123 4 56 78 90
+    email: john.doe@example.com
+
+  sections:
+
+    - name: Professional Experience
+      entries:
+
+        - timespan: since 2020
+          title: Example Job
+          organization: Example Company
+          city: Example City
+          bullets:
+            - This will be rendered as a bullet point
+            - You can add as many bullet points as you need
+
+        - timespan: 2018 - 2020
+          title: Another Job
+          organization: Another Company
+          city: Another City
+          bullets:
+            - This time with only one bullet point
+
+    - name: Personal Projects
+      entries:
+
+        - timespan: 2021
+          title: Super Cool Project
+          bullets:
+            - Only timespan and title are required
+            - You can leave out organization and even bullets
+
+    - name: Academic Carreer
+      entries:
+
+        - timespan: since 2020
+          title: M.Sc. Computer Science
+          organization: Example University
+          city: Example City
+          bullets:
+          - current GPA 4.0
+
+        - timespan: 2017-2020
+          title: B.Sc. Computer Science
+          organization: Another University
+          city: Another city
+
+  language_section:
+    name: Languages
+    languages:
+      
+      - name: English
+        level: Proficient
+
+      - name: Spanish
+        level: Beginner
