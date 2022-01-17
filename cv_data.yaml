@@ -1,8 +1,8 @@
 cv_data:
 
   cv:
-    theme: classic
-    color: blue
+    theme: classic         # casual, classic, oldstyle, banking, fancy
+    color: blue            # black, blue, burgundy, green, grey, orange, purple, red
     title: My personal CV
 
   personal:
