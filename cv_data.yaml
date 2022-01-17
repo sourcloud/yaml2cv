@@ -1,9 +1,16 @@
 cv_data:
 
+  # General configuration of your moderncv
+
   cv:
     theme: classic         # casual, classic, oldstyle, banking, fancy
     color: blue            # black, blue, burgundy, green, grey, orange, purple, red
     title: My personal CV
+
+  # Personal information and contact data
+  #
+  # This data is displayed in header or 
+  # footer depending on the template.
 
   personal:
     firstname: John
@@ -16,6 +23,15 @@ cv_data:
   contact:
     phone: 0123 4 56 78 90
     email: john.doe@example.com
+
+  # Your CV is divided into any number of sections. 
+  # 
+  # Each section consists of a name and any 
+  # number of entries.
+  #
+  # You can specify the period, title, organization, 
+  # city and keywords for each entry, but only the
+  # period and title are required.
 
   sections:
 
@@ -60,6 +76,9 @@ cv_data:
           title: B.Sc. Computer Science
           organization: Another University
           city: Another city
+
+  # Language section is separated from other sections
+  # as there is no need for timespan, organization etc.
 
   language_section:
     name: Languages
