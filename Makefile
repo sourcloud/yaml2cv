@@ -1,20 +1,10 @@
-.PHONY: help fresh build image clean
+.PHONY: help build run
 
 help:
 	cat Makefile
 
-fresh: clean build
+run:
+	docker run --rm -d -p 5000:5000 yaml2moderncv:0.1.0
 
-build: cv.pdf
-
-cv.pdf: cv.tex
-	docker run --rm -it --mount type=bind,source="$(shell pwd)",target=/app yaml2moderncv:latest /bin/sh -c "cd /app && latexmk -pdf -output-directory=/app cv.tex && latexmk -c"
-
-cv.tex:
-	docker run --rm -it --mount type=bind,source="$(shell pwd)",target=/app yaml2moderncv:latest /bin/sh -c "cd /app && python3 yaml2moderncv.py"
-
-image:
-	docker build --tag=yaml2moderncv:latest .
-
-clean:
-	rm -f cv.*
+build:
+	docker build --tag=yaml2moderncv:0.1.0 .
