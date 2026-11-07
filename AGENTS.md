@@ -63,6 +63,7 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
 | Format        | `gleam format src test`          |
 | Type-check    | `gleam check`                    |
 | Run the app   | `gleam run`                      |
+| All CI checks | `just check`                     |
 
 ## Code style
 

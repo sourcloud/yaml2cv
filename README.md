@@ -41,17 +41,19 @@ The schema is not final yet; it is being redesigned as part of the port.
 
 ## Quickstart
 
-_Coming soon._ The development environment is provided by a Nix flake:
+The development environment is provided by a Nix flake (flakes must be
+enabled):
 
 ```sh
 direnv allow     # or: nix develop
-gleam test
+just             # list tasks
+just check       # format check, type-check, tests
 ```
 
 ## Roadmap
 
 - [x] M0 — Repository hygiene: license, docs, workflow, ADRs
-- [ ] M1 — Dev environment (Nix flake), Gleam scaffold, CI
+- [x] M1 — Dev environment (Nix flake), Gleam scaffold, CI
 - [ ] M2 — Domain model and YAML validation
 - [ ] M3 — Pluggable renderer with Typst backend
 - [ ] M4 — HTTP API
