@@ -85,3 +85,10 @@ pub const colors = [
   #("purple", Purple),
   #("red", Red),
 ]
+
+/// The name of a theme as written in YAML and used as theme directory name.
+pub fn theme_name(theme: Theme) -> String {
+  case theme {
+    Classic -> "classic"
+  }
+}
