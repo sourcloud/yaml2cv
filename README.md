@@ -14,14 +14,15 @@ validation and preview.
 ## Example
 
 ```yaml
-cv:
+schema_version: 1
+
+style:
   theme: classic
   color: blue
-  title: My personal CV
 
-personal:
-  firstname: John
-  lastname: Doe
+person:
+  name: John Doe
+  title: Software Engineer
 
 contact:
   email: john.doe@example.com
@@ -32,9 +33,15 @@ sections:
       - timespan: since 2020
         title: Example Job
         organization: Example Company
-        city: Example City
+        location: Example City
         bullets:
           - This will be rendered as a bullet point
+
+  - name: Languages
+    kind: skills
+    items:
+      - name: English
+        level: Native
 ```
 
 The full schema is documented in
