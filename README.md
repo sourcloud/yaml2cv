@@ -37,7 +37,9 @@ sections:
           - This will be rendered as a bullet point
 ```
 
-The schema is not final yet; it is being redesigned as part of the port.
+The full schema is documented in
+[ADR 0007](docs/adr/0007-cv-schema-version-1.md); a complete example is in
+[`test/fixtures/example.yaml`](test/fixtures/example.yaml).
 
 ## Quickstart
 
@@ -48,7 +50,56 @@ enabled):
 direnv allow     # or: nix develop
 just             # list tasks
 just check       # format check, type-check, tests
+just run         # start the server on http://localhost:8000
 ```
+
+Render a CV:
+
+```sh
+curl --data-binary @test/fixtures/example.yaml \
+     -H 'content-type: application/yaml' \
+     http://localhost:8000/api/v1/render -o cv.pdf
+```
+
+## HTTP API
+
+| Endpoint | Request | Success |
+| --- | --- | --- |
+| `POST /api/v1/render` | YAML body | `200 application/pdf` |
+| `POST /api/v1/validate` | YAML body | `200 {"valid": true}` |
+| `GET /healthz` | | `200 {"status": "ok"}` |
+
+The YAML body must be sent as `application/yaml`, `text/yaml` or
+`text/plain`. Errors are
+[RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem details, e.g.:
+
+```json
+{
+  "type": "/problems/invalid-cv",
+  "title": "Invalid CV",
+  "status": 422,
+  "detail": "The CV does not match the schema.",
+  "errors": [{ "path": "person.name", "message": "is required" }]
+}
+```
+
+The full list of problem types is in
+[ADR 0010](docs/adr/0010-http-api.md).
+
+## Configuration
+
+All settings are environment variables:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `PORT` | `8000` | HTTP port |
+| `BIND_ADDRESS` | `0.0.0.0` | Interface to listen on |
+| `TYPST_PATH` | `typst` | Typst executable |
+| `WORK_DIR` | `$TMPDIR/yaml2cv` | Temporary render jobs |
+| `RENDER_TIMEOUT_MS` | `10000` | Kill a compile after this time |
+| `RENDER_CONCURRENCY` | CPU schedulers | Parallel compiles |
+| `RENDER_QUEUE_WAIT_MS` | `5000` | Max wait for a free render slot |
+| `MAX_BODY_BYTES` | `262144` | Request body limit |
 
 ## Roadmap
 
@@ -56,7 +107,7 @@ just check       # format check, type-check, tests
 - [x] M1 — Dev environment (Nix flake), Gleam scaffold, CI
 - [x] M2 — Domain model and YAML validation
 - [x] M3 — Pluggable renderer with Typst backend
-- [ ] M4 — HTTP API
+- [x] M4 — HTTP API
 - [ ] M5 — Browser editor (htmx)
 - [ ] M6 — Container image, removal of the legacy Python app, v0.1.0
 
