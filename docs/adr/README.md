@@ -14,3 +14,4 @@ for the process.
 | [0006](0006-license-and-legacy-code.md) | Apache-2.0 license and removal of legacy code | Accepted |
 | [0007](0007-cv-schema-version-1.md) | CV schema version 1 | Accepted |
 | [0008](0008-own-yaml-bindings-over-yamerl.md) | Own YAML bindings over yamerl | Accepted |
+| [0009](0009-typst-renderer-execution-and-themes.md) | Typst renderer: execution, limits and themes | Accepted |
