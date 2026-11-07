@@ -1,0 +1,65 @@
+schema_version: 1
+
+style:
+  theme: classic
+  color: blue
+
+person:
+  name: John Doe
+  title: My personal CV
+  address: 1234 Main Street, 98765 Example City
+
+contact:
+  phone: 0123 4 56 78 90
+  email: john.doe@example.com
+  links:
+    - label: GitHub
+      url: https://github.com/johndoe
+
+sections:
+  - name: Professional Experience
+    entries:
+      - timespan: since 2020
+        title: Example Job
+        organization: Example Company
+        location: Example City
+        bullets:
+          - This will be rendered as a bullet point
+          - You can add as many bullet points as you need
+
+      - timespan: 2018 - 2020
+        title: Another Job
+        organization: Another Company
+        location: Another City
+        bullets:
+          - This time with only one bullet point
+
+  - name: Personal Projects
+    entries:
+      - timespan: 2021
+        title: Super Cool Project
+        bullets:
+          - Only timespan and title are required
+          - You can leave out organization and even bullets
+
+  - name: Academic Career
+    entries:
+      - timespan: since 2020
+        title: M.Sc. Computer Science
+        organization: Example University
+        location: Example City
+        bullets:
+          - current GPA 4.0
+
+      - timespan: 2017-2020
+        title: B.Sc. Computer Science
+        organization: Another University
+        location: Another City
+
+  - name: Languages
+    kind: skills
+    items:
+      - name: English
+        level: Proficient
+      - name: Spanish
+        level: Beginner
