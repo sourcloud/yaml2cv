@@ -1,10 +1,12 @@
 import gleam/option.{None, Some}
+import gleam/string
 import simplifile
 import yaml2cv/cv.{
   Blue, Classic, Contact, Cv, Entries, Entry, Link, Person, Section, Skill,
   Skills, Style, Text,
 }
-import yaml2cv/cv/decode.{SchemaError, SyntaxError}
+import yaml2cv/cv/decode.{DocumentTooLarge, SchemaError, SyntaxError}
+import yaml2cv/yaml
 
 const minimal =
   "
@@ -170,4 +172,10 @@ pub fn rejects_multiple_documents_test() {
     == Error([
       SchemaError(path: "", message: "expected exactly one YAML document"),
     ])
+}
+
+pub fn rejects_documents_with_too_many_nodes_test() {
+  let yaml = "[" <> string.repeat("x, ", yaml.max_nodes) <> "x]"
+  assert decode.from_yaml(yaml)
+    == Error([DocumentTooLarge(max_nodes: yaml.max_nodes)])
 }

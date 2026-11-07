@@ -1,4 +1,8 @@
-import yaml2cv/yaml.{Bool, Float, Int, Map, Null, Sequence, String, SyntaxError}
+import gleam/list
+import gleam/string
+import yaml2cv/yaml.{
+  Bool, Float, Int, Map, Null, Sequence, String, SyntaxError, TooManyNodes,
+}
 
 pub fn parses_scalars_and_collections_test() {
   let source =
@@ -46,4 +50,27 @@ pub fn reports_syntax_error_with_location_test() {
       line: 2,
       column: 18,
     ))
+}
+
+pub fn rejects_alias_expansion_bombs_test() {
+  // Seven levels of ten aliases each expand to ten million nodes.
+  let level = fn(name, item) {
+    name <> ": &" <> name <> "\n" <> string.repeat("  - " <> item <> "\n", 10)
+  }
+  let source =
+    level("a", "x")
+    <> level("b", "*a")
+    <> level("c", "*b")
+    <> level("d", "*c")
+    <> level("e", "*d")
+    <> level("f", "*e")
+    <> level("g", "*f")
+
+  assert yaml.parse(source) == Error(TooManyNodes(limit: yaml.max_nodes))
+}
+
+pub fn allows_documents_within_node_budget_test() {
+  let assert Ok([Sequence(items)]) =
+    yaml.parse("[" <> string.repeat("x, ", yaml.max_nodes - 2) <> "x]")
+  assert list.length(items) == yaml.max_nodes - 1
 }

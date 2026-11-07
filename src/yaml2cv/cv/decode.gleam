@@ -23,6 +23,8 @@ pub type DecodeError {
   /// offending value, e.g. `sections[1].entries[0].title`; it is empty for
   /// the document root.
   SchemaError(path: String, message: String)
+  /// The document has more than `max_nodes` nodes after alias expansion.
+  DocumentTooLarge(max_nodes: Int)
 }
 
 const supported_version = 1
@@ -44,6 +46,8 @@ pub fn from_yaml(source: String) -> Result(Cv, List(DecodeError)) {
       ])
     Error(yaml.SyntaxError(message:, line:, column:)) ->
       Error([SyntaxError(message:, line:, column:)])
+    Error(yaml.TooManyNodes(limit:)) ->
+      Error([DocumentTooLarge(max_nodes: limit)])
   }
 }
 
