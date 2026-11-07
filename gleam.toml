@@ -1,0 +1,12 @@
+name = "yaml2cv"
+version = "0.1.0"
+description = "Render CVs written in YAML to PDF"
+licences = ["Apache-2.0"]
+target = "erlang"
+repository = { type = "github", user = "sourcloud", repo = "yaml2cv" }
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
