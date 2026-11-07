@@ -55,7 +55,7 @@ just check       # format check, type-check, tests
 - [x] M0 — Repository hygiene: license, docs, workflow, ADRs
 - [x] M1 — Dev environment (Nix flake), Gleam scaffold, CI
 - [x] M2 — Domain model and YAML validation
-- [ ] M3 — Pluggable renderer with Typst backend
+- [x] M3 — Pluggable renderer with Typst backend
 - [ ] M4 — HTTP API
 - [ ] M5 — Browser editor (htmx)
 - [ ] M6 — Container image, removal of the legacy Python app, v0.1.0
