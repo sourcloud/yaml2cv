@@ -50,7 +50,7 @@ gleam test
 
 ## Roadmap
 
-- [ ] M0 — Repository hygiene: license, docs, workflow, ADRs
+- [x] M0 — Repository hygiene: license, docs, workflow, ADRs
 - [ ] M1 — Dev environment (Nix flake), Gleam scaffold, CI
 - [ ] M2 — Domain model and YAML validation
 - [ ] M3 — Pluggable renderer with Typst backend
