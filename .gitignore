@@ -1,0 +1,17 @@
+# Gleam
+/build/
+*.beam
+erl_crash.dump
+
+# Nix / direnv
+/.direnv/
+/result
+/result-*
+
+# Rendered output
+*.pdf
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
