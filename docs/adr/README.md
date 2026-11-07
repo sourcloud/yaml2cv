@@ -13,3 +13,4 @@ for the process.
 | [0005](0005-nix-flake-dev-environment.md) | Nix flake development environment | Accepted |
 | [0006](0006-license-and-legacy-code.md) | Apache-2.0 license and removal of legacy code | Accepted |
 | [0007](0007-cv-schema-version-1.md) | CV schema version 1 | Proposed |
+| [0008](0008-own-yaml-bindings-over-yamerl.md) | Own YAML bindings over yamerl | Accepted |
