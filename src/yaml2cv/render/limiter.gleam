@@ -9,6 +9,7 @@ import exception
 import gleam/erlang/process.{type Monitor, type Pid, type Subject}
 import gleam/list
 import gleam/otp/actor
+import gleam/otp/supervision
 import gleam/result
 import yaml2cv/render.{type Renderer, Overloaded, Renderer}
 
@@ -16,7 +17,8 @@ pub opaque type Limiter {
   Limiter(subject: Subject(Message))
 }
 
-type Message {
+/// Messages understood by the limiter actor.
+pub opaque type Message {
   /// Asks for a slot; the actor sends `Nil` to `slot` once one is granted.
   Acquire(slot: Subject(Nil), caller: Pid)
   /// Gives up a held slot or leaves the queue.
@@ -37,6 +39,31 @@ type State {
 
 /// Starts a limiter allowing `capacity` renders at a time.
 pub fn start(capacity: Int) -> Result(Limiter, actor.StartError) {
+  builder(capacity)
+  |> actor.start
+  |> result.map(fn(started) { started.data })
+}
+
+/// A child specification that starts a limiter registered under `name`, for
+/// use in a supervision tree. Callers reach it through `named(name)`, which
+/// keeps working across restarts.
+pub fn supervised(
+  name: process.Name(Message),
+  capacity capacity: Int,
+) -> supervision.ChildSpecification(Limiter) {
+  supervision.worker(fn() {
+    builder(capacity)
+    |> actor.named(name)
+    |> actor.start
+  })
+}
+
+/// The limiter registered under `name` by `supervised`.
+pub fn named(name: process.Name(Message)) -> Limiter {
+  Limiter(process.named_subject(name))
+}
+
+fn builder(capacity: Int) -> actor.Builder(State, Message, Limiter) {
   actor.new_with_initialiser(1000, fn(subject) {
     let selector =
       process.new_selector()
@@ -49,8 +76,6 @@ pub fn start(capacity: Int) -> Result(Limiter, actor.StartError) {
     |> Ok
   })
   |> actor.on_message(handle_message)
-  |> actor.start
-  |> result.map(fn(started) { started.data })
 }
 
 /// Wraps a renderer so that each render first waits up to `wait`

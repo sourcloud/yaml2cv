@@ -1,5 +1,6 @@
 import exception
 import gleam/erlang/process.{type Subject}
+import gleam/otp/static_supervisor
 import yaml2cv/cv.{type Cv}
 import yaml2cv/cv/decode
 import yaml2cv/render.{type Renderer, Overloaded, Renderer}
@@ -119,4 +120,17 @@ pub fn timed_out_waiter_does_not_hold_a_slot_test() {
   let assert Ok(gate) = process.receive(started, 1000)
   process.send(gate, Nil)
   assert process.receive(result, 1000) == Ok(Ok(<<"pdf">>))
+}
+
+pub fn works_as_named_supervised_child_test() {
+  let name = process.new_name("limiter_test")
+  let assert Ok(_) =
+    static_supervisor.new(static_supervisor.OneForOne)
+    |> static_supervisor.add(limiter.supervised(name, capacity: 1))
+    |> static_supervisor.start
+
+  let renderer =
+    Renderer(render: fn(_) { Ok(<<"pdf">>) })
+    |> limiter.limit(with: limiter.named(name), wait: 100)
+  assert renderer.render(cv()) == Ok(<<"pdf">>)
 }
