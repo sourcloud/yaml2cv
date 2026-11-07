@@ -1,6 +1,6 @@
 # 0007. CV schema version 1
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-07
 
 ## Context

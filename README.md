@@ -54,7 +54,7 @@ just check       # format check, type-check, tests
 
 - [x] M0 — Repository hygiene: license, docs, workflow, ADRs
 - [x] M1 — Dev environment (Nix flake), Gleam scaffold, CI
-- [ ] M2 — Domain model and YAML validation
+- [x] M2 — Domain model and YAML validation
 - [ ] M3 — Pluggable renderer with Typst backend
 - [ ] M4 — HTTP API
 - [ ] M5 — Browser editor (htmx)
