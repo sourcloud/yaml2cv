@@ -1,6 +1,6 @@
 # 0029. Copy, download and import the YAML from one menu
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-08
 
 ## Context
@@ -34,8 +34,10 @@ Import guard: replace directly but undoably, or confirm first.
 
 ## Decision
 
-A **YAML** menu button in the CV panel header (`ui-menu`, a menu button
-following the WAI-ARIA menu button pattern) with three items:
+A **File** menu button (German **Datei**) in the CV panel header
+(`ui-menu`, a menu button following the WAI-ARIA menu button pattern),
+named so it is not mistaken for the **YAML** mode beside it, with three
+items:
 
 - **Copy** — as before; the "Copied" feedback shows on the menu button.
 - **Download .yaml** — saves the editor text as `cv.yaml` (matching

@@ -71,7 +71,7 @@ YAML. The YAML stays the source of truth: every block edit is written back
 to it, so it can be copied at any time. The first block edit rewrites the
 YAML in a uniform layout, dropping comments (ADR 0024).
 
-The service keeps nothing, so save your work: the **YAML** menu in the CV
+The service keeps nothing, so save your work: the **File** menu in the CV
 panel copies the YAML, downloads it as `cv.yaml` and imports a saved file
 back into the editor, all in the browser (ADR 0029).
 
