@@ -63,6 +63,11 @@ just run         # start the server on http://localhost:8000
 
 Open http://localhost:8000 for the editor: edit the YAML on the left, see
 validation results and a live preview on the right, and download the PDF.
+Switch the CV panel to **Visual** to edit the same document as building
+blocks (person, contact, sections, entries, bullets, skills) instead of raw
+YAML. The YAML stays the source of truth: every block edit is written back
+to it, so it can be copied at any time. The first block edit rewrites the
+YAML in a uniform layout, dropping comments (ADR 0024).
 
 Render a CV:
 
@@ -192,6 +197,7 @@ can reach. The format is documented in
 - [x] M6 — Container image, removal of the legacy Python app, v0.1.0
 - [x] M7 — Minimal single-column theme
 - [x] M8 — Phone home: admin endpoint and UDP heartbeat
+- [x] M9 — Visual block editor next to the YAML source
 
 ## Contributing
 
