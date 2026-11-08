@@ -9,7 +9,7 @@ pub type Cv {
 
 /// Visual settings passed to the renderer.
 pub type Style {
-  Style(theme: Theme, color: Color)
+  Style(theme: Theme, color: Color, paper: Paper)
 }
 
 pub type Theme {
@@ -26,6 +26,12 @@ pub type Color {
   Orange
   Purple
   Red
+}
+
+/// The paper size of the rendered document.
+pub type Paper {
+  A4
+  Letter
 }
 
 pub type Person {
@@ -86,6 +92,9 @@ pub const colors = [
   #("purple", Purple),
   #("red", Red),
 ]
+
+/// All paper sizes, in the order they are listed to users.
+pub const papers = [#("a4", A4), #("letter", Letter)]
 
 /// The name of a theme as written in YAML and used as theme directory name.
 pub fn theme_name(theme: Theme) -> String {

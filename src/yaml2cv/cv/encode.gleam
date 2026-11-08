@@ -4,8 +4,8 @@
 
 import gleam/json.{type Json}
 import yaml2cv/cv.{
-  type Color, type Contact, type Cv, type Entry, type Person, type Section,
-  type Skill, type Style,
+  type Color, type Contact, type Cv, type Entry, type Paper, type Person,
+  type Section, type Skill, type Style,
 }
 
 /// Encodes a CV as a JSON value.
@@ -22,7 +22,15 @@ fn style(style: Style) -> Json {
   json.object([
     #("theme", json.string(cv.theme_name(style.theme))),
     #("color", json.string(color_name(style.color))),
+    #("paper", json.string(paper_name(style.paper))),
   ])
+}
+
+fn paper_name(paper: Paper) -> String {
+  case paper {
+    cv.A4 -> "a4"
+    cv.Letter -> "letter"
+  }
 }
 
 fn color_name(color: Color) -> String {

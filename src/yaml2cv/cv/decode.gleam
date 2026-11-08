@@ -98,13 +98,14 @@ fn schema_version() -> Decoder(Int) {
 }
 
 fn style() -> Decoder(cv.Style) {
-  let zero = Style(theme: cv.Classic, color: cv.Blue)
+  let zero = Style(theme: cv.Classic, color: cv.Blue, paper: cv.A4)
   use node, path <- Decoder(zero:)
   use fields <- object(node, path, zero)
   use theme <- then(optional_or(fields, "theme", one_of(cv.themes, cv.Classic)))
   use color <- then(optional_or(fields, "color", one_of(cv.colors, cv.Blue)))
-  use _ <- then(no_unknown_keys(fields, ["theme", "color"]))
-  succeed(Style(theme:, color:))
+  use paper <- then(optional_or(fields, "paper", one_of(cv.papers, cv.A4)))
+  use _ <- then(no_unknown_keys(fields, ["theme", "color", "paper"]))
+  succeed(Style(theme:, color:, paper:))
 }
 
 fn person() -> Decoder(cv.Person) {

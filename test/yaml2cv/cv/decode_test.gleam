@@ -2,8 +2,8 @@ import gleam/option.{None, Some}
 import gleam/string
 import simplifile
 import yaml2cv/cv.{
-  Blue, Classic, Contact, Cv, Entries, Entry, Link, Minimal, Person, Section,
-  Skill, Skills, Style, Text,
+  A4, Blue, Classic, Contact, Cv, Entries, Entry, Letter, Link, Minimal, Person,
+  Section, Skill, Skills, Style, Text,
 }
 import yaml2cv/cv/decode.{
   DocumentTooComplex, DocumentTooLarge, SchemaError, SyntaxError,
@@ -22,7 +22,7 @@ pub fn decodes_minimal_document_with_defaults_test() {
   assert decode.from_yaml(minimal)
     == Ok(
       Cv(
-        style: Style(theme: Classic, color: Blue),
+        style: Style(theme: Classic, color: Blue, paper: A4),
         person: Person(name: "Jane Roe", title: None, address: None),
         contact: Contact(email: None, phone: None, website: None, links: []),
         sections: [],
@@ -40,7 +40,32 @@ person: { name: Jane Roe }
 sections: []
 ",
     )
-  assert cv.style == Style(theme: Minimal, color: Blue)
+  assert cv.style == Style(theme: Minimal, color: Blue, paper: A4)
+}
+
+pub fn decodes_paper_size_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { paper: letter }
+person: { name: Jane Roe }
+sections: []
+",
+    )
+  assert cv.style.paper == Letter
+}
+
+pub fn rejects_unknown_paper_size_test() {
+  let assert Error([SchemaError(path: "style.paper", ..)]) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { paper: a3 }
+person: { name: Jane Roe }
+sections: []
+",
+    )
 }
 
 pub fn decodes_all_section_kinds_test() {

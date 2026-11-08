@@ -18,6 +18,7 @@ schema_version: 1
 style:
   theme: classic   # or: minimal
   color: blue
+  paper: a4        # or: letter
 
 person:
   name: John Doe
