@@ -85,7 +85,7 @@ fn editor_page(
                   ],
                   t.schema_button,
                 ),
-                yaml_menu(texts, max_body_bytes),
+                file_menu(texts, max_body_bytes),
               ],
               body: [
                 html.form(
@@ -176,10 +176,10 @@ const import_field = "yaml-import"
 /// Copy, download and import the YAML source, in the browser (ADR 0029).
 /// Imports above the request body limit are refused, as the server would
 /// refuse to check or render them.
-fn yaml_menu(texts: Texts, max_body_bytes: Int) -> Element(a) {
+fn file_menu(texts: Texts, max_body_bytes: Int) -> Element(a) {
   let t = texts.editor
-  html.div([attribute.class("editor-yaml-menu")], [
-    menu.view(id: "yaml-file", label: t.yaml_menu, items: [
+  html.div([attribute.class("editor-file-menu")], [
+    menu.view(id: "file", label: t.file_menu, items: [
       menu.Item(t.copy_yaml, [
         attribute.data("copy-from", source_field),
         attribute.data("copied-label", t.copied),

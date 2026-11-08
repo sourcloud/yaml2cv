@@ -32,7 +32,7 @@ pub fn texts() -> texts.Texts {
       mode_yaml: "YAML",
       mode_visual: "Visual",
       schema_button: "Schema",
-      yaml_menu: "YAML",
+      file_menu: "File",
       copy_yaml: "Copy",
       copied: "Copied",
       copy_failed: "Copy failed",

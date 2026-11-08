@@ -49,6 +49,10 @@ pub fn editor_page_offers_copying_the_yaml_test() {
   assert string.contains(body, "data-copy-from=\"cv\"")
   assert string.contains(body, "data-copy-failed-label=\"Copy failed\"")
   assert string.contains(body, "role=\"menuitem\"")
+  assert string.contains(
+    body,
+    "data-menu-trigger id=\"file\" type=\"button\">File</button>",
+  )
 }
 
 pub fn editor_page_offers_downloading_the_yaml_test() {

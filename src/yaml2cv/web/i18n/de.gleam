@@ -37,7 +37,7 @@ pub fn texts() -> texts.Texts {
       mode_yaml: "YAML",
       mode_visual: "Visuell",
       schema_button: "Schema",
-      yaml_menu: "YAML",
+      file_menu: "Datei",
       copy_yaml: "Kopieren",
       copied: "Kopiert",
       copy_failed: "Kopieren fehlgeschlagen",

@@ -46,8 +46,8 @@ pub type EditorTexts {
     mode_yaml: String,
     mode_visual: String,
     schema_button: String,
-    /// The YAML menu (ADR 0029) and its items.
-    yaml_menu: String,
+    /// The file menu (ADR 0029) and its items.
+    file_menu: String,
     copy_yaml: String,
     copied: String,
     copy_failed: String,
