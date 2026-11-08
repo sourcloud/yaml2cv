@@ -319,7 +319,9 @@ fn list_of(
   )
 }
 
-/// Move up, move down and remove buttons for item `index` of `count`.
+/// Move up, move down and remove buttons for item `index` of `count`. Both
+/// arrows are always there, disabled when the item cannot move that way,
+/// so the actions line up from item to item.
 fn item_actions(
   t: Labels,
   ref: ListRef,
@@ -328,22 +330,31 @@ fn item_actions(
   noun: String,
 ) -> List(Element(message)) {
   let which = numbered(noun, index)
-  let moves =
-    list.flatten([
-      case index > 0 {
-        True -> [op_button(MoveUp(ref, index), "↑", t.v.move_up(which))]
-        False -> []
-      },
-      case index + 1 < count {
-        True -> [op_button(MoveDown(ref, index), "↓", t.v.move_down(which))]
-        False -> []
-      },
-    ])
-  let remove = op_button(Remove(ref, index), t.v.remove, t.v.remove_item(which))
-  case moves {
-    [] -> [remove]
-    _ -> [html.div([attribute.class("visual-editor__move")], moves), remove]
+  let up = case index > 0 {
+    True -> op_button(MoveUp(ref, index), "↑", t.v.move_up(which))
+    False -> unavailable_move("↑")
   }
+  let down = case index + 1 < count {
+    True -> op_button(MoveDown(ref, index), "↓", t.v.move_down(which))
+    False -> unavailable_move("↓")
+  }
+  [
+    html.div([attribute.class("visual-editor__move")], [up, down]),
+    op_button(Remove(ref, index), t.v.remove, t.v.remove_item(which)),
+  ]
+}
+
+/// A disabled arrow that only keeps its place in the actions.
+fn unavailable_move(label: String) -> Element(message) {
+  button.view(
+    button.Quiet,
+    [
+      attribute.type_("button"),
+      attribute.disabled(True),
+      attribute.aria_hidden(True),
+    ],
+    label,
+  )
 }
 
 /// A button that posts the form with `op` and replaces it with the result.

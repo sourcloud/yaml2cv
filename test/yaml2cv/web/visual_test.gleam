@@ -73,3 +73,16 @@ pub fn sync_carries_escaped_yaml_out_of_band_test() {
   assert string.contains(html, "id=\"yaml-sync\"")
   assert string.contains(html, "name: &lt;/textarea&gt;")
 }
+
+pub fn always_shows_both_arrows_test() {
+  let html = element.to_string(visual.view(sample(), i18n.texts(i18n.En)))
+  // Every item has a move group with two arrows; impossible moves are
+  // disabled placeholders.
+  let groups = string.split(html, "visual-editor__move") |> list.length
+  let removes = string.split(html, "value=\"remove:") |> list.length
+  assert groups == removes
+  assert string.contains(
+    html,
+    "aria-hidden=\"true\" class=\"ui-button ui-button--quiet\" disabled",
+  )
+}
