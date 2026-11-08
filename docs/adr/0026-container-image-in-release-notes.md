@@ -1,6 +1,6 @@
 # 0026. Reference the container image in the GitHub Release
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-08
 
 ## Context
