@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: observe full document
+---
+{"name":"yaml2cv","version":"0.3.0","requires":["collector"],"address":{"host":"10.0.0.135","port":"8000","admin_port":"9000","ipv6":"fd00::87","interfaces":[{"name":"eth0","ipv4":["10.0.0.135"],"ipv6":["fd00::87"]}]},"heartbeat":{"interval":10000,"mia_interval":30000},"config":{"git_revision":"585b6be","build_date":"2026-11-07T21:00:00Z","deployed_from":null,"deployed_by":"Jane Roe","deployed_on":null,"settings":{"port":8000,"bind_address":"::","max_body_bytes":262144,"render_concurrency":4,"render_queue_wait_ms":5000,"render_timeout_ms":10000,"typst_path":"typst","work_dir":"/tmp/yaml2cv","admin_bind_address":"0.0.0.0","admin_port":9000,"phone_home_target":"collector.local:5140","heartbeat_interval_ms":10000,"heartbeat_mia_ms":30000}},"status":{"memory":41,"cpu_load":[0.4,0.3,0.2],"io_load":0.1,"disk":null},"rel":{"self":"/","config":"/config","status":"/status","health":"/healthz"}}

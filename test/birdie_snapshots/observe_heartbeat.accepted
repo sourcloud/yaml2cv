@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: observe heartbeat
+---
+{"name":"yaml2cv","version":"0.3.0","address":{"host":"10.0.0.135","port":"8000","admin_port":"9000","ipv6":"fd00::87"},"heartbeat":{"interval":10000,"mia_interval":30000},"status":{"memory":41,"cpu_load":[0.4,0.3,0.2],"io_load":0.1,"disk":null},"rel":{"self":"http://10.0.0.135:9000/","config":"http://10.0.0.135:9000/config","status":"http://10.0.0.135:9000/status","health":"http://10.0.0.135:9000/healthz"}}
