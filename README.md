@@ -60,6 +60,9 @@ just check       # format check, type-check, tests
 just run         # start the server on http://localhost:8000
 ```
 
+Open http://localhost:8000 for the editor: edit the YAML on the left, see
+validation results and a live preview on the right, and download the PDF.
+
 Render a CV:
 
 ```sh
@@ -115,7 +118,7 @@ All settings are environment variables:
 - [x] M2 — Domain model and YAML validation
 - [x] M3 — Pluggable renderer with Typst backend
 - [x] M4 — HTTP API
-- [ ] M5 — Browser editor (htmx)
+- [x] M5 — Browser editor (htmx)
 - [ ] M6 — Container image, removal of the legacy Python app, v0.1.0
 
 ## Contributing
