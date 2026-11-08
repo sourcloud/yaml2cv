@@ -34,6 +34,11 @@
   inset-inline: 0 auto;
 }
 
+/* Set by editor.js when there is no room below the button. */
+.ui-menu__list--up {
+  inset-block: auto calc(100% + var(--space-1));
+}
+
 .ui-menu__list[hidden] {
   display: none;
 }

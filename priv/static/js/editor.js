@@ -8,7 +8,7 @@
 // - Buttons with `data-jump-field`, `data-jump-line` and `data-jump-column`
 //   move the cursor to that 1-based position in the field.
 // - Menu buttons (`[data-menu]`, ADR 0029) open their list on click or the
-//   arrow keys; the arrow keys, Home and End move between the items, Escape
+//   arrow keys, upwards when there is no room below; the arrow keys, Home and End move between the items, Escape
 //   and a click elsewhere close it.
 // - Buttons with `data-copy-from` copy that field's text to the clipboard
 //   and briefly show `data-copied-label` (on the menu button when inside a
@@ -239,7 +239,14 @@
 
   const openMenu = (menu, focus) => {
     const { trigger, list, items } = menuParts(menu);
+    list.classList.remove("ui-menu__list--up");
     list.hidden = false;
+    // Open upwards when the list would leave the viewport below and there is
+    // more room above, as for a button at the bottom of the page.
+    const below = window.innerHeight - trigger.getBoundingClientRect().bottom;
+    const above = trigger.getBoundingClientRect().top;
+    const height = list.getBoundingClientRect().height;
+    if (height > below && above > below) list.classList.add("ui-menu__list--up");
     trigger.setAttribute("aria-expanded", "true");
     (focus === "last" ? items.at(-1) : items[0])?.focus();
   };
