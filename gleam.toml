@@ -1,5 +1,5 @@
 name = "yaml2cv"
-version = "0.4.0"
+version = "0.5.0"
 description = "Render CVs written in YAML to PDF"
 licences = ["Apache-2.0"]
 target = "erlang"
