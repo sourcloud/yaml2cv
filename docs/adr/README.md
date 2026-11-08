@@ -16,7 +16,7 @@ for the process.
 | [0008](0008-own-yaml-bindings-over-yamerl.md) | Own YAML bindings over yamerl | Accepted |
 | [0009](0009-typst-renderer-execution-and-themes.md) | Typst renderer: execution, limits and themes | Accepted |
 | [0010](0010-http-api.md) | HTTP API, configuration, limits and logging | Accepted |
-| [0011](0011-browser-editor.md) | Browser editor and UI component library | Accepted |
+| [0011](0011-browser-editor.md) | Browser editor and UI component library | Accepted, PNG preview superseded by 0019 |
 | [0012](0012-colour-theme-switch.md) | Colour theme switch | Accepted |
 | [0013](0013-container-image-and-release.md) | Container image, third-party notices and releases | Accepted |
 | [0014](0014-upgrade-to-erlang-otp-29.md) | Upgrade to Erlang/OTP 29 | Accepted |
@@ -24,3 +24,4 @@ for the process.
 | [0016](0016-print-typography-refinements.md) | Print typography refinements for both themes | Accepted |
 | [0017](0017-paper-size-margins-and-spacing.md) | Paper size, margins, spacing and black | Accepted |
 | [0018](0018-pdf-generator-metadata.md) | Mark generated PDFs with yaml2cv metadata | Accepted |
+| [0019](0019-svg-preview-and-gzip.md) | SVG page previews and gzip responses | Accepted |

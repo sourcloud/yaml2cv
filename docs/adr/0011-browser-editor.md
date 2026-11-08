@@ -1,6 +1,6 @@
 # 0011. Browser editor and UI component library
 
-- Status: Accepted
+- Status: Accepted, PNG preview superseded by 0019
 - Date: 2026-11-07
 
 ## Context
