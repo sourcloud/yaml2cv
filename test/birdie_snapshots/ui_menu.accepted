@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui menu
+---
+<div class="ui-menu" data-menu><button aria-controls="file-menu" aria-expanded="false" aria-haspopup="menu" class="ui-button ui-button--secondary ui-menu__trigger" data-menu-trigger id="file" type="button">File &lt;x&gt;</button><div aria-labelledby="file" class="ui-menu__list" hidden id="file-menu" role="menu"><button class="ui-menu__item" data-copy-from="cv" role="menuitem" tabindex="-1" type="button">Copy</button><button class="ui-menu__item" role="menuitem" tabindex="-1" type="button">Import…</button></div></div>

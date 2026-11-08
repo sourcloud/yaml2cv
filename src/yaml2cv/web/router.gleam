@@ -44,7 +44,12 @@ pub fn handle_request(request: Request, context: Context) -> Response {
   case wisp.path_segments(request) {
     [] ->
       case request.method {
-        http.Get -> editor.page(locale(request), context.example_cv)
+        http.Get ->
+          editor.page(
+            locale(request),
+            context.example_cv,
+            context.max_body_bytes,
+          )
         http.Post ->
           editor.switch_language(
             request,

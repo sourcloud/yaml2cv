@@ -32,9 +32,17 @@ pub fn texts() -> texts.Texts {
       mode_yaml: "YAML",
       mode_visual: "Visual",
       schema_button: "Schema",
-      copy_yaml: "Copy YAML",
+      yaml_menu: "YAML",
+      copy_yaml: "Copy",
       copied: "Copied",
       copy_failed: "Copy failed",
+      download_yaml: "Download .yaml",
+      import_yaml: "Import .yaml…",
+      import_failed: fn(kib) {
+        "The file could not be imported. Choose a YAML file of at most "
+        <> int.to_string(kib)
+        <> " KiB."
+      },
       source_label: "CV source in YAML",
       preview_panel: "Preview",
       rendering: "Rendering…",

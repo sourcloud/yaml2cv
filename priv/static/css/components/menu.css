@@ -1,0 +1,54 @@
+/* ui-menu: menu button with a list below it. Gleam: yaml2cv/web/ui/menu */
+.ui-menu {
+  position: relative;
+  display: inline-block;
+}
+
+/* Chevron like the select fields', in currentColor. */
+.ui-menu__trigger::after {
+  content: "";
+  width: 0.3125rem;
+  height: 0.3125rem;
+  margin-block-start: -0.1875rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.ui-menu__list {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-end: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-menu__list[hidden] {
+  display: none;
+}
+
+.ui-menu__item {
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  text-align: start;
+  white-space: nowrap;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.ui-menu__item:hover,
+.ui-menu__item:focus-visible {
+  background: var(--color-surface-sunken);
+}

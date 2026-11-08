@@ -7,8 +7,15 @@
 //   and scroll position of their textarea.
 // - Buttons with `data-jump-field`, `data-jump-line` and `data-jump-column`
 //   move the cursor to that 1-based position in the field.
+// - Menu buttons (`[data-menu]`, ADR 0029) open their list on click or the
+//   arrow keys; the arrow keys, Home and End move between the items, Escape
+//   and a click elsewhere close it.
 // - Buttons with `data-copy-from` copy that field's text to the clipboard
-//   and briefly show `data-copied-label`.
+//   and briefly show `data-copied-label` (on the menu button when inside a
+//   menu). `data-download-from` saves the field's text as a file named
+//   `data-download-name`. `data-import-choose` opens the file input with
+//   that id, whose `data-import-into` field gets the picked file's text,
+//   undoably; in visual mode the blocks are then asked for again.
 // - Buttons with `data-dialog-open` open the modal `<dialog>` with that id;
 //   a click on its backdrop closes it (ADR 0022).
 // - Edit modes (ADR 0024): `[data-mode]` holds `yaml` or `visual`. The
@@ -122,21 +129,171 @@
 
   const labels = new WeakMap();
 
-  document.addEventListener("click", async (event) => {
-    const button = event.target.closest?.("[data-copy-from]");
-    if (!button) return;
-    const field = document.getElementById(button.dataset.copyFrom);
-    if (!(field instanceof HTMLTextAreaElement)) return;
+  const flash = (button, text) => {
     if (!labels.has(button)) labels.set(button, { text: button.textContent });
     const state = labels.get(button);
-    const copied = await copy(field);
-    button.textContent = copied
-      ? button.dataset.copiedLabel || "Copied"
-      : button.dataset.copyFailedLabel || "Copy failed";
+    button.textContent = text;
     clearTimeout(state.timer);
     state.timer = setTimeout(() => {
       button.textContent = state.text;
     }, 2000);
+  };
+
+  // In visual mode, block edits wait for a debounce before they reach the
+  // YAML. Actions that read the YAML run once those edits are in it.
+  let afterFlush = null;
+
+  const needsFlush = () => {
+    const root = document.querySelector("[data-mode]");
+    const form = document.getElementById("visual-form");
+    return root?.dataset.mode === "visual" && Boolean(form?.dataset.dirty) && Boolean(window.htmx);
+  };
+
+  const whenFlushed = (action) => {
+    if (!needsFlush()) return action();
+    afterFlush = action;
+    window.htmx.trigger(document.getElementById("visual-form"), "flush");
+  };
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-copy-from]");
+    if (!button) return;
+    const field = document.getElementById(button.dataset.copyFrom);
+    if (!(field instanceof HTMLTextAreaElement)) return;
+    const feedback = button.closest("[data-menu]")?.querySelector("[data-menu-trigger]") || button;
+    whenFlushed(async () => {
+      const copied = await copy(field);
+      flash(
+        feedback,
+        copied
+          ? button.dataset.copiedLabel || "Copied"
+          : button.dataset.copyFailedLabel || "Copy failed",
+      );
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-download-from]");
+    if (!button) return;
+    const field = document.getElementById(button.dataset.downloadFrom);
+    if (!(field instanceof HTMLTextAreaElement)) return;
+    whenFlushed(() => {
+      const url = URL.createObjectURL(new Blob([field.value], { type: "application/yaml" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = button.dataset.downloadName || "cv.yaml";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-import-choose]");
+    if (button) document.getElementById(button.dataset.importChoose)?.click();
+  });
+
+  // Replaces the field's text; execCommand keeps the browser's undo history.
+  const replaceText = (field, text) => {
+    field.focus();
+    field.select();
+    if (!document.execCommand("insertText", false, text)) {
+      field.value = text;
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  };
+
+  document.addEventListener("change", async (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.dataset.importInto) return;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    const failed = () => window.alert(input.dataset.importFailedLabel || "The file could not be imported.");
+    const max = Number(input.dataset.importMaxBytes) || Infinity;
+    if (file.size > max) return failed();
+    let text;
+    try {
+      text = await file.text();
+    } catch {
+      return failed();
+    }
+    const field = document.getElementById(input.dataset.importInto);
+    if (!(field instanceof HTMLTextAreaElement)) return;
+    const root = field.closest("[data-mode]");
+    const visual = root?.dataset.mode === "visual";
+    // The field is hidden in visual mode, and focus and undo need it shown.
+    if (visual) setMode(root, "yaml");
+    replaceText(field, text);
+    if (visual) root.querySelector('[data-mode-switch="visual"]')?.click();
+  });
+
+  // --- Menu buttons -----------------------------------------------------------
+
+  const menuParts = (menu) => ({
+    trigger: menu.querySelector("[data-menu-trigger]"),
+    list: menu.querySelector('[role="menu"]'),
+    items: [...menu.querySelectorAll('[role="menuitem"]')],
+  });
+
+  const openMenu = (menu, focus) => {
+    const { trigger, list, items } = menuParts(menu);
+    list.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    (focus === "last" ? items.at(-1) : items[0])?.focus();
+  };
+
+  const closeMenu = (menu, refocus) => {
+    const { trigger, list } = menuParts(menu);
+    if (list.hidden) return;
+    list.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    if (refocus) trigger.focus();
+  };
+
+  document.addEventListener("click", (event) => {
+    const menu = event.target.closest?.("[data-menu]");
+    for (const open of document.querySelectorAll("[data-menu]")) {
+      if (open !== menu) closeMenu(open, false);
+    }
+    if (!menu) return;
+    if (event.target.closest("[data-menu-trigger]")) {
+      if (menuParts(menu).list.hidden) openMenu(menu, "first");
+      else closeMenu(menu, false);
+    } else if (event.target.closest('[role="menuitem"]')) {
+      closeMenu(menu, true);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const menu = event.target.closest?.("[data-menu]");
+    if (!menu) return;
+    const { items } = menuParts(menu);
+    if (event.target.closest("[data-menu-trigger]")) {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        openMenu(menu, event.key === "ArrowUp" ? "last" : "first");
+      }
+      return;
+    }
+    const at = items.indexOf(event.target);
+    if (at < 0) return;
+    const go = {
+      ArrowDown: (at + 1) % items.length,
+      ArrowUp: (at - 1 + items.length) % items.length,
+      Home: 0,
+      End: items.length - 1,
+    }[event.key];
+    if (go !== undefined) {
+      event.preventDefault();
+      items[go].focus();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu(menu, true);
+    } else if (event.key === "Tab") {
+      closeMenu(menu, false);
+    }
   });
 
   document.addEventListener("click", (event) => {
@@ -196,12 +353,9 @@
   // go into it first, then the switch is submitted again.
   document.addEventListener("click", (event) => {
     const choice = event.target.closest?.("[data-language-choice]");
-    const root = document.querySelector("[data-mode]");
-    const form = document.getElementById("visual-form");
-    if (!choice || root?.dataset.mode !== "visual" || !form?.dataset.dirty || !window.htmx) return;
+    if (!choice || !needsFlush()) return;
     event.preventDefault();
-    root.dataset.pendingLanguage = choice.dataset.languageChoice;
-    window.htmx.trigger(form, "flush");
+    whenFlushed(() => choice.form?.requestSubmit(choice));
   });
 
   const applySync = () => {
@@ -217,12 +371,9 @@
       field.dispatchEvent(new Event("input", { bubbles: true }));
     }
     if (root.dataset.pendingMode) setMode(root, root.dataset.pendingMode);
-    const language = root.dataset.pendingLanguage;
-    if (language) {
-      delete root.dataset.pendingLanguage;
-      const choice = document.querySelector(`[data-language-choice="${language}"]`);
-      choice?.form?.requestSubmit(choice);
-    }
+    const action = afterFlush;
+    afterFlush = null;
+    action?.();
   };
 
   document.addEventListener("htmx:oobAfterSwap", applySync);

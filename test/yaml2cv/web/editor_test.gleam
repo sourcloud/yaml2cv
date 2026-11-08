@@ -48,7 +48,24 @@ pub fn editor_page_offers_copying_the_yaml_test() {
   let body = get("/") |> simulate.read_body
   assert string.contains(body, "data-copy-from=\"cv\"")
   assert string.contains(body, "data-copy-failed-label=\"Copy failed\"")
-  assert string.contains(body, ">Copy YAML</button>")
+  assert string.contains(body, "role=\"menuitem\"")
+}
+
+pub fn editor_page_offers_downloading_the_yaml_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-download-from=\"cv\"")
+  assert string.contains(body, "data-download-name=\"cv.yaml\"")
+}
+
+pub fn editor_page_offers_importing_yaml_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-import-into=\"cv\"")
+  assert string.contains(
+    body,
+    "accept=\".yaml,.yml,application/yaml,text/yaml\"",
+  )
+  // The request body limit of the test context.
+  assert string.contains(body, "data-import-max-bytes=\"1024\"")
 }
 
 pub fn editor_header_has_no_photo_picker_test() {

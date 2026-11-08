@@ -37,9 +37,17 @@ pub fn texts() -> texts.Texts {
       mode_yaml: "YAML",
       mode_visual: "Visuell",
       schema_button: "Schema",
-      copy_yaml: "YAML kopieren",
+      yaml_menu: "YAML",
+      copy_yaml: "Kopieren",
       copied: "Kopiert",
       copy_failed: "Kopieren fehlgeschlagen",
+      download_yaml: ".yaml herunterladen",
+      import_yaml: ".yaml importieren…",
+      import_failed: fn(kib) {
+        "Die Datei konnte nicht importiert werden. Bitte eine YAML-Datei mit höchstens "
+        <> int.to_string(kib)
+        <> " KiB wählen."
+      },
       source_label: "Lebenslauf als YAML",
       preview_panel: "Vorschau",
       rendering: "Wird gesetzt…",

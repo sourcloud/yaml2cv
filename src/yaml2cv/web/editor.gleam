@@ -2,6 +2,7 @@
 
 import gleam/bytes_tree
 import gleam/http/response
+import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -26,6 +27,7 @@ import yaml2cv/web/ui/button
 import yaml2cv/web/ui/code_area
 import yaml2cv/web/ui/error_list
 import yaml2cv/web/ui/indicator
+import yaml2cv/web/ui/menu
 import yaml2cv/web/ui/page_stack
 import yaml2cv/web/ui/panel
 import yaml2cv/web/ui/segmented
@@ -42,14 +44,15 @@ const source_field = "cv"
 const form_id = "editor-form"
 
 /// `GET /` — the editor in `locale`, preloaded with `source`.
-pub fn page(locale: Locale, source: String) -> Response {
-  editor_page(locale, source, None)
+pub fn page(locale: Locale, source: String, max_body_bytes: Int) -> Response {
+  editor_page(locale, source, max_body_bytes, None)
 }
 
 /// The editor page, in visual mode with the blocks of `blocks` if given.
 fn editor_page(
   locale: Locale,
   source: String,
+  max_body_bytes: Int,
   blocks: Option(draft.Draft),
 ) -> Response {
   let texts = i18n.texts(locale)
@@ -82,16 +85,7 @@ fn editor_page(
                   ],
                   t.schema_button,
                 ),
-                button.view(
-                  button.Secondary,
-                  [
-                    attribute.type_("button"),
-                    attribute.data("copy-from", source_field),
-                    attribute.data("copied-label", t.copied),
-                    attribute.data("copy-failed-label", t.copy_failed),
-                  ],
-                  t.copy_yaml,
-                ),
+                yaml_menu(texts, max_body_bytes),
               ],
               body: [
                 html.form(
@@ -177,6 +171,41 @@ fn editor_page(
   |> wisp.html_response(200)
 }
 
+const import_field = "yaml-import"
+
+/// Copy, download and import the YAML source, in the browser (ADR 0029).
+/// Imports above the request body limit are refused, as the server would
+/// refuse to check or render them.
+fn yaml_menu(texts: Texts, max_body_bytes: Int) -> Element(a) {
+  let t = texts.editor
+  html.div([attribute.class("editor-yaml-menu")], [
+    menu.view(id: "yaml-file", label: t.yaml_menu, items: [
+      menu.Item(t.copy_yaml, [
+        attribute.data("copy-from", source_field),
+        attribute.data("copied-label", t.copied),
+        attribute.data("copy-failed-label", t.copy_failed),
+      ]),
+      menu.Item(t.download_yaml, [
+        attribute.data("download-from", source_field),
+        attribute.data("download-name", "cv.yaml"),
+      ]),
+      menu.Item(t.import_yaml, [attribute.data("import-choose", import_field)]),
+    ]),
+    html.input([
+      attribute.id(import_field),
+      attribute.type_("file"),
+      attribute.accept([".yaml", ".yml", "application/yaml", "text/yaml"]),
+      attribute.attribute("hidden", ""),
+      attribute.data("import-into", source_field),
+      attribute.data("import-max-bytes", int.to_string(max_body_bytes)),
+      attribute.data(
+        "import-failed-label",
+        t.import_failed(max_body_bytes / 1024),
+      ),
+    ]),
+  ])
+}
+
 /// YAML / Visual toggle. Visual asks the server for the blocks first; the
 /// switch happens once it answers with `visual-ready` (ADR 0024).
 fn mode_switch(t: texts.EditorTexts, visual: Bool) -> Element(a) {
@@ -220,7 +249,7 @@ pub fn switch_language(
       option.from_result(result.replace_error(draft.from_yaml(source), Nil))
     _ -> None
   }
-  editor_page(i18n.from_request(request, lang), source, blocks)
+  editor_page(i18n.from_request(request, lang), source, max_body_bytes, blocks)
 }
 
 /// `POST /editor/validate` — validation status fragment.

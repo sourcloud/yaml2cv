@@ -46,9 +46,15 @@ pub type EditorTexts {
     mode_yaml: String,
     mode_visual: String,
     schema_button: String,
+    /// The YAML menu (ADR 0029) and its items.
+    yaml_menu: String,
     copy_yaml: String,
     copied: String,
     copy_failed: String,
+    download_yaml: String,
+    import_yaml: String,
+    /// Takes the largest importable size in KiB.
+    import_failed: fn(Int) -> String,
     source_label: String,
     preview_panel: String,
     rendering: String,
