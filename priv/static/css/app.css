@@ -19,4 +19,5 @@
 @import url("components/code-area.css") layer(components);
 @import url("components/page-stack.css") layer(components);
 @import url("components/indicator.css") layer(components);
+@import url("components/theme-switch.css") layer(components);
 @import url("layout.css") layer(layout);

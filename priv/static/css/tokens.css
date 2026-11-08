@@ -20,21 +20,22 @@
   --color-red-600: #b42318;
   --color-red-100: #fde8e6;
 
-  /* Semantic colours */
-  --color-background: var(--color-neutral-50);
-  --color-surface: var(--color-neutral-0);
-  --color-surface-sunken: var(--color-neutral-100);
-  --color-border: var(--color-neutral-200);
-  --color-text: var(--color-neutral-900);
-  --color-text-muted: var(--color-neutral-500);
-  --color-accent: var(--color-blue-500);
-  --color-accent-hover: var(--color-blue-600);
-  --color-on-accent: var(--color-neutral-0);
-  --color-success: var(--color-green-600);
-  --color-success-surface: var(--color-green-100);
-  --color-danger: var(--color-red-600);
-  --color-danger-surface: var(--color-red-100);
-  --color-focus: var(--color-blue-500);
+  /* Semantic colours: light-dark(light value, dark value). Which one applies
+   * follows `color-scheme` below (ADR 0012). */
+  --color-background: light-dark(var(--color-neutral-50), var(--color-neutral-950));
+  --color-surface: light-dark(var(--color-neutral-0), var(--color-neutral-900));
+  --color-surface-sunken: light-dark(var(--color-neutral-100), var(--color-neutral-800));
+  --color-border: light-dark(var(--color-neutral-200), var(--color-neutral-700));
+  --color-text: light-dark(var(--color-neutral-900), var(--color-neutral-100));
+  --color-text-muted: light-dark(var(--color-neutral-500), #9aa3b2);
+  --color-accent: light-dark(var(--color-blue-500), var(--color-blue-300));
+  --color-accent-hover: light-dark(var(--color-blue-600), #a5c3e6);
+  --color-on-accent: light-dark(var(--color-neutral-0), var(--color-neutral-950));
+  --color-success: light-dark(var(--color-green-600), #7cc98a);
+  --color-success-surface: light-dark(var(--color-green-100), #16301b);
+  --color-danger: light-dark(var(--color-red-600), #f28b82);
+  --color-danger-surface: light-dark(var(--color-red-100), #3a1714);
+  --color-focus: light-dark(var(--color-blue-500), var(--color-blue-300));
 
   /* Spacing (4 px grid) */
   --space-1: 0.25rem;
@@ -60,31 +61,19 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --border-width: 1px;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
-  --shadow-md: 0 2px 8px rgb(0 0 0 / 0.12);
+  --shadow-sm: 0 1px 2px light-dark(rgb(0 0 0 / 0.06), transparent);
+  --shadow-md: 0 2px 8px light-dark(rgb(0 0 0 / 0.12), transparent);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-focus) 40%, transparent);
 
   /* Motion */
   --duration-fast: 120ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--color-neutral-950);
-    --color-surface: var(--color-neutral-900);
-    --color-surface-sunken: var(--color-neutral-800);
-    --color-border: var(--color-neutral-700);
-    --color-text: var(--color-neutral-100);
-    --color-text-muted: #9aa3b2;
-    --color-accent: var(--color-blue-300);
-    --color-accent-hover: #a5c3e6;
-    --color-on-accent: var(--color-neutral-950);
-    --color-success: #7cc98a;
-    --color-success-surface: #16301b;
-    --color-danger: #f28b82;
-    --color-danger-surface: #3a1714;
-    --color-focus: var(--color-blue-300);
-    --shadow-sm: none;
-    --shadow-md: none;
-  }
+/* An explicit choice from the theme switch overrides the system setting. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }

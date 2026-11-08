@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui theme switch
+---
+<div aria-label="Colour theme" class="ui-theme-switch" hidden role="group"><button aria-pressed="false" class="ui-theme-switch__option" data-theme-choice="system" type="button">System</button><button aria-pressed="false" class="ui-theme-switch__option" data-theme-choice="light" type="button">Light</button><button aria-pressed="false" class="ui-theme-switch__option" data-theme-choice="dark" type="button">Dark</button></div>
