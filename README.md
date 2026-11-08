@@ -158,7 +158,7 @@ All settings are environment variables:
 | `RENDER_TIMEOUT_MS` | `10000` | Kill a compile after this time |
 | `RENDER_CONCURRENCY` | CPU schedulers | Parallel compiles |
 | `RENDER_QUEUE_WAIT_MS` | `5000` | Max wait for a free render slot |
-| `MAX_BODY_BYTES` | `262144` | Request body limit |
+| `MAX_BODY_BYTES` | `1048576` | Request body limit; covers a CV with a photo at the 512 KiB limit (ADR 0028) |
 | `ADMIN_BIND_ADDRESS` | `127.0.0.1` | Interface of the admin listener |
 | `ADMIN_PORT` | `9000` | Port of the admin listener; must differ from `PORT` |
 | `PHONE_HOME_TARGET` | unset | `host:port` of a UDP collector; enables heartbeats |

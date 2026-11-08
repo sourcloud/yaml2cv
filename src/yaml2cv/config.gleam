@@ -99,7 +99,7 @@ pub fn parse(
   let #(port, errors) = port_number(env, "PORT", 8000, [])
   let #(bind_address, errors) = text(env, "BIND_ADDRESS", "0.0.0.0", errors)
   let #(max_body_bytes, errors) =
-    positive(env, "MAX_BODY_BYTES", 262_144, errors)
+    positive(env, "MAX_BODY_BYTES", 1_048_576, errors)
   let #(timeout, errors) = positive(env, "RENDER_TIMEOUT_MS", 10_000, errors)
   let #(render_concurrency, errors) =
     positive(env, "RENDER_CONCURRENCY", schedulers, errors)

@@ -17,7 +17,7 @@ pub fn uses_defaults_for_empty_environment_test() {
     == Ok(Config(
       port: 8000,
       bind_address: "0.0.0.0",
-      max_body_bytes: 262_144,
+      max_body_bytes: 1_048_576,
       render_concurrency: 4,
       render_queue_wait: 5000,
       static_directory: "/priv/static",
