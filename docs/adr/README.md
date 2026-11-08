@@ -31,3 +31,4 @@ for the process.
 | [0023](0023-release-notes-from-conventional-commits.md) | Generate GitHub releases from Conventional Commits | Accepted |
 | [0024](0024-visual-block-editor.md) | Visual block editor next to the YAML source | Accepted |
 | [0025](0025-ui-localisation.md) | Localise the web UI | Accepted |
+| [0026](0026-container-image-in-release-notes.md) | Reference the container image in the GitHub Release | Proposed |
