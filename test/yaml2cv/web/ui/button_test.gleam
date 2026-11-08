@@ -14,3 +14,9 @@ pub fn secondary_button_test() {
   |> element.to_string
   |> birdie.snap(title: "ui button secondary")
 }
+
+pub fn quiet_button_test() {
+  button.view(button.Quiet, [], "Remove")
+  |> element.to_string
+  |> birdie.snap(title: "ui button quiet")
+}

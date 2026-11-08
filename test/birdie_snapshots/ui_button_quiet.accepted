@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui button quiet
+---
+<button class="ui-button ui-button--quiet">Remove</button>

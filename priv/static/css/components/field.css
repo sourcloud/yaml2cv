@@ -1,0 +1,35 @@
+/* ui-field: labelled input, textarea or select. Gleam: yaml2cv/web/ui/field */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ui-field__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ui-field__required {
+  font-size: 0.85em;
+}
+
+.ui-field__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.ui-field__input:focus-visible {
+  border-color: var(--color-focus);
+}
+
+.ui-field__input--multiline {
+  resize: vertical;
+}

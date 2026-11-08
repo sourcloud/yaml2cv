@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui block without actions
+---
+<fieldset class="ui-block"><legend class="ui-block__title">Person</legend><div class="ui-block__body"></div></fieldset>

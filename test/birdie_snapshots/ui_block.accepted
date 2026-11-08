@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui block
+---
+<fieldset class="ui-block"><legend class="ui-block__title">Entry</legend><div class="ui-block__actions"><button class="ui-button ui-button--quiet">Remove</button></div><div class="ui-block__body">fields</div></fieldset>

@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui field select
+---
+<label class="ui-field"><span class="ui-field__label">Theme</span><select class="ui-field__input" name="style.theme"><option value>Default (classic)</option><option selected value="minimal">minimal</option></select></label>

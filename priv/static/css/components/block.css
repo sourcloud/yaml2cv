@@ -1,0 +1,51 @@
+/* ui-block: building block of the visual editor (ADR 0024).
+ * Gleam: yaml2cv/web/ui/block
+ *
+ * Actions sit on the title row; the legend cannot be a flex item, so they
+ * are positioned over the block's top edge instead. */
+.ui-block {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.ui-block .ui-block {
+  background: var(--color-surface-sunken);
+}
+
+.ui-block .ui-block .ui-block {
+  background: var(--color-surface);
+}
+
+.ui-block__title {
+  padding-inline: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-block__actions {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--space-3));
+  inset-inline-end: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+  background: inherit;
+  border-radius: var(--radius-sm);
+}
+
+.ui-block__body {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+/* Lists of blocks and wide fields span the whole row. */
+.ui-block__body > .ui-block,
+.ui-block__body > .ui-block-list,
+.ui-block__body > .ui-field:has(.ui-field__input--multiline) {
+  grid-column: 1 / -1;
+}

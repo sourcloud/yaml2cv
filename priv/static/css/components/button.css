@@ -37,3 +37,15 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.ui-button--quiet {
+  padding: var(--space-1) var(--space-2);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  background: transparent;
+}
+
+.ui-button--quiet:hover {
+  color: var(--color-text);
+  background: var(--color-surface-sunken);
+}

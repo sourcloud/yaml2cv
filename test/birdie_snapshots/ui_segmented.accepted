@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui segmented
+---
+<div aria-label="Edit mode" class="ui-segmented" role="group"><button aria-pressed="true" class="ui-segmented__option" data-mode-switch="yaml" type="button">YAML</button><button aria-pressed="false" class="ui-segmented__option" data-mode-switch="visual" type="button">Visual</button></div>

@@ -1,0 +1,6 @@
+---
+version: 2.0.2
+title: ui field textarea
+---
+<label class="ui-field"><span class="ui-field__label">Text</span><textarea class="ui-field__input ui-field__input--multiline" name="sections.0.text" rows="5">a
+&lt;/textarea&gt;</textarea></label>

@@ -7,6 +7,8 @@ import lustre/element/html
 pub type Variant {
   Primary
   Secondary
+  /// Compact and borderless, for small actions inside content.
+  Quiet
 }
 
 /// A button; pass `type`, `form` and similar via `attributes`.
@@ -18,6 +20,7 @@ pub fn view(
   let modifier = case variant {
     Primary -> "ui-button--primary"
     Secondary -> "ui-button--secondary"
+    Quiet -> "ui-button--quiet"
   }
   html.button([attribute.class("ui-button " <> modifier), ..attributes], [
     html.text(label),

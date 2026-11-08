@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui field text
+---
+<label class="ui-field"><span class="ui-field__label">Name<span class="ui-field__required"> (required)</span></span><input aria-required="true" class="ui-field__input" name="person.name" type="text" value="Jane &quot;JR&quot; Roe"></label>
