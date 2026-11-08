@@ -18,3 +18,4 @@ for the process.
 | [0010](0010-http-api.md) | HTTP API, configuration, limits and logging | Accepted |
 | [0011](0011-browser-editor.md) | Browser editor and UI component library | Accepted |
 | [0012](0012-colour-theme-switch.md) | Colour theme switch | Accepted |
+| [0013](0013-container-image-and-release.md) | Container image, third-party notices and releases | Accepted |
