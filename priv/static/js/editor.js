@@ -7,6 +7,8 @@
 //   and scroll position of their textarea.
 // - Buttons with `data-jump-field`, `data-jump-line` and `data-jump-column`
 //   move the cursor to that 1-based position in the field.
+// - Buttons with `data-copy-from` copy that field's text to the clipboard
+//   and briefly show `data-copied-label`.
 (() => {
   "use strict";
 
@@ -84,5 +86,35 @@
     field.scrollTop = Math.max(0, (line - 1) * lineHeight - field.clientHeight / 3);
     const gutter = gutterOf(field);
     if (gutter) gutter.scrollTop = field.scrollTop;
+  });
+
+  // The Clipboard API needs a secure context (HTTPS or localhost); fall back
+  // to selecting the text and the legacy copy command elsewhere.
+  const copy = async (field) => {
+    try {
+      await navigator.clipboard.writeText(field.value);
+      return true;
+    } catch {
+      field.focus();
+      field.select();
+      return document.execCommand("copy");
+    }
+  };
+
+  const labels = new WeakMap();
+
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest?.("[data-copy-from]");
+    if (!button) return;
+    const field = document.getElementById(button.dataset.copyFrom);
+    if (!(field instanceof HTMLTextAreaElement)) return;
+    if (!labels.has(button)) labels.set(button, { text: button.textContent });
+    const state = labels.get(button);
+    const copied = await copy(field);
+    button.textContent = copied ? button.dataset.copiedLabel || "Copied" : "Copy failed";
+    clearTimeout(state.timer);
+    state.timer = setTimeout(() => {
+      button.textContent = state.text;
+    }, 2000);
   });
 })();

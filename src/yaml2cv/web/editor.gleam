@@ -50,23 +50,37 @@ pub fn page(example: String) -> Response {
             attribute.action("/editor/download"),
           ],
           [
-            panel.view(title: "CV", actions: [], body: [
-              code_area.view(
-                id: source_field,
-                name: "yaml",
-                label: "CV source in YAML",
-                value: example,
-                attributes: [],
-              ),
-              html.div(
-                [
-                  attribute.id("validation"),
-                  attribute.aria("live", "polite"),
-                  ..live_update("/editor/validate", "400ms")
-                ],
-                [],
-              ),
-            ]),
+            panel.view(
+              title: "CV",
+              actions: [
+                button.view(
+                  button.Secondary,
+                  [
+                    attribute.type_("button"),
+                    attribute.data("copy-from", source_field),
+                    attribute.data("copied-label", "Copied"),
+                  ],
+                  "Copy YAML",
+                ),
+              ],
+              body: [
+                code_area.view(
+                  id: source_field,
+                  name: "yaml",
+                  label: "CV source in YAML",
+                  value: example,
+                  attributes: [],
+                ),
+                html.div(
+                  [
+                    attribute.id("validation"),
+                    attribute.aria("live", "polite"),
+                    ..live_update("/editor/validate", "400ms")
+                  ],
+                  [],
+                ),
+              ],
+            ),
           ],
         ),
         html.div([attribute.class("layout-editor__preview")], [

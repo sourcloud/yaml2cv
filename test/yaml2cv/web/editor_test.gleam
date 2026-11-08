@@ -44,6 +44,12 @@ pub fn editor_page_preloads_example_test() {
   assert string.contains(body, "name: &lt;Example&gt;")
 }
 
+pub fn editor_page_offers_copying_the_yaml_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-copy-from=\"cv\"")
+  assert string.contains(body, ">Copy YAML</button>")
+}
+
 pub fn pages_send_security_headers_test() {
   let response = get("/")
   let assert Ok(csp) = response.get_header(response, "content-security-policy")
