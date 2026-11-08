@@ -57,15 +57,47 @@
   items
 }
 
-#block(below: 3 * unit, stack(
-  spacing: 0.9em,
-  text(size: 28pt, fill: accent, cv.person.name),
-  ..if cv.person.title != none {
-    (text(size: 14pt, fill: muted, style: "italic", cv.person.title),)
-  },
-  ..if contact-items.len() > 0 {
-    (text(size: 9.5pt, fill: muted, contact-items.join[ #h(0.3em)·#h(0.3em) ]),)
-  },
+// Profile photo (ADR 0028): cropped to fill a fixed box. The renderer writes
+// the file next to cv.json; the JSON holds only its name.
+#let photo-box(stroke: none) = {
+  let shape = cv.style.photo_shape
+  let height = if shape == "circle" { 3.5cm } else { 4.5cm }
+  let radius = if shape == "circle" { 1.75cm } else if shape == "rounded" {
+    0.3cm
+  } else { 0pt }
+  box(
+    width: 3.5cm,
+    height: height,
+    radius: radius,
+    clip: true,
+    stroke: stroke,
+    image(cv.person.photo, width: 100%, height: 100%, fit: "cover"),
+  )
+}
+
+// The header text, with the photo on the right when there is one.
+#let with-photo(header, stroke: none) = if cv.person.photo == none {
+  header
+} else {
+  grid(
+    columns: (1fr, auto),
+    column-gutter: 1em,
+    header, photo-box(stroke: stroke),
+  )
+}
+
+#block(below: 3 * unit, with-photo(
+  stack(
+    spacing: 0.9em,
+    text(size: 28pt, fill: accent, cv.person.name),
+    ..if cv.person.title != none {
+      (text(size: 14pt, fill: muted, style: "italic", cv.person.title),)
+    },
+    ..if contact-items.len() > 0 {
+      (text(size: 9.5pt, fill: muted, contact-items.join[ #h(0.3em)·#h(0.3em) ]),)
+    },
+  ),
+  stroke: 0.75pt + accent,
 ))
 
 // Sections --------------------------------------------------------------------

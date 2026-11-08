@@ -1,6 +1,7 @@
 import gleam/bit_array
 import gleam/int
 import gleam/list
+import gleam/option.{Some}
 import gleam/string
 import simplifile
 import yaml2cv/cv.{Style}
@@ -134,4 +135,29 @@ pub fn keeps_render_directories_private_test() {
 
   let assert Ok(info) = simplifile.file_info(work_directory)
   assert int.bitwise_and(info.mode, 0o777) == 0o700
+}
+
+fn with_photo(cv: cv.Cv, file: String, format: cv.PhotoFormat) -> cv.Cv {
+  let assert Ok(data) = simplifile.read_bits("test/fixtures/" <> file)
+  let photo = Some(cv.Photo(format:, data:))
+  cv.Cv(..cv, person: cv.Person(..cv.person, photo:))
+}
+
+pub fn renders_photo_in_every_theme_and_shape_test() {
+  use #(_, theme) <- list.each(cv.themes)
+  use #(_, photo_shape) <- list.each(cv.photo_shapes)
+  use #(file, format) <- list.each([
+    #("photo.jpg", cv.Jpeg),
+    #("photo.png", cv.Png),
+  ])
+  let cv = with_photo(with_theme(example_cv(), theme), file, format)
+  let cv = cv.Cv(..cv, style: Style(..cv.style, photo_shape:))
+  let assert Ok([page, ..]) = typst.render_svg_pages(config(), cv)
+  assert contains(page, <<"<image">>)
+  assert work_directory_is_empty()
+}
+
+pub fn renders_no_image_without_photo_test() {
+  let assert Ok([page, ..]) = typst.render_svg_pages(config(), example_cv())
+  assert !contains(page, <<"<image">>)
 }

@@ -3,11 +3,13 @@
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import simplifile
 import yaml2cv/cv.{type Cv}
 import yaml2cv/cv/encode
+import yaml2cv/cv/photo
 import yaml2cv/process.{Exit}
 import yaml2cv/render.{
   type RenderError, type Renderer, CompileFailed, Renderer, RendererUnavailable,
@@ -107,10 +109,20 @@ fn prepare(config: Config, job: String, cv: Cv) -> Result(Nil, RenderError) {
     use _ <- result.try(simplifile.create_directory(job))
     use _ <- result.try(simplifile.set_permissions_octal(job, 0o700))
     use _ <- result.try(simplifile.copy_directory(at: theme, to: job))
-    simplifile.write(
+    use _ <- result.try(simplifile.write(
       to: job <> "/cv.json",
       contents: json.to_string(encode.to_json(cv)),
-    )
+    ))
+    // The photo is written next to the JSON under the name the JSON holds
+    // and removed with the job directory (ADR 0028).
+    case cv.person.photo {
+      Some(image) ->
+        simplifile.write_bits(
+          to: job <> "/" <> photo.file_name(image),
+          bits: image.data,
+        )
+      None -> Ok(Nil)
+    }
   }
   |> result.map_error(fn(error) {
     RendererUnavailable(
