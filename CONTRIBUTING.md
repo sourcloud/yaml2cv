@@ -17,7 +17,7 @@ gleam test
 - **Test first.** Add a failing test, make it pass, refactor.
 - **Conventional Commits.** `feat: …`, `fix: …`, `docs: …`, `test: …`,
   `refactor: …`, `build: …`, `ci: …`, `chore: …`.
-- **Green before commit.** `gleam format --check src test && gleam test`.
+- **Green before commit.** `just check`.
 - **Design decisions** are documented as ADRs in [`docs/adr/`](docs/adr/).
   Propose a new ADR for any structural change.
 

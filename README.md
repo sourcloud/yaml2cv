@@ -7,9 +7,8 @@ to PDF using [Typst](https://typst.app). It ships as a lightweight, stateless
 web application with an HTTP API and a browser-based editor with live
 validation and preview.
 
-> **Status:** rewrite in progress. The project is being ported from a
-> Python/Flask + LaTeX prototype to [Gleam](https://gleam.run) on the BEAM.
-> See [the roadmap](#roadmap) and the [architecture decision records](docs/adr/).
+Written in [Gleam](https://gleam.run) on the BEAM. Design decisions are
+documented as [architecture decision records](docs/adr/).
 
 ## Example
 
@@ -71,6 +70,35 @@ curl --data-binary @priv/examples/example.yaml \
      http://localhost:8000/api/v1/render -o cv.pdf
 ```
 
+## Container
+
+```sh
+podman build -t yaml2cv .        # or: just image
+podman run --rm -p 8000:8000 yaml2cv
+```
+
+Released images are published to `ghcr.io/sourcloud/yaml2cv` for
+`linux/amd64` and `linux/arm64`.
+
+### Deployment notes
+
+- The service is stateless; run as many replicas as needed behind a load
+  balancer. Rendering is CPU-bound; size `RENDER_CONCURRENCY` to the CPUs
+  available to the container.
+- It speaks plain HTTP. Terminate TLS at a reverse proxy or the platform's
+  ingress.
+- `/healthz` is suitable for liveness and readiness probes.
+- The image runs as an unprivileged user and works with a read-only root
+  filesystem as long as `/tmp` is writable:
+
+  ```sh
+  podman run --read-only --tmpfs /tmp --cap-drop=ALL \
+    --security-opt no-new-privileges -p 8000:8000 yaml2cv
+  ```
+
+- Third-party license notices are in `/app/THIRD_PARTY_NOTICES.md` and
+  `/app/licenses/` inside the image.
+
 ## HTTP API
 
 | Endpoint | Request | Success |
@@ -119,7 +147,7 @@ All settings are environment variables:
 - [x] M3 — Pluggable renderer with Typst backend
 - [x] M4 — HTTP API
 - [x] M5 — Browser editor (htmx)
-- [ ] M6 — Container image, removal of the legacy Python app, v0.1.0
+- [x] M6 — Container image, removal of the legacy Python app, v0.1.0
 
 ## Contributing
 

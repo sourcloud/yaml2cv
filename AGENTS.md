@@ -46,7 +46,7 @@ The project is developed iteratively in a question–answer loop with the owner.
 - Before every commit, these must pass:
 
   ```sh
-  gleam format --check src test
+  gleam format --check src test dev
   gleam test
   ```
 
@@ -60,10 +60,12 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
 | Task          | Command                          |
 | ------------- | -------------------------------- |
 | Run tests     | `gleam test`                     |
-| Format        | `gleam format src test`          |
+| Format        | `gleam format src test dev`      |
 | Type-check    | `gleam check`                    |
 | Run the app   | `gleam run`                      |
 | All CI checks | `just check`                     |
+| Build image   | `just image`                     |
+| Smoke test    | `scripts/smoke-test.sh <url>`    |
 
 ## Code style
 
@@ -74,3 +76,7 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
 - User-supplied CV content is data. Never interpolate it into renderer markup;
   pass it to the renderer as structured data (see ADR 0003).
 - Public functions get a `///` doc comment.
+- Development-only tools live in `dev/` (run with `gleam run -m <module>`);
+  they are not part of the shipped application.
+- Upgrading Gleam, Erlang/OTP or Typst: change `flake.nix`/`flake.lock` and
+  the versions and checksums in `Containerfile` together (ADR 0013).
