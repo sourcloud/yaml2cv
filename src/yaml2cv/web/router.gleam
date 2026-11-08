@@ -3,11 +3,13 @@
 import gleam/http
 import gleam/http/response
 import gleam/json
+import gleam/option.{None}
 import wisp.{type Request, type Response}
 import yaml2cv/render.{type Renderer}
 import yaml2cv/web/api
 import yaml2cv/web/compress
 import yaml2cv/web/editor
+import yaml2cv/web/i18n
 
 /// Everything a request handler needs, injected so tests can swap parts.
 pub type Context {
@@ -40,29 +42,52 @@ pub fn handle_request(request: Request, context: Context) -> Response {
   )
 
   case wisp.path_segments(request) {
-    [] -> {
-      use <- wisp.require_method(request, http.Get)
-      editor.page(context.example_cv)
-    }
+    [] ->
+      case request.method {
+        http.Get -> editor.page(locale(request), context.example_cv)
+        http.Post ->
+          editor.switch_language(
+            request,
+            context.max_body_bytes,
+            context.example_cv,
+          )
+        _ -> wisp.method_not_allowed([http.Get, http.Post])
+      }
+      |> localised
     ["editor", "validate"] -> {
       use <- wisp.require_method(request, http.Post)
-      editor.validate(request, context.max_body_bytes)
+      editor.validate(request, locale(request), context.max_body_bytes)
+      |> localised
     }
     ["editor", "preview"] -> {
       use <- wisp.require_method(request, http.Post)
-      editor.preview(request, context.renderer, context.max_body_bytes)
+      editor.preview(
+        request,
+        locale(request),
+        context.renderer,
+        context.max_body_bytes,
+      )
+      |> localised
     }
     ["editor", "visual"] -> {
       use <- wisp.require_method(request, http.Post)
-      editor.visual(request, context.max_body_bytes)
+      editor.visual(request, locale(request), context.max_body_bytes)
+      |> localised
     }
     ["editor", "visual", "update"] -> {
       use <- wisp.require_method(request, http.Post)
-      editor.visual_update(request, context.max_body_bytes)
+      editor.visual_update(request, locale(request), context.max_body_bytes)
+      |> localised
     }
     ["editor", "download"] -> {
       use <- wisp.require_method(request, http.Post)
-      editor.download(request, context.renderer, context.max_body_bytes)
+      editor.download(
+        request,
+        locale(request),
+        context.renderer,
+        context.max_body_bytes,
+      )
+      |> localised
     }
     ["healthz"] -> {
       use <- wisp.require_method(request, http.Get)
@@ -80,6 +105,15 @@ pub fn handle_request(request: Request, context: Context) -> Response {
     }
     _ -> wisp.not_found()
   }
+}
+
+fn locale(request: Request) -> i18n.Locale {
+  i18n.from_request(request, None)
+}
+
+/// Marks a response whose language depends on the request (ADR 0025).
+fn localised(response: Response) -> Response {
+  response.set_header(response, "vary", "accept-language, " <> i18n.header)
 }
 
 fn security_headers(next: fn() -> Response) -> Response {

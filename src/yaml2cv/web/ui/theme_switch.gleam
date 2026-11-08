@@ -6,18 +6,24 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 
-/// A System / Light / Dark segmented control. It starts hidden and is
-/// revealed by `theme.js`, which also marks the active choice.
-pub fn view() -> Element(message) {
+/// A System / Light / Dark segmented control with the given labels. It
+/// starts hidden and is revealed by `theme.js`, which also marks the active
+/// choice.
+pub fn view(
+  label label: String,
+  system system: String,
+  light light: String,
+  dark dark: String,
+) -> Element(message) {
   html.div(
     [
       attribute.class("ui-theme-switch"),
       attribute.role("group"),
-      attribute.aria("label", "Colour theme"),
+      attribute.aria("label", label),
       attribute.attribute("hidden", ""),
     ],
     list.map(
-      [#("system", "System"), #("light", "Light"), #("dark", "Dark")],
+      [#("system", system), #("light", light), #("dark", dark)],
       fn(choice) {
         html.button(
           [

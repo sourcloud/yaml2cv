@@ -7,7 +7,7 @@ pub fn text_field_test() {
     name: "person.name",
     label: "Name",
     value: "Jane \"JR\" Roe",
-    requirement: field.Required,
+    requirement: field.Required(" (required)"),
   )
   |> element.to_string
   |> birdie.snap(title: "ui field text")

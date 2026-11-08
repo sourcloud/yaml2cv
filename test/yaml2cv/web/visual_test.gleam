@@ -6,8 +6,11 @@ import simplifile
 import yaml2cv/cv/draft.{
   Contact, Draft, Entries, Entry, Link, Section, Skill, Skills, Text,
 }
+import yaml2cv/web/i18n
 import yaml2cv/web/visual
 import yaml2cv/web/visual_form
+
+const en = i18n.En
 
 fn sample() -> draft.Draft {
   Draft(
@@ -30,22 +33,29 @@ fn sample() -> draft.Draft {
 
 pub fn renders_blocks_test() {
   sample()
-  |> visual.view
+  |> visual.view(i18n.texts(en))
   |> element.to_string
   |> birdie.snap(title: "visual editor blocks")
+}
+
+pub fn renders_german_blocks_test() {
+  sample()
+  |> visual.view(i18n.texts(i18n.De))
+  |> element.to_string
+  |> birdie.snap(title: "visual editor blocks de")
 }
 
 pub fn renders_a_field_for_every_draft_value_test() {
   let assert Ok(yaml) = simplifile.read("priv/examples/example.yaml")
   let assert Ok(cv) = draft.from_yaml(yaml)
-  let html = element.to_string(visual.view(cv))
+  let html = element.to_string(visual.view(cv, i18n.texts(en)))
   list.each(visual_form.fields(cv), fn(field) {
     assert string.contains(html, "name=\"" <> field.0 <> "\"") as field.0
   })
 }
 
 pub fn offers_only_possible_moves_test() {
-  let html = element.to_string(visual.view(sample()))
+  let html = element.to_string(visual.view(sample(), i18n.texts(en)))
   assert !string.contains(html, "value=\"up:sections.0\"")
   assert string.contains(html, "value=\"down:sections.0\"")
   assert string.contains(html, "value=\"up:sections.2\"")

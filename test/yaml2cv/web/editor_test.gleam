@@ -47,6 +47,7 @@ pub fn editor_page_preloads_example_test() {
 pub fn editor_page_offers_copying_the_yaml_test() {
   let body = get("/") |> simulate.read_body
   assert string.contains(body, "data-copy-from=\"cv\"")
+  assert string.contains(body, "data-copy-failed-label=\"Copy failed\"")
   assert string.contains(body, ">Copy YAML</button>")
 }
 
@@ -266,4 +267,86 @@ pub fn editor_page_offers_edit_modes_test() {
   assert string.contains(body, "hx-post=\"/editor/visual\"")
   assert string.contains(body, "id=\"visual\"")
   assert string.contains(body, "id=\"yaml-sync\"")
+}
+
+// --- Languages (ADR 0025) ----------------------------------------------------
+
+fn get_with_header(path: String, name: String, value: String) {
+  simulate.request(http.Get, path)
+  |> simulate.header(name, value)
+  |> router.handle_request(context(Ok([])))
+}
+
+pub fn editor_page_defaults_to_english_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "<html lang=\"en\">")
+  assert string.contains(body, "Download PDF")
+}
+
+pub fn editor_page_follows_accept_language_test() {
+  let response = get_with_header("/", "accept-language", "de-DE, en;q=0.5")
+  let body = simulate.read_body(response)
+  assert string.contains(body, "<html lang=\"de\">")
+  assert string.contains(body, "PDF herunterladen")
+  let assert Ok(vary) = response.get_header(response, "vary")
+  assert string.starts_with(vary, "accept-language, x-yaml2cv-lang")
+}
+
+pub fn lang_query_overrides_accept_language_test() {
+  let body =
+    get_with_header("/?lang=en", "accept-language", "de")
+    |> simulate.read_body
+  assert string.contains(body, "<html lang=\"en\">")
+}
+
+pub fn unknown_language_falls_back_to_english_test() {
+  let body = get_with_header("/", "accept-language", "fr") |> simulate.read_body
+  assert string.contains(body, "<html lang=\"en\">")
+}
+
+pub fn switching_language_keeps_the_posted_yaml_test() {
+  let response =
+    simulate.request(http.Post, "/")
+    |> simulate.form_body([#("lang", "de"), #("yaml", "person: <mine>\n")])
+    |> router.handle_request(context(Ok([])))
+  assert response.status == 200
+  let body = simulate.read_body(response)
+  assert string.contains(body, "<html lang=\"de\">")
+  assert string.contains(body, "person: &lt;mine&gt;")
+  assert !string.contains(body, "&lt;Example&gt;")
+}
+
+pub fn switching_language_without_yaml_shows_the_example_test() {
+  let body =
+    simulate.request(http.Post, "/")
+    |> simulate.form_body([#("lang", "de")])
+    |> router.handle_request(context(Ok([])))
+    |> simulate.read_body
+  assert string.contains(body, "&lt;Example&gt;")
+}
+
+pub fn fragments_follow_the_language_header_test() {
+  let response =
+    simulate.request(http.Post, "/editor/validate")
+    |> simulate.header("x-yaml2cv-lang", "de")
+    |> simulate.header("accept-language", "en")
+    |> simulate.form_body([#("yaml", "schema_version: 1\nsections: []\n")])
+    |> router.handle_request(context(Ok([])))
+  let body = simulate.read_body(response)
+  assert string.contains(body, "1 Problem")
+  assert string.contains(body, "fehlt (Pflichtfeld)")
+  let assert Ok(vary) = response.get_header(response, "vary")
+  assert string.starts_with(vary, "accept-language, x-yaml2cv-lang")
+}
+
+pub fn api_messages_stay_english_test() {
+  let body =
+    simulate.request(http.Post, "/api/v1/validate")
+    |> simulate.header("accept-language", "de")
+    |> simulate.header("x-yaml2cv-lang", "de")
+    |> simulate.header("content-type", "application/yaml")
+    |> simulate.string_body("schema_version: 1\nsections: []\n")
+    |> router.handle_request(context(Ok([])))
+    |> simulate.read_body
+  assert string.contains(body, "is required")
 }

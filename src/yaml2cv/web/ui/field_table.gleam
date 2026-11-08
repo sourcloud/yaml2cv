@@ -11,14 +11,20 @@ pub type Row(message) {
   Row(key: String, requirement: String, description: List(Element(message)))
 }
 
-/// A table of keys with whether they are required and what they mean.
-pub fn view(rows: List(Row(message))) -> Element(message) {
+/// A table of keys with whether they are required and what they mean,
+/// under the given column headers.
+pub fn view(
+  key_header key_header: String,
+  requirement_header requirement_header: String,
+  description_header description_header: String,
+  rows rows: List(Row(message)),
+) -> Element(message) {
   html.table([attribute.class("ui-field-table")], [
     html.thead([], [
       html.tr([], [
-        html.th([attribute.scope("col")], [html.text("Key")]),
-        html.th([attribute.scope("col")], [html.text("Required")]),
-        html.th([attribute.scope("col")], [html.text("Description")]),
+        html.th([attribute.scope("col")], [html.text(key_header)]),
+        html.th([attribute.scope("col")], [html.text(requirement_header)]),
+        html.th([attribute.scope("col")], [html.text(description_header)]),
       ]),
     ]),
     html.tbody(

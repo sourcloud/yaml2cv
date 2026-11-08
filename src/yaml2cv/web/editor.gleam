@@ -2,9 +2,9 @@
 
 import gleam/bytes_tree
 import gleam/http/response
-import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
+import gleam/result
 import gleam/string
 import lustre/attribute
 import lustre/element.{type Element}
@@ -18,6 +18,8 @@ import yaml2cv/cv/decode.{
 import yaml2cv/cv/draft
 import yaml2cv/cv/draft/emit
 import yaml2cv/render.{type RenderError, type Renderer}
+import yaml2cv/web/i18n.{type Locale}
+import yaml2cv/web/i18n/texts.{type Texts}
 import yaml2cv/web/schema_help
 import yaml2cv/web/ui/alert
 import yaml2cv/web/ui/button
@@ -36,115 +38,127 @@ const title = "yaml2cv"
 /// The id of the YAML source field; error locations jump into it.
 const source_field = "cv"
 
-/// `GET /` — the editor, preloaded with `example`.
-pub fn page(example: String) -> Response {
-  shell.view(title:, actions: [], content: [
-    html.div([attribute.class("layout-editor")], [
-      // `editor.js` switches `data-mode` between `yaml` and `visual`.
-      html.div(
-        [attribute.class("editor-modes"), attribute.data("mode", "yaml")],
-        [
+/// The id of the editor form, which the language switch submits too.
+const form_id = "editor-form"
+
+/// `GET /` — the editor in `locale`, preloaded with `source`.
+pub fn page(locale: Locale, source: String) -> Response {
+  let texts = i18n.texts(locale)
+  let t = texts.editor
+  shell.view(
+    locale:,
+    language_form: Some(form_id),
+    title:,
+    actions: [],
+    content: [
+      html.div([attribute.class("layout-editor")], [
+        // `editor.js` switches `data-mode` between `yaml` and `visual`.
+        html.div(
+          [attribute.class("editor-modes"), attribute.data("mode", "yaml")],
+          [
+            panel.view(
+              title: t.cv_panel,
+              actions: [
+                mode_switch(t),
+                button.view(
+                  button.Secondary,
+                  [
+                    attribute.type_("button"),
+                    attribute.data("dialog-open", schema_help.dialog_id),
+                    attribute.aria_haspopup("dialog"),
+                  ],
+                  t.schema_button,
+                ),
+                button.view(
+                  button.Secondary,
+                  [
+                    attribute.type_("button"),
+                    attribute.data("copy-from", source_field),
+                    attribute.data("copied-label", t.copied),
+                    attribute.data("copy-failed-label", t.copy_failed),
+                  ],
+                  t.copy_yaml,
+                ),
+              ],
+              body: [
+                html.form(
+                  [
+                    attribute.id(form_id),
+                    attribute.class("editor-modes__source"),
+                    attribute.method("post"),
+                    attribute.action("/editor/download"),
+                  ],
+                  [
+                    code_area.view(
+                      id: source_field,
+                      name: "yaml",
+                      label: t.source_label,
+                      value: source,
+                      attributes: [],
+                    ),
+                  ],
+                ),
+                // Filled by `POST /editor/visual`; the blocks have a form of
+                // their own, so this sits outside the editor form.
+                html.div(
+                  [
+                    attribute.id("visual"),
+                    attribute.class("editor-modes__visual"),
+                  ],
+                  [],
+                ),
+                html.div(
+                  [
+                    attribute.id("validation"),
+                    attribute.aria("live", "polite"),
+                    ..live_update("/editor/validate", "400ms")
+                  ],
+                  [],
+                ),
+              ],
+            ),
+          ],
+        ),
+        html.div([attribute.class("layout-editor__preview")], [
           panel.view(
-            title: "CV",
+            title: t.preview_panel,
             actions: [
-              mode_switch(),
+              indicator.view(id: "preview-indicator", label: t.rendering),
+              // Outside the form; `form` makes it submit the editor form.
               button.view(
-                button.Secondary,
-                [
-                  attribute.type_("button"),
-                  attribute.data("dialog-open", schema_help.dialog_id),
-                  attribute.aria_haspopup("dialog"),
-                ],
-                "Schema",
-              ),
-              button.view(
-                button.Secondary,
-                [
-                  attribute.type_("button"),
-                  attribute.data("copy-from", source_field),
-                  attribute.data("copied-label", "Copied"),
-                ],
-                "Copy YAML",
+                button.Primary,
+                [attribute.type_("submit"), attribute.form(form_id)],
+                t.download_pdf,
               ),
             ],
             body: [
-              html.form(
-                [
-                  attribute.id("editor-form"),
-                  attribute.class("editor-modes__source"),
-                  attribute.method("post"),
-                  attribute.action("/editor/download"),
-                ],
-                [
-                  code_area.view(
-                    id: source_field,
-                    name: "yaml",
-                    label: "CV source in YAML",
-                    value: example,
-                    attributes: [],
-                  ),
-                ],
-              ),
-              // Filled by `POST /editor/visual`; the blocks have a form of
-              // their own, so this sits outside the editor form.
               html.div(
                 [
-                  attribute.id("visual"),
-                  attribute.class("editor-modes__visual"),
-                ],
-                [],
-              ),
-              html.div(
-                [
-                  attribute.id("validation"),
-                  attribute.aria("live", "polite"),
-                  ..live_update("/editor/validate", "400ms")
+                  attribute.id("preview"),
+                  attribute.attribute("hx-indicator", "#preview-indicator"),
+                  ..live_update("/editor/preview", "1s")
                 ],
                 [],
               ),
             ],
           ),
-        ],
-      ),
-      html.div([attribute.class("layout-editor__preview")], [
-        panel.view(
-          title: "Preview",
-          actions: [
-            indicator.view(id: "preview-indicator", label: "Rendering…"),
-            // Outside the form; `form` makes it submit the editor form.
-            button.view(
-              button.Primary,
-              [attribute.type_("submit"), attribute.form("editor-form")],
-              "Download PDF",
-            ),
-          ],
-          body: [
-            html.div(
-              [
-                attribute.id("preview"),
-                attribute.attribute("hx-indicator", "#preview-indicator"),
-                ..live_update("/editor/preview", "1s")
-              ],
-              [],
-            ),
-          ],
-        ),
+        ]),
       ]),
-    ]),
-    // Outside the editor form: the dialog has a form of its own.
-    schema_help.view(),
-    visual.sync_placeholder(),
-  ])
+      // Outside the editor form: the dialog has a form of its own.
+      schema_help.view(texts.schema, close: texts.ui.close),
+      visual.sync_placeholder(),
+    ],
+  )
   |> element.to_document_string
   |> wisp.html_response(200)
 }
 
 /// YAML / Visual toggle. Visual asks the server for the blocks first; the
 /// switch happens once it answers with `visual-ready` (ADR 0024).
-fn mode_switch() -> Element(a) {
-  segmented.view(label: "Edit mode", options: [
-    segmented.Option("YAML", True, [attribute.data("mode-switch", "yaml")]),
-    segmented.Option("Visual", False, [
+fn mode_switch(t: texts.EditorTexts) -> Element(a) {
+  segmented.view(label: t.edit_mode, options: [
+    segmented.Option(t.mode_yaml, True, [attribute.data("mode-switch", "yaml")]),
+    segmented.Option(t.mode_visual, False, [
       attribute.data("mode-switch", "visual"),
       attribute.attribute("hx-post", "/editor/visual"),
       attribute.attribute("hx-include", "#" <> source_field),
@@ -164,12 +178,30 @@ fn live_update(path: String, delay: String) -> List(attribute.Attribute(a)) {
   ]
 }
 
+/// `POST /` — the editor in the posted `lang`, keeping the posted `yaml`
+/// (`example` when missing). The language switch submits here (ADR 0025).
+pub fn switch_language(
+  request: Request,
+  max_body_bytes: Int,
+  example: String,
+) -> Response {
+  use fields <- require_form_within(request, max_body_bytes)
+  let lang = option.from_result(list.key_find(fields, "lang"))
+  let source = list.key_find(fields, "yaml") |> result.unwrap(example)
+  page(i18n.from_request(request, lang), source)
+}
+
 /// `POST /editor/validate` — validation status fragment.
-pub fn validate(request: Request, max_body_bytes: Int) -> Response {
+pub fn validate(
+  request: Request,
+  locale: Locale,
+  max_body_bytes: Int,
+) -> Response {
   use source <- require_yaml_field(request, max_body_bytes)
+  let texts = i18n.texts(locale)
   let view = case decode.from_yaml(source) {
-    Ok(_) -> alert.view(alert.Success, "Valid CV", [])
-    Error(errors) -> errors_view(errors)
+    Ok(_) -> alert.view(alert.Success, texts.editor.valid, [])
+    Error(errors) -> errors_view(texts, errors)
   }
   fragment(view, 200)
 }
@@ -178,19 +210,22 @@ pub fn validate(request: Request, max_body_bytes: Int) -> Response {
 /// `204 No Content` so the last good preview stays visible.
 pub fn preview(
   request: Request,
+  locale: Locale,
   renderer: Renderer,
   max_body_bytes: Int,
 ) -> Response {
   use source <- require_yaml_field(request, max_body_bytes)
+  let texts = i18n.texts(locale)
   case decode.from_yaml(source) {
     Error(_) -> wisp.response(204)
     Ok(cv) ->
       case renderer.render_svg_pages(cv) {
-        Ok(pages) -> fragment(page_stack.view(pages), 200)
+        Ok(pages) ->
+          fragment(page_stack.view(pages:, page_label: texts.ui.page), 200)
         Error(error) ->
           fragment(
-            alert.view(alert.Danger, "Preview unavailable", [
-              html.text(render_error_message(error)),
+            alert.view(alert.Danger, texts.editor.preview_unavailable, [
+              html.text(render_error_message(texts, error)),
             ]),
             200,
           )
@@ -201,17 +236,19 @@ pub fn preview(
 /// `POST /editor/download` — the PDF as an attachment, or an error page.
 pub fn download(
   request: Request,
+  locale: Locale,
   renderer: Renderer,
   max_body_bytes: Int,
 ) -> Response {
   use source <- require_yaml_field(request, max_body_bytes)
   case decode.from_yaml(source) {
-    Error(errors) -> error_page(errors_view(errors), 422)
-    Ok(cv) -> download_pdf(renderer, cv)
+    Error(errors) ->
+      error_page(locale, errors_view(i18n.texts(locale), errors), 422)
+    Ok(cv) -> download_pdf(locale, renderer, cv)
   }
 }
 
-fn download_pdf(renderer: Renderer, cv: Cv) -> Response {
+fn download_pdf(locale: Locale, renderer: Renderer, cv: Cv) -> Response {
   case renderer.render_pdf(cv) {
     Ok(pdf) ->
       wisp.response(200)
@@ -226,10 +263,11 @@ fn download_pdf(renderer: Renderer, cv: Cv) -> Response {
         render.CompileFailed(..) -> 500
         _ -> 503
       }
-      alert.view(alert.Danger, "Download failed", [
-        html.text(render_error_message(error)),
+      let texts = i18n.texts(locale)
+      alert.view(alert.Danger, texts.editor.download_failed, [
+        html.text(render_error_message(texts, error)),
       ])
-      |> error_page(status)
+      |> error_page(locale, _, status)
     }
   }
 }
@@ -237,16 +275,21 @@ fn download_pdf(renderer: Renderer, cv: Cv) -> Response {
 /// `POST /editor/visual` — the blocks for the posted YAML, or why it cannot
 /// be shown as blocks. Success triggers `visual-ready`, which switches the
 /// mode; errors are retargeted to the mode errors next to the source.
-pub fn visual(request: Request, max_body_bytes: Int) -> Response {
+pub fn visual(
+  request: Request,
+  locale: Locale,
+  max_body_bytes: Int,
+) -> Response {
   use source <- require_yaml_field(request, max_body_bytes)
+  let texts = i18n.texts(locale)
   case draft.from_yaml(source) {
     Ok(cv) ->
-      fragment(visual.view(cv), 200)
+      fragment(visual.view(cv, texts), 200)
       |> response.set_header("hx-trigger", "visual-ready")
     // Shown in place of the validation status, which would otherwise list
     // the same problems in a second alert; the next edit validates again.
     Error(errors) ->
-      errors_alert("Visual mode needs these fixed first", errors)
+      errors_alert(texts, texts.editor.visual_needs_fixes, errors)
       |> fragment(200)
       |> response.set_header("hx-retarget", "#validation")
       |> response.set_header("hx-reswap", "innerHTML")
@@ -256,7 +299,11 @@ pub fn visual(request: Request, max_body_bytes: Int) -> Response {
 /// `POST /editor/visual/update` — the YAML regenerated from the posted
 /// blocks, after applying the requested `op` if any. With an op the blocks
 /// are re-rendered too.
-pub fn visual_update(request: Request, max_body_bytes: Int) -> Response {
+pub fn visual_update(
+  request: Request,
+  locale: Locale,
+  max_body_bytes: Int,
+) -> Response {
   use fields <- require_form_within(request, max_body_bytes)
   let cv = visual_form.parse(list.filter(fields, fn(field) { field.0 != "op" }))
   case list.key_find(fields, "op") {
@@ -269,7 +316,10 @@ pub fn visual_update(request: Request, max_body_bytes: Int) -> Response {
         Ok(op) -> visual_form.apply(cv, op)
         Error(Nil) -> cv
       }
-      element.fragment([visual.view(cv), visual.sync(emit.to_yaml(cv))])
+      element.fragment([
+        visual.view(cv, i18n.texts(locale)),
+        visual.sync(emit.to_yaml(cv)),
+      ])
     }
   }
   |> fragment(200)
@@ -308,27 +358,26 @@ fn require_form_within(
   }
 }
 
-fn errors_view(errors: List(DecodeError)) -> Element(a) {
-  let title = case list.length(errors) {
-    1 -> "1 problem"
-    count -> int.to_string(count) <> " problems"
-  }
-  errors_alert(title, errors)
+fn errors_view(texts: Texts, errors: List(DecodeError)) -> Element(a) {
+  errors_alert(texts, texts.editor.problems(list.length(errors)), errors)
 }
 
-fn errors_alert(title: String, errors: List(DecodeError)) -> Element(a) {
+fn errors_alert(
+  texts: Texts,
+  title: String,
+  errors: List(DecodeError),
+) -> Element(a) {
   // yamerl aborts at the first syntax error, so later problems stay hidden.
   let hint = case list.any(errors, is_syntax_error) {
-    True ->
-      html.p([], [
-        html.text(
-          "Parsing stops at the first syntax error. Fix it to see any further problems.",
-        ),
-      ])
+    True -> html.p([], [html.text(texts.editor.syntax_hint)])
     False -> element.none()
   }
   alert.view(alert.Danger, title, [
-    error_list.view(list.map(errors, describe_error)),
+    error_list.view(
+      errors: list.map(errors, describe_error(texts.editor, _)),
+      document_label: texts.ui.whole_document,
+      jump_label: texts.ui.show_in_editor,
+    ),
     hint,
   ])
 }
@@ -342,59 +391,50 @@ fn is_syntax_error(error: DecodeError) -> Bool {
 
 /// A decode error as an error list item; syntax errors with a known
 /// position link to it in the editor.
-fn describe_error(error: DecodeError) -> error_list.Item {
+fn describe_error(t: texts.EditorTexts, error: DecodeError) -> error_list.Item {
   case error {
     SchemaError(path:, problem:) ->
       error_list.Item(
         location: path,
-        message: decode.describe(problem),
+        message: t.schema_problem(problem),
         target: None,
       )
     SyntaxError(message:, line: 0, ..) ->
       error_list.Item(location: "", message:, target: None)
     SyntaxError(message:, line:, column:) ->
       error_list.Item(
-        location: "line "
-          <> int.to_string(line)
-          <> ", column "
-          <> int.to_string(column),
+        location: t.location(line, column),
         message:,
         target: Some(error_list.Target(field: source_field, line:, column:)),
       )
     DocumentTooComplex ->
-      error_list.Item(
-        location: "",
-        message: "the document is nested too deeply to process",
-        target: None,
-      )
+      error_list.Item(location: "", message: t.too_complex, target: None)
     DocumentTooLarge(max_nodes:) ->
       error_list.Item(
         location: "",
-        message: "the document has more than "
-          <> int.to_string(max_nodes)
-          <> " nodes",
+        message: t.too_large(max_nodes),
         target: None,
       )
   }
 }
 
-fn render_error_message(error: RenderError) -> String {
+fn render_error_message(texts: Texts, error: RenderError) -> String {
   case error {
     render.Overloaded -> {
       wisp.log_warning("editor render rejected: server overloaded")
-      "The server is busy right now. Try again in a moment."
+      texts.editor.busy
     }
     render.TimedOut -> {
       wisp.log_warning("editor render timed out")
-      "Rendering took too long."
+      texts.editor.timed_out
     }
     render.RendererUnavailable(reason:) -> {
       wisp.log_error("renderer unavailable: " <> reason)
-      "The renderer is currently unavailable."
+      texts.editor.renderer_unavailable
     }
     render.CompileFailed(output:) -> {
       wisp.log_error("render failed: " <> output)
-      "The CV could not be rendered."
+      texts.editor.render_failed
     }
   }
 }
@@ -404,11 +444,12 @@ fn fragment(view: Element(a), status: Int) -> Response {
 }
 
 /// A full page showing `message` with a way back to the editor.
-fn error_page(message: Element(a), status: Int) -> Response {
-  shell.view(title:, actions: [], content: [
+fn error_page(locale: Locale, message: Element(a), status: Int) -> Response {
+  let t = i18n.texts(locale).editor
+  shell.view(locale:, language_form: None, title:, actions: [], content: [
     panel.view(
-      title: "Cannot create PDF",
-      actions: [html.a([attribute.href("/")], [html.text("Back to editor")])],
+      title: t.cannot_create_pdf,
+      actions: [html.a([attribute.href("/")], [html.text(t.back_to_editor)])],
       body: [message],
     ),
   ])

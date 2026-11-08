@@ -121,7 +121,9 @@
     if (!labels.has(button)) labels.set(button, { text: button.textContent });
     const state = labels.get(button);
     const copied = await copy(field);
-    button.textContent = copied ? button.dataset.copiedLabel || "Copied" : "Copy failed";
+    button.textContent = copied
+      ? button.dataset.copiedLabel || "Copied"
+      : button.dataset.copyFailedLabel || "Copy failed";
     clearTimeout(state.timer);
     state.timer = setTimeout(() => {
       button.textContent = state.text;

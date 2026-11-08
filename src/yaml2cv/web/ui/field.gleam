@@ -5,9 +5,10 @@ import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
 import lustre/element/html
 
-/// Whether a field must be filled in; required fields are marked.
+/// Whether a field must be filled in; required fields are marked with
+/// `marker`, e.g. " (required)".
 pub type Requirement {
-  Required
+  Required(marker: String)
   Optional
 }
 
@@ -75,10 +76,8 @@ fn wrap(
   control: List(Element(message)),
 ) -> Element(message) {
   let marker = case requirement {
-    Required ->
-      html.span([attribute.class("ui-field__required")], [
-        html.text(" (required)"),
-      ])
+    Required(marker:) ->
+      html.span([attribute.class("ui-field__required")], [html.text(marker)])
     Optional -> element.none()
   }
   html.label([attribute.class("ui-field")], [
@@ -91,7 +90,7 @@ fn wrap(
 /// fields are only marked for assistive technology.
 fn required(requirement: Requirement) -> List(Attribute(message)) {
   case requirement {
-    Required -> [attribute.aria_required(True)]
+    Required(..) -> [attribute.aria_required(True)]
     Optional -> []
   }
 }

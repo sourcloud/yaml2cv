@@ -19,13 +19,19 @@ pub type Target {
 }
 
 /// Lists errors; locations with a target become buttons that jump to it.
-pub fn view(errors: List(Item)) -> Element(message) {
+/// An empty location shows `document_label`; jump buttons are titled
+/// `jump_label`.
+pub fn view(
+  errors errors: List(Item),
+  document_label document_label: String,
+  jump_label jump_label: String,
+) -> Element(message) {
   html.ul(
     [attribute.class("ui-error-list")],
     list.map(errors, fn(error) {
       let Item(location:, message:, target:) = error
       html.li([attribute.class("ui-error-list__item")], [
-        location_view(location, target),
+        location_view(location, target, document_label, jump_label),
         html.span([attribute.class("ui-error-list__message")], [
           html.text(message),
         ]),
@@ -34,10 +40,15 @@ pub fn view(errors: List(Item)) -> Element(message) {
   )
 }
 
-fn location_view(location: String, target: Option(Target)) -> Element(message) {
+fn location_view(
+  location: String,
+  target: Option(Target),
+  document_label: String,
+  jump_label: String,
+) -> Element(message) {
   let text =
     html.text(case location {
-      "" -> "document"
+      "" -> document_label
       _ -> location
     })
   case target {
@@ -50,7 +61,7 @@ fn location_view(location: String, target: Option(Target)) -> Element(message) {
           attribute.data("jump-field", field),
           attribute.data("jump-line", int.to_string(line)),
           attribute.data("jump-column", int.to_string(column)),
-          attribute.title("Show in editor"),
+          attribute.title(jump_label),
         ],
         [html.code([], [text])],
       )

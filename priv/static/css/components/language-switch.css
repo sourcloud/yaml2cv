@@ -1,0 +1,5 @@
+/* ui-language-switch: UI language choice, styled as ui-segmented.
+ * Gleam: yaml2cv/web/ui/language_switch, behaviour: js/language.js */
+.ui-language-switch__form {
+  display: contents;
+}

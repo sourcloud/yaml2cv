@@ -4,12 +4,13 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 
-/// A modal `<dialog>` with a title and a Close button. Open it with a button
+/// A modal `<dialog>` with a title and a close button labelled `close`. Open it with a button
 /// carrying `data-dialog-open="<id>"` (see `editor.js`). The Close button
 /// submits a `method="dialog"` form, so closing needs no script.
 pub fn view(
   id id: String,
   title title: String,
+  close close: String,
   body body: List(Element(message)),
 ) -> Element(message) {
   let title_id = id <> "-title"
@@ -27,7 +28,7 @@ pub fn view(
         ]),
         html.form([attribute.method("dialog")], [
           html.button([attribute.class("ui-button ui-button--secondary")], [
-            html.text("Close"),
+            html.text(close),
           ]),
         ]),
       ]),

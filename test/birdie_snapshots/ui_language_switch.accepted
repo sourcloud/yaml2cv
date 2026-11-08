@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui language switch
+---
+<div aria-label="Language" class="ui-segmented ui-language-switch" role="group"><button aria-label="English" aria-pressed="true" class="ui-segmented__option" data-language-choice="en" form="editor-form" formaction="/" formmethod="post" lang="en" name="lang" title="English" type="submit" value="en">EN</button><button aria-label="Deutsch" aria-pressed="false" class="ui-segmented__option" data-language-choice="de" form="editor-form" formaction="/" formmethod="post" lang="de" name="lang" title="Deutsch" type="submit" value="de">DE</button></div>
