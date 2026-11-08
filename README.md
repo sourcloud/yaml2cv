@@ -148,6 +148,33 @@ All settings are environment variables:
 | `RENDER_CONCURRENCY` | CPU schedulers | Parallel compiles |
 | `RENDER_QUEUE_WAIT_MS` | `5000` | Max wait for a free render slot |
 | `MAX_BODY_BYTES` | `262144` | Request body limit |
+| `ADMIN_BIND_ADDRESS` | `127.0.0.1` (`0.0.0.0` in the image) | Interface of the admin listener |
+| `ADMIN_PORT` | `9000` | Port of the admin listener; must differ from `PORT` |
+| `PHONE_HOME_TARGET` | unset | `host:port` of a UDP collector; enables heartbeats |
+| `HEARTBEAT_INTERVAL_MS` | `10000` | Time between heartbeats |
+| `HEARTBEAT_MIA_MS` | 3 × interval | Silence after which a collector should consider the instance missing |
+| `REQUIRES` | empty | Comma-separated components this instance depends on |
+| `DEPLOYED_BY`, `DEPLOYED_FROM`, `DEPLOYED_ON` | unset | Deployment details shown by the admin endpoint |
+| `GIT_REVISION`, `BUILD_DATE` | set by the image build | Build details shown by the admin endpoint |
+
+## Observability
+
+A second HTTP listener (`ADMIN_PORT`, default 9000) describes the running
+instance: name, version, dependencies, reachable addresses, heartbeat timing,
+build and deployment details, configuration and system load (memory, CPU
+load, I/O pressure, disk). It serves `GET /` (everything), `/config`,
+`/status` and `/healthz`. Keep this port off the internet; it reveals
+internal details.
+
+```sh
+curl http://localhost:9000/status
+# {"memory":13,"cpu_load":[1.31,0.54,0.3],"io_load":0.0,"disk":62}
+```
+
+With `PHONE_HOME_TARGET=collector:5140` the instance also sends a compact
+JSON heartbeat by UDP every `HEARTBEAT_INTERVAL_MS`, with links back to the
+admin endpoint. The format is documented in
+[ADR 0020](docs/adr/0020-phone-home-observability.md).
 
 ## Roadmap
 
@@ -159,6 +186,7 @@ All settings are environment variables:
 - [x] M5 — Browser editor (htmx)
 - [x] M6 — Container image, removal of the legacy Python app, v0.1.0
 - [x] M7 — Minimal single-column theme
+- [x] M8 — Phone home: admin endpoint and UDP heartbeat
 
 ## Contributing
 
