@@ -3,12 +3,27 @@
 -include_lib("yamerl/include/yamerl_errors.hrl").
 -include_lib("yamerl/include/yamerl_nodes.hrl").
 
--export([parse/2]).
+-export([parse/3]).
 
 %% Parses a binary into the root nodes of its documents, converted to the
-%% `yaml2cv/yaml.Node` representation. At most `MaxNodes` nodes are
-%% converted; yamerl shares aliased subtrees, but the conversion would copy
-%% them, so the budget is what stops alias expansion bombs.
+%% `yaml2cv/yaml.Node` representation, in a separate process that is killed
+%% after `Timeout` milliseconds.
+parse(Source, MaxNodes, Timeout) ->
+    {Pid, Ref} = spawn_monitor(fun() -> exit({parsed, parse(Source, MaxNodes)}) end),
+    receive
+        {'DOWN', Ref, process, Pid, {parsed, Result}} ->
+            Result;
+        {'DOWN', Ref, process, Pid, _Crash} ->
+            {error, {syntax_error, <<"invalid YAML">>, 0, 0}}
+    after Timeout ->
+        exit(Pid, kill),
+        erlang:demonitor(Ref, [flush]),
+        {error, {timed_out, Timeout}}
+    end.
+
+%% At most `MaxNodes` nodes are converted; yamerl shares aliased subtrees,
+%% but the conversion would copy them, so the budget is what stops alias
+%% expansion bombs.
 parse(Source, MaxNodes) ->
     try
         Documents = yamerl_constr:string(Source, [{detailed_constr, true}]),

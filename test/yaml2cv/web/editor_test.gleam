@@ -123,3 +123,15 @@ pub fn rejects_oversized_yaml_test() {
   let response = post_form("/editor/validate", string.repeat("#", 2000))
   assert response.status == 413
 }
+
+pub fn validate_explains_too_deeply_nested_yaml_test() {
+  let nested = string.repeat("[", 30_000) <> string.repeat("]", 30_000)
+  let body =
+    post_form_with(
+      "/editor/validate",
+      nested,
+      Context(..context(Ok([])), max_body_bytes: 100_000),
+    )
+    |> simulate.read_body
+  assert string.contains(body, "nested too deeply")
+}

@@ -25,6 +25,9 @@ pub type DecodeError {
   SchemaError(path: String, message: String)
   /// The document has more than `max_nodes` nodes after alias expansion.
   DocumentTooLarge(max_nodes: Int)
+  /// The document could not be parsed within the time limit, typically
+  /// because it is nested very deeply.
+  DocumentTooComplex
 }
 
 const supported_version = 1
@@ -46,6 +49,7 @@ pub fn from_yaml(source: String) -> Result(Cv, List(DecodeError)) {
       ])
     Error(yaml.SyntaxError(message:, line:, column:)) ->
       Error([SyntaxError(message:, line:, column:)])
+    Error(yaml.TimedOut(..)) -> Error([DocumentTooComplex])
     Error(yaml.TooManyNodes(limit:)) ->
       Error([DocumentTooLarge(max_nodes: limit)])
   }

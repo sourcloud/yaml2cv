@@ -11,7 +11,8 @@ import lustre/element/html
 import wisp.{type Request, type Response}
 import yaml2cv/cv.{type Cv}
 import yaml2cv/cv/decode.{
-  type DecodeError, DocumentTooLarge, SchemaError, SyntaxError,
+  type DecodeError, DocumentTooComplex, DocumentTooLarge, SchemaError,
+  SyntaxError,
 }
 import yaml2cv/render.{type RenderError, type Renderer}
 import yaml2cv/web/ui/alert
@@ -210,6 +211,7 @@ fn describe_error(error: DecodeError) -> #(String, String) {
       "line " <> int.to_string(line) <> ", column " <> int.to_string(column),
       message,
     )
+    DocumentTooComplex -> #("", "the document is nested too deeply to process")
     DocumentTooLarge(max_nodes:) -> #(
       "",
       "the document has more than " <> int.to_string(max_nodes) <> " nodes",

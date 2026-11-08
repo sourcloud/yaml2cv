@@ -5,7 +5,9 @@ import yaml2cv/cv.{
   Blue, Classic, Contact, Cv, Entries, Entry, Link, Person, Section, Skill,
   Skills, Style, Text,
 }
-import yaml2cv/cv/decode.{DocumentTooLarge, SchemaError, SyntaxError}
+import yaml2cv/cv/decode.{
+  DocumentTooComplex, DocumentTooLarge, SchemaError, SyntaxError,
+}
 import yaml2cv/yaml
 
 const minimal =
@@ -175,7 +177,13 @@ pub fn rejects_multiple_documents_test() {
 }
 
 pub fn rejects_documents_with_too_many_nodes_test() {
-  let yaml = "[" <> string.repeat("x, ", yaml.max_nodes) <> "x]"
+  // Block style: yamerl parses long flow collections in quadratic time.
+  let yaml = string.repeat("- x\n", yaml.max_nodes + 1)
   assert decode.from_yaml(yaml)
     == Error([DocumentTooLarge(max_nodes: yaml.max_nodes)])
+}
+
+pub fn rejects_documents_too_complex_to_parse_in_time_test() {
+  let yaml = string.repeat("[", 30_000) <> string.repeat("]", 30_000)
+  assert decode.from_yaml(yaml) == Error([DocumentTooComplex])
 }

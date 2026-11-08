@@ -173,3 +173,17 @@ pub fn unknown_path_is_not_found_test() {
     |> router.handle_request(context(Ok(<<>>)))
   assert response.status == 404
 }
+
+pub fn rejects_too_deeply_nested_yaml_test() {
+  let nested = string.repeat("[", 30_000) <> string.repeat("]", 30_000)
+  let response =
+    simulate.request(http.Post, "/api/v1/validate")
+    |> simulate.string_body(nested)
+    |> simulate.header("content-type", "application/yaml")
+    |> router.handle_request(
+      Context(..context(Ok(<<>>)), max_body_bytes: 100_000),
+    )
+  assert response.status == 413
+  assert problem_type(response) == "/problems/content-too-large"
+  assert string.contains(simulate.read_body(response), "nested")
+}

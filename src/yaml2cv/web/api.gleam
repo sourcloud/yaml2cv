@@ -9,7 +9,9 @@ import gleam/list
 import gleam/string
 import wisp.{type Request, type Response}
 import yaml2cv/cv.{type Cv}
-import yaml2cv/cv/decode.{DocumentTooLarge, SchemaError, SyntaxError}
+import yaml2cv/cv/decode.{
+  DocumentTooComplex, DocumentTooLarge, SchemaError, SyntaxError,
+}
 import yaml2cv/render.{type RenderError, type Renderer}
 import yaml2cv/web/problem.{type Problem}
 
@@ -116,7 +118,7 @@ fn decode_problem(errors: List(decode.DecodeError)) -> Problem {
       invalid_yaml(message)
       |> problem.with("line", json.int(line))
       |> problem.with("column", json.int(column))
-    [DocumentTooLarge(..), ..] -> content_too_large()
+    [DocumentTooLarge(..), ..] | [DocumentTooComplex, ..] -> content_too_large()
     _ ->
       problem.new(
         slug: "invalid-cv",
@@ -134,7 +136,8 @@ fn decode_problem(errors: List(decode.DecodeError)) -> Problem {
                 #("message", json.string(message)),
               ])
             // Syntax and size errors never mix with schema errors.
-            SyntaxError(..) | DocumentTooLarge(..) -> json.null()
+            SyntaxError(..) | DocumentTooLarge(..) | DocumentTooComplex ->
+              json.null()
           }
         }),
       )
@@ -150,7 +153,7 @@ fn content_too_large() -> Problem {
     slug: "content-too-large",
     title: "Content too large",
     status: 413,
-    detail: "The CV document is too large.",
+    detail: "The CV document is too large or nested too deeply.",
   )
 }
 

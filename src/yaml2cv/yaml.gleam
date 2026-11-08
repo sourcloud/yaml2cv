@@ -16,6 +16,8 @@ pub type ParseError {
   SyntaxError(message: String, line: Int, column: Int)
   /// The document expands to more than `limit` nodes, e.g. through aliases.
   TooManyNodes(limit: Int)
+  /// Parsing took longer than `limit` milliseconds and was aborted.
+  TimedOut(limit: Int)
 }
 
 /// The maximum number of nodes, counted after alias expansion, across all
@@ -23,13 +25,21 @@ pub type ParseError {
 /// ("billion laughs") can cause.
 pub const max_nodes = 20_000
 
-/// Parses a string into the root nodes of all documents it contains.
+/// Maximum parse time in milliseconds. yamerl needs time quadratic in the
+/// nesting depth, so a small but deeply nested input could otherwise keep a
+/// CPU busy for minutes.
+pub const parse_timeout = 2000
+
+/// Parses a string into the root nodes of all documents it contains, within
+/// the default node budget and time limit.
 pub fn parse(source: String) -> Result(List(Node), ParseError) {
-  parse_with_budget(source, max_nodes)
+  parse_with(source, max_nodes:, timeout: parse_timeout)
 }
 
+/// Like `parse`, with an explicit node budget and time limit (milliseconds).
 @external(erlang, "yaml2cv_yaml_ffi", "parse")
-fn parse_with_budget(
+pub fn parse_with(
   source: String,
-  max_nodes: Int,
+  max_nodes max_nodes: Int,
+  timeout timeout: Int,
 ) -> Result(List(Node), ParseError)

@@ -1,7 +1,8 @@
 import gleam/list
 import gleam/string
 import yaml2cv/yaml.{
-  Bool, Float, Int, Map, Null, Sequence, String, SyntaxError, TooManyNodes,
+  Bool, Float, Int, Map, Null, Sequence, String, SyntaxError, TimedOut,
+  TooManyNodes,
 }
 
 pub fn parses_scalars_and_collections_test() {
@@ -71,6 +72,19 @@ pub fn rejects_alias_expansion_bombs_test() {
 
 pub fn allows_documents_within_node_budget_test() {
   let assert Ok([Sequence(items)]) =
-    yaml.parse("[" <> string.repeat("x, ", yaml.max_nodes - 2) <> "x]")
+    yaml.parse(string.repeat("- x\n", yaml.max_nodes - 1))
   assert list.length(items) == yaml.max_nodes - 1
+}
+
+pub fn aborts_parsing_that_takes_too_long_test() {
+  // yamerl needs time quadratic in the nesting depth; 8000 levels take
+  // well over a second.
+  let source = string.repeat("[", 8000) <> string.repeat("]", 8000)
+  assert yaml.parse_with(source, max_nodes: yaml.max_nodes, timeout: 100)
+    == Error(TimedOut(limit: 100))
+}
+
+pub fn default_parse_has_a_time_limit_test() {
+  assert yaml.parse_timeout > 0
+  assert yaml.parse_timeout <= 5000
 }
