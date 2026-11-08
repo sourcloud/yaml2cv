@@ -52,7 +52,12 @@ kill(Port) ->
         {os_pid, OsPid} -> os:cmd("kill -9 " ++ integer_to_list(OsPid));
         undefined -> ok
     end,
-    catch port_close(Port),
+    %% The port may already be closed if the program exited meanwhile.
+    try
+        port_close(Port)
+    catch
+        error:badarg -> ok
+    end,
     flush(Port).
 
 flush(Port) ->
