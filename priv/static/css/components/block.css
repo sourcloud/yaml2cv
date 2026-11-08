@@ -34,12 +34,10 @@
   line-height: 1.75rem;
 }
 
-/* Actions end where the content ends. Outer blocks move theirs in by one
- * more padding, so they line up with the actions of the blocks inside. */
 .ui-block__actions {
   position: absolute;
   inset-block-start: var(--space-3);
-  inset-inline-end: calc(var(--space-4) * 2);
+  inset-inline-end: var(--space-3);
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -52,10 +50,6 @@
   /* Wide enough for a label with its required marker on one line, also in
    * German; narrower panels get one column. */
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-}
-
-.ui-block .ui-block > .ui-block__actions {
-  inset-inline-end: var(--space-4);
 }
 
 /* Lists of blocks and wide fields span the whole row. */
