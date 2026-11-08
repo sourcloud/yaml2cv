@@ -30,4 +30,4 @@ for the process.
 | [0022](0022-in-app-schema-reference.md) | In-app schema reference | Accepted |
 | [0023](0023-release-notes-from-conventional-commits.md) | Generate GitHub releases from Conventional Commits | Accepted |
 | [0024](0024-visual-block-editor.md) | Visual block editor next to the YAML source | Accepted |
-| [0025](0025-ui-localisation.md) | Localise the web UI | Proposed |
+| [0025](0025-ui-localisation.md) | Localise the web UI | Accepted |

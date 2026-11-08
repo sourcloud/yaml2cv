@@ -1,6 +1,6 @@
 # 0025. Localise the web UI
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-08
 
 ## Context
