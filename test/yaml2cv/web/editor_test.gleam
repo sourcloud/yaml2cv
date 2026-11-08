@@ -11,7 +11,7 @@ fn context(pages: Result(List(BitArray), RenderError)) -> router.Context {
   Context(
     renderer: Renderer(
       render_pdf: fn(_) { Ok(<<"%PDF-fake">>) },
-      render_png_pages: fn(_) { pages },
+      render_svg_pages: fn(_) { pages },
     ),
     max_body_bytes: 1024,
     static_directory: "priv/static",
@@ -85,7 +85,7 @@ pub fn preview_shows_pages_test() {
   assert response.status == 200
   assert string.contains(
     simulate.read_body(response),
-    "src=\"data:image/png;base64,AQID\"",
+    "src=\"data:image/svg+xml;base64,AQID\"",
   )
 }
 

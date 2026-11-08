@@ -122,7 +122,7 @@ pub fn preview(
   case decode.from_yaml(source) {
     Error(_) -> wisp.response(204)
     Ok(cv) ->
-      case renderer.render_png_pages(cv) {
+      case renderer.render_svg_pages(cv) {
         Ok(pages) -> fragment(page_stack.view(pages), 200)
         Error(error) ->
           fragment(

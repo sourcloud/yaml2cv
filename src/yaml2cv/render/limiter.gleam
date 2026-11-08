@@ -90,9 +90,9 @@ pub fn limit(
       use <- with_slot(limiter, wait)
       renderer.render_pdf(cv)
     },
-    render_png_pages: fn(cv) {
+    render_svg_pages: fn(cv) {
       use <- with_slot(limiter, wait)
-      renderer.render_png_pages(cv)
+      renderer.render_svg_pages(cv)
     },
   )
 }

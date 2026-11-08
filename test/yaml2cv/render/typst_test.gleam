@@ -52,12 +52,9 @@ pub fn renders_letter_paper_in_every_theme_test() {
   use #(_, theme) <- list.each(cv.themes)
   let cv = with_theme(example_cv(), theme)
   let cv = cv.Cv(..cv, style: Style(..cv.style, paper: cv.Letter))
-  let assert Ok([page]) = typst.render_png_pages(config(), cv)
-  // The PNG header holds the image size; US letter is 8.5 × 11 in.
-  let assert <<_:bytes-size(16), width:size(32), height:size(32), _:bits>> =
-    page
-  assert #(width, height)
-    == #(typst.preview_ppi * 17 / 2, typst.preview_ppi * 11)
+  let assert Ok([page]) = typst.render_svg_pages(config(), cv)
+  // US letter is 8.5 × 11 in, i.e. 612 × 792 pt.
+  assert contains(page, <<"viewBox=\"0 0 612 792\"">>)
 }
 
 pub fn marks_pdf_as_generated_by_yaml2cv_in_every_theme_test() {
@@ -111,20 +108,20 @@ pub fn reports_missing_executable_test() {
     typst.render_pdf(config, example_cv())
 }
 
-pub fn renders_example_cv_to_png_pages_test() {
-  let assert Ok([page]) = typst.render_png_pages(config(), example_cv())
-  assert bit_array.slice(page, 0, 4) == Ok(<<137, "PNG":utf8>>)
+pub fn renders_example_cv_to_svg_pages_test() {
+  let assert Ok([page]) = typst.render_svg_pages(config(), example_cv())
+  assert bit_array.slice(page, 0, 4) == Ok(<<"<svg">>)
   assert work_directory_is_empty()
 }
 
-pub fn renders_png_pages_up_to_the_page_limit_test() {
+pub fn renders_svg_pages_up_to_the_page_limit_test() {
   let entry = "      - { timespan: '2020', title: Job, bullets: [a, b, c] }\n"
   let yaml =
     "schema_version: 1\nperson: {name: X}\nsections:\n  - name: Work\n    entries:\n"
     <> string.repeat(entry, 300)
   let assert Ok(cv) = decode.from_yaml(yaml)
 
-  let assert Ok(pages) = typst.render_png_pages(config(), cv)
+  let assert Ok(pages) = typst.render_svg_pages(config(), cv)
   assert list.length(pages) == typst.max_preview_pages
   assert work_directory_is_empty()
 }

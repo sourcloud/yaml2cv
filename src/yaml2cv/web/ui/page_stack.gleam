@@ -7,15 +7,16 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 
-/// Shows PNG pages, embedded as `data:` URIs, one below the other.
+/// Shows SVG pages, embedded as `data:` URIs, one below the other. As images
+/// they cannot run scripts or follow links (ADR 0019).
 pub fn view(pages: List(BitArray)) -> Element(message) {
   html.div(
     [attribute.class("ui-page-stack")],
-    list.index_map(pages, fn(png, index) {
+    list.index_map(pages, fn(svg, index) {
       html.img([
         attribute.class("ui-page-stack__page"),
         attribute.src(
-          "data:image/png;base64," <> bit_array.base64_encode(png, True),
+          "data:image/svg+xml;base64," <> bit_array.base64_encode(svg, True),
         ),
         attribute.alt("Page " <> int.to_string(index + 1)),
       ])

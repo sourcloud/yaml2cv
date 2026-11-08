@@ -21,7 +21,7 @@ pub type Renderer {
   Renderer(
     /// Renders the whole CV as one PDF document.
     render_pdf: fn(Cv) -> Result(BitArray, RenderError),
-    /// Renders preview images, one PNG per page, in page order.
-    render_png_pages: fn(Cv) -> Result(List(BitArray), RenderError),
+    /// Renders preview images, one SVG document per page, in page order.
+    render_svg_pages: fn(Cv) -> Result(List(BitArray), RenderError),
   )
 }

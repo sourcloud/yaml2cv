@@ -12,9 +12,9 @@ fn cv() -> Cv {
   cv
 }
 
-/// A renderer whose PDF output comes from `render`; it has no PNG pages.
+/// A renderer whose PDF output comes from `render`; it has no SVG pages.
 fn pdf_renderer(render: fn(Cv) -> Result(BitArray, RenderError)) -> Renderer {
-  Renderer(render_pdf: render, render_png_pages: fn(_) { Ok([]) })
+  Renderer(render_pdf: render, render_svg_pages: fn(_) { Ok([]) })
 }
 
 /// A renderer that announces each render by sending a gate to `started` and
@@ -140,18 +140,18 @@ pub fn works_as_named_supervised_child_test() {
   assert renderer.render_pdf(cv()) == Ok(<<"pdf">>)
 }
 
-pub fn limits_png_renders_too_test() {
+pub fn limits_svg_renders_too_test() {
   let started = process.new_subject()
   let gated = gated_renderer(started)
   let renderer =
     new_limited(
-      Renderer(..gated, render_png_pages: fn(_) { Ok([<<"png">>]) }),
+      Renderer(..gated, render_svg_pages: fn(_) { Ok([<<"<svg/>">>]) }),
       1,
       50,
     )
   let gate = start_blocked_render(renderer, started)
 
-  assert renderer.render_png_pages(cv()) == Error(Overloaded)
+  assert renderer.render_svg_pages(cv()) == Error(Overloaded)
 
   process.send(gate, Nil)
 }

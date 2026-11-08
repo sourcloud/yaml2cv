@@ -29,9 +29,6 @@ pub type Config {
   )
 }
 
-/// Resolution of preview images, in pixels per inch.
-pub const preview_ppi = 110
-
 /// Preview images are rendered for at most this many pages.
 pub const max_preview_pages = 10
 
@@ -39,7 +36,7 @@ pub const max_preview_pages = 10
 pub fn new(config: Config) -> Renderer {
   Renderer(
     render_pdf: render_pdf(config, _),
-    render_png_pages: render_png_pages(config, _),
+    render_svg_pages: render_svg_pages(config, _),
   )
 }
 
@@ -49,18 +46,16 @@ pub fn render_pdf(config: Config, cv: Cv) -> Result(BitArray, RenderError) {
   read(job <> "/cv.pdf")
 }
 
-/// Renders the first `max_preview_pages` pages of a CV as PNG images.
-pub fn render_png_pages(
+/// Renders the first `max_preview_pages` pages of a CV as SVG images.
+pub fn render_svg_pages(
   config: Config,
   cv: Cv,
 ) -> Result(List(BitArray), RenderError) {
   let arguments = [
-    "--ppi",
-    int.to_string(preview_ppi),
     "--pages",
     "1-" <> int.to_string(max_preview_pages),
     // Zero-padded page numbers make the file names sort in page order.
-    "page-{0p}.png",
+    "page-{0p}.svg",
   ]
   use job <- in_job(config, cv, arguments)
   use files <- result.try(
@@ -68,7 +63,7 @@ pub fn render_png_pages(
   )
   files
   |> list.filter(fn(file) {
-    string.starts_with(file, "page-") && string.ends_with(file, ".png")
+    string.starts_with(file, "page-") && string.ends_with(file, ".svg")
   })
   |> list.sort(string.compare)
   |> list.try_map(fn(file) { read(job <> "/" <> file) })
