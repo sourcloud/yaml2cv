@@ -174,3 +174,97 @@ pub fn validate_explains_too_deeply_nested_yaml_test() {
     |> simulate.read_body
   assert string.contains(body, "nested too deeply")
 }
+
+fn post_fields(path: String, fields: List(#(String, String))) {
+  simulate.request(http.Post, path)
+  |> simulate.form_body(fields)
+  |> router.handle_request(context(Ok([])))
+}
+
+pub fn visual_mode_shows_blocks_for_mappable_yaml_test() {
+  let response = post_form("/editor/visual", valid_cv)
+  assert response.status == 200
+  assert response.get_header(response, "hx-trigger") == Ok("visual-ready")
+  let body = simulate.read_body(response)
+  assert string.contains(body, "id=\"visual-form\"")
+  assert string.contains(body, "name=\"person.name\"")
+  assert string.contains(body, "value=\"Jane Roe\"")
+  // Clears errors left over from an earlier refused switch.
+  assert string.contains(body, "id=\"mode-errors\"")
+}
+
+pub fn visual_mode_accepts_missing_required_values_test() {
+  let response = post_form("/editor/visual", "person: {title: Boss}\n")
+  assert response.get_header(response, "hx-trigger") == Ok("visual-ready")
+}
+
+pub fn visual_mode_refuses_unmappable_yaml_test() {
+  let response =
+    post_form("/editor/visual", "schema_version: 1\nnickname: JR\n")
+  assert response.status == 200
+  assert response.get_header(response, "hx-trigger") == Error(Nil)
+  assert response.get_header(response, "hx-retarget") == Ok("#mode-errors")
+  let body = simulate.read_body(response)
+  assert string.contains(body, "ui-alert--danger")
+  assert string.contains(body, ">nickname</code>")
+  assert !string.contains(body, "visual-form")
+}
+
+pub fn visual_update_returns_regenerated_yaml_only_test() {
+  let body =
+    post_fields("/editor/visual/update", [
+      #("person.name", "Jane Roe"),
+      #("sections.0.kind", "text"),
+      #("sections.0.name", "About"),
+      #("sections.0.text", "Hi"),
+    ])
+    |> simulate.read_body
+  assert string.contains(body, "id=\"yaml-sync\"")
+  assert string.contains(body, "name: Jane Roe")
+  assert string.contains(body, "kind: text")
+  assert !string.contains(body, "visual-form")
+}
+
+pub fn visual_update_applies_ops_and_rerenders_blocks_test() {
+  let body =
+    post_fields("/editor/visual/update", [
+      #("person.name", "Jane Roe"),
+      #("op", "add-section:skills"),
+    ])
+    |> simulate.read_body
+  assert string.contains(body, "id=\"visual-form\"")
+  assert string.contains(
+    body,
+    "name=\"sections.0.kind\" type=\"hidden\" value=\"skills\"",
+  )
+  assert string.contains(body, "kind: skills")
+  assert string.contains(body, "items: []")
+}
+
+pub fn visual_update_ignores_unknown_ops_test() {
+  let response =
+    post_fields("/editor/visual/update", [
+      #("person.name", "Jane Roe"),
+      #("op", "explode:everything"),
+    ])
+  assert response.status == 200
+  assert string.contains(simulate.read_body(response), "id=\"visual-form\"")
+}
+
+pub fn visual_update_rejects_oversized_forms_test() {
+  let response =
+    post_fields("/editor/visual/update", [
+      #("person.name", string.repeat("x", 2000)),
+    ])
+  assert response.status == 413
+}
+
+pub fn editor_page_offers_edit_modes_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-mode-switch=\"yaml\"")
+  assert string.contains(body, "data-mode-switch=\"visual\"")
+  assert string.contains(body, "hx-post=\"/editor/visual\"")
+  assert string.contains(body, "id=\"visual\"")
+  assert string.contains(body, "id=\"yaml-sync\"")
+  assert string.contains(body, "id=\"mode-errors\"")
+}

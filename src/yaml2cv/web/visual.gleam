@@ -41,7 +41,8 @@ pub fn view(draft: Draft) -> Element(message) {
       attribute.id(form_id),
       attribute.class("visual-editor"),
       attribute.attribute("hx-post", update_path),
-      attribute.attribute("hx-trigger", "input delay:300ms"),
+      // `flush` sends pending edits at once, before leaving visual mode.
+      attribute.attribute("hx-trigger", "input delay:300ms, flush"),
       attribute.attribute("hx-swap", "none"),
       attribute.attribute("hx-sync", "this:queue all"),
     ],

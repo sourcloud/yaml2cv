@@ -52,6 +52,14 @@ pub fn handle_request(request: Request, context: Context) -> Response {
       use <- wisp.require_method(request, http.Post)
       editor.preview(request, context.renderer, context.max_body_bytes)
     }
+    ["editor", "visual"] -> {
+      use <- wisp.require_method(request, http.Post)
+      editor.visual(request, context.max_body_bytes)
+    }
+    ["editor", "visual", "update"] -> {
+      use <- wisp.require_method(request, http.Post)
+      editor.visual_update(request, context.max_body_bytes)
+    }
     ["editor", "download"] -> {
       use <- wisp.require_method(request, http.Post)
       editor.download(request, context.renderer, context.max_body_bytes)

@@ -15,6 +15,8 @@ import yaml2cv/cv/decode.{
   type DecodeError, DocumentTooComplex, DocumentTooLarge, SchemaError,
   SyntaxError,
 }
+import yaml2cv/cv/draft
+import yaml2cv/cv/draft/emit
 import yaml2cv/render.{type RenderError, type Renderer}
 import yaml2cv/web/schema_help
 import yaml2cv/web/ui/alert
@@ -24,7 +26,10 @@ import yaml2cv/web/ui/error_list
 import yaml2cv/web/ui/indicator
 import yaml2cv/web/ui/page_stack
 import yaml2cv/web/ui/panel
+import yaml2cv/web/ui/segmented
 import yaml2cv/web/ui/shell
+import yaml2cv/web/visual
+import yaml2cv/web/visual_form
 
 const title = "yaml2cv"
 
@@ -35,16 +40,14 @@ const source_field = "cv"
 pub fn page(example: String) -> Response {
   shell.view(title:, actions: [], content: [
     html.div([attribute.class("layout-editor")], [
-      html.form(
-        [
-          attribute.id("editor-form"),
-          attribute.method("post"),
-          attribute.action("/editor/download"),
-        ],
+      // `editor.js` switches `data-mode` between `yaml` and `visual`.
+      html.div(
+        [attribute.class("editor-modes"), attribute.data("mode", "yaml")],
         [
           panel.view(
             title: "CV",
             actions: [
+              mode_switch(),
               button.view(
                 button.Secondary,
                 [
@@ -65,12 +68,32 @@ pub fn page(example: String) -> Response {
               ),
             ],
             body: [
-              code_area.view(
-                id: source_field,
-                name: "yaml",
-                label: "CV source in YAML",
-                value: example,
-                attributes: [],
+              mode_errors([]),
+              html.form(
+                [
+                  attribute.id("editor-form"),
+                  attribute.class("editor-modes__source"),
+                  attribute.method("post"),
+                  attribute.action("/editor/download"),
+                ],
+                [
+                  code_area.view(
+                    id: source_field,
+                    name: "yaml",
+                    label: "CV source in YAML",
+                    value: example,
+                    attributes: [],
+                  ),
+                ],
+              ),
+              // Filled by `POST /editor/visual`; the blocks have a form of
+              // their own, so this sits outside the editor form.
+              html.div(
+                [
+                  attribute.id("visual"),
+                  attribute.class("editor-modes__visual"),
+                ],
+                [],
               ),
               html.div(
                 [
@@ -111,9 +134,41 @@ pub fn page(example: String) -> Response {
     ]),
     // Outside the editor form: the dialog has a form of its own.
     schema_help.view(),
+    visual.sync_placeholder(),
   ])
   |> element.to_document_string
   |> wisp.html_response(200)
+}
+
+/// YAML / Visual toggle. Visual asks the server for the blocks first; the
+/// switch happens once it answers with `visual-ready` (ADR 0024).
+fn mode_switch() -> Element(a) {
+  segmented.view(label: "Edit mode", options: [
+    segmented.Option("YAML", True, [attribute.data("mode-switch", "yaml")]),
+    segmented.Option("Visual", False, [
+      attribute.data("mode-switch", "visual"),
+      attribute.attribute("hx-post", "/editor/visual"),
+      attribute.attribute("hx-include", "#" <> source_field),
+      attribute.attribute("hx-target", "#visual"),
+    ]),
+  ])
+}
+
+/// Where errors go when the YAML cannot be shown as blocks.
+fn mode_errors(attributes: List(attribute.Attribute(a))) -> Element(a) {
+  html.div(
+    [
+      attribute.id("mode-errors"),
+      attribute.aria("live", "polite"),
+      ..attributes
+    ],
+    [],
+  )
+}
+
+/// Replaces the element with the same id elsewhere in the page.
+fn out_of_band() -> attribute.Attribute(a) {
+  attribute.attribute("hx-swap-oob", "true")
 }
 
 /// htmx attributes that post the editor content to `path` on load and after
@@ -197,23 +252,76 @@ fn download_pdf(renderer: Renderer, cv: Cv) -> Response {
   }
 }
 
-/// Reads the `yaml` field of a form-encoded body. URL encoding can triple
-/// the size of the text, so the body limit is relaxed accordingly and the
-/// decoded text is checked against `max_body_bytes`.
+/// `POST /editor/visual` — the blocks for the posted YAML, or why it cannot
+/// be shown as blocks. Success triggers `visual-ready`, which switches the
+/// mode; errors are retargeted to the mode errors next to the source.
+pub fn visual(request: Request, max_body_bytes: Int) -> Response {
+  use source <- require_yaml_field(request, max_body_bytes)
+  case draft.from_yaml(source) {
+    Ok(cv) ->
+      element.fragment([visual.view(cv), mode_errors([out_of_band()])])
+      |> fragment(200)
+      |> response.set_header("hx-trigger", "visual-ready")
+    Error(errors) ->
+      errors_view(errors)
+      |> fragment(200)
+      |> response.set_header("hx-retarget", "#mode-errors")
+      |> response.set_header("hx-reswap", "innerHTML")
+  }
+}
+
+/// `POST /editor/visual/update` — the YAML regenerated from the posted
+/// blocks, after applying the requested `op` if any. With an op the blocks
+/// are re-rendered too.
+pub fn visual_update(request: Request, max_body_bytes: Int) -> Response {
+  use fields <- require_form_within(request, max_body_bytes)
+  let cv = visual_form.parse(list.filter(fields, fn(field) { field.0 != "op" }))
+  case list.key_find(fields, "op") {
+    // Typing: the blocks stay as they are.
+    Error(Nil) -> visual.sync(emit.to_yaml(cv))
+    // A button: unknown ops change nothing but still re-render the blocks,
+    // as the button expects.
+    Ok(op) -> {
+      let cv = case visual_form.parse_op(op) {
+        Ok(op) -> visual_form.apply(cv, op)
+        Error(Nil) -> cv
+      }
+      element.fragment([visual.view(cv), visual.sync(emit.to_yaml(cv))])
+    }
+  }
+  |> fragment(200)
+}
+
+/// Reads the `yaml` field of a form-encoded body.
 fn require_yaml_field(
   request: Request,
   max_body_bytes: Int,
   next: fn(String) -> Response,
 ) -> Response {
+  use fields <- require_form_within(request, max_body_bytes)
+  case list.key_find(fields, "yaml") {
+    Error(Nil) -> wisp.bad_request("Missing form field: yaml")
+    Ok(source) -> next(source)
+  }
+}
+
+/// Reads a form-encoded body whose decoded names and values together stay
+/// within `max_body_bytes`. URL encoding can triple the size of the text,
+/// so the body limit is relaxed accordingly.
+fn require_form_within(
+  request: Request,
+  max_body_bytes: Int,
+  next: fn(List(#(String, String))) -> Response,
+) -> Response {
   let request = wisp.set_max_body_size(request, max_body_bytes * 3)
   use form <- wisp.require_form(request)
-  case list.key_find(form.values, "yaml") {
-    Error(Nil) -> wisp.bad_request("Missing form field: yaml")
-    Ok(source) ->
-      case string.byte_size(source) > max_body_bytes {
-        True -> wisp.content_too_large()
-        False -> next(source)
-      }
+  let size =
+    list.fold(form.values, 0, fn(size, field) {
+      size + string.byte_size(field.0) + string.byte_size(field.1)
+    })
+  case size > max_body_bytes {
+    True -> wisp.content_too_large()
+    False -> next(form.values)
   }
 }
 
