@@ -344,8 +344,12 @@ fn is_syntax_error(error: DecodeError) -> Bool {
 /// position link to it in the editor.
 fn describe_error(error: DecodeError) -> error_list.Item {
   case error {
-    SchemaError(path:, message:) ->
-      error_list.Item(location: path, message:, target: None)
+    SchemaError(path:, problem:) ->
+      error_list.Item(
+        location: path,
+        message: decode.describe(problem),
+        target: None,
+      )
     SyntaxError(message:, line: 0, ..) ->
       error_list.Item(location: "", message:, target: None)
     SyntaxError(message:, line:, column:) ->

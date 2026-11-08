@@ -128,17 +128,29 @@ nickname: JR
     == Error([
       SchemaError(
         path: "style.color",
-        message: "expected one of: black, blue, burgundy, green, grey, orange, purple, red",
+        problem: decode.ExpectedOneOf([
+          "black",
+          "blue",
+          "burgundy",
+          "green",
+          "grey",
+          "orange",
+          "purple",
+          "red",
+        ]),
       ),
-      SchemaError(path: "person.name", message: "expected text"),
-      SchemaError(path: "contact.links", message: "expected a list"),
-      SchemaError(path: "sections[0].entries[0].city", message: "unknown key"),
+      SchemaError(path: "person.name", problem: decode.ExpectedText),
+      SchemaError(path: "contact.links", problem: decode.ExpectedList),
+      SchemaError(
+        path: "sections[0].entries[0].city",
+        problem: decode.UnknownKey,
+      ),
       SchemaError(
         path: "sections[1].kind",
-        message: "expected one of: entries, skills, text",
+        problem: decode.ExpectedOneOf(["entries", "skills", "text"]),
       ),
-      SchemaError(path: "sections[2].entries", message: "unknown key"),
-      SchemaError(path: "nickname", message: "unknown key"),
+      SchemaError(path: "sections[2].entries", problem: decode.UnknownKey),
+      SchemaError(path: "nickname", problem: decode.UnknownKey),
     ])
 }
 
@@ -147,7 +159,7 @@ pub fn rejects_unsupported_schema_version_test() {
     == Error([
       SchemaError(
         path: "schema_version",
-        message: "unsupported version 2, expected 1",
+        problem: decode.UnsupportedVersion(found: 2, supported: 1),
       ),
     ])
 }
@@ -159,5 +171,5 @@ pub fn rejects_syntax_errors_test() {
 
 pub fn rejects_non_mapping_root_test() {
   assert draft.from_yaml("- a list")
-    == Error([SchemaError(path: "", message: "expected a mapping")])
+    == Error([SchemaError(path: "", problem: decode.ExpectedMapping)])
 }

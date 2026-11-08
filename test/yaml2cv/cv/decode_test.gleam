@@ -137,12 +137,12 @@ pub fn reports_yaml_syntax_error_with_location_test() {
 
 pub fn rejects_non_mapping_root_test() {
   assert decode.from_yaml("- a list")
-    == Error([SchemaError(path: "", message: "expected a mapping")])
+    == Error([SchemaError(path: "", problem: decode.ExpectedMapping)])
 }
 
 pub fn rejects_empty_document_test() {
   assert decode.from_yaml("")
-    == Error([SchemaError(path: "", message: "expected a mapping")])
+    == Error([SchemaError(path: "", problem: decode.ExpectedMapping)])
 }
 
 pub fn rejects_unsupported_schema_version_test() {
@@ -150,7 +150,7 @@ pub fn rejects_unsupported_schema_version_test() {
     == Error([
       SchemaError(
         path: "schema_version",
-        message: "unsupported version 2, expected 1",
+        problem: decode.UnsupportedVersion(found: 2, supported: 1),
       ),
     ])
 }
@@ -175,19 +175,31 @@ nickname: JR
     == Error([
       SchemaError(
         path: "style.color",
-        message: "expected one of: black, blue, burgundy, green, grey, orange, purple, red",
+        problem: decode.ExpectedOneOf([
+          "black",
+          "blue",
+          "burgundy",
+          "green",
+          "grey",
+          "orange",
+          "purple",
+          "red",
+        ]),
       ),
-      SchemaError(path: "person.name", message: "is required"),
+      SchemaError(path: "person.name", problem: decode.Required),
       SchemaError(
         path: "sections[0].entries[0].timespan",
-        message: "is required",
+        problem: decode.Required,
       ),
-      SchemaError(path: "sections[0].entries[0].city", message: "unknown key"),
+      SchemaError(
+        path: "sections[0].entries[0].city",
+        problem: decode.UnknownKey,
+      ),
       SchemaError(
         path: "sections[1].kind",
-        message: "expected one of: entries, skills, text",
+        problem: decode.ExpectedOneOf(["entries", "skills", "text"]),
       ),
-      SchemaError(path: "nickname", message: "unknown key"),
+      SchemaError(path: "nickname", problem: decode.UnknownKey),
     ])
 }
 
@@ -201,17 +213,17 @@ sections: { name: Work }
 
   assert decode.from_yaml(yaml)
     == Error([
-      SchemaError(path: "person.name", message: "must not be empty"),
-      SchemaError(path: "person.title", message: "expected text"),
-      SchemaError(path: "person.address", message: "expected text"),
-      SchemaError(path: "sections", message: "expected a list"),
+      SchemaError(path: "person.name", problem: decode.MustNotBeEmpty),
+      SchemaError(path: "person.title", problem: decode.ExpectedText),
+      SchemaError(path: "person.address", problem: decode.ExpectedText),
+      SchemaError(path: "sections", problem: decode.ExpectedList),
     ])
 }
 
 pub fn rejects_multiple_documents_test() {
   assert decode.from_yaml(minimal <> "---\n" <> minimal)
     == Error([
-      SchemaError(path: "", message: "expected exactly one YAML document"),
+      SchemaError(path: "", problem: decode.ExpectedOneDocument),
     ])
 }
 
@@ -244,4 +256,34 @@ pub fn accepts_every_exported_section_kind_with_its_content_key_test() {
       <> "\n"
     let assert Ok(_) = decode.from_yaml(source)
   })
+}
+
+pub fn describe_problem_in_english_test() {
+  assert list.map(
+      [
+        decode.ExpectedMapping,
+        decode.ExpectedOneDocument,
+        decode.UnsupportedVersion(found: 2, supported: 1),
+        decode.ExpectedInteger,
+        decode.Required,
+        decode.UnknownKey,
+        decode.MustNotBeEmpty,
+        decode.ExpectedText,
+        decode.ExpectedList,
+        decode.ExpectedOneOf(["a", "b"]),
+      ],
+      decode.describe,
+    )
+    == [
+      "expected a mapping",
+      "expected exactly one YAML document",
+      "unsupported version 2, expected 1",
+      "expected an integer",
+      "is required",
+      "unknown key",
+      "must not be empty",
+      "expected text",
+      "expected a list",
+      "expected one of: a, b",
+    ]
 }

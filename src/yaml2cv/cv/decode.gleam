@@ -23,12 +23,47 @@ pub type DecodeError {
   /// The YAML is valid but does not match the schema. `path` locates the
   /// offending value, e.g. `sections[1].entries[0].title`; it is empty for
   /// the document root.
-  SchemaError(path: String, message: String)
+  SchemaError(path: String, problem: SchemaProblem)
   /// The document has more than `max_nodes` nodes after alias expansion.
   DocumentTooLarge(max_nodes: Int)
   /// The document could not be parsed within the time limit, typically
   /// because it is nested very deeply.
   DocumentTooComplex
+}
+
+/// What is wrong with a value that does not match the schema.
+pub type SchemaProblem {
+  ExpectedMapping
+  ExpectedOneDocument
+  UnsupportedVersion(found: Int, supported: Int)
+  ExpectedInteger
+  Required
+  UnknownKey
+  MustNotBeEmpty
+  ExpectedText
+  ExpectedList
+  /// The value is not one of the allowed `names`.
+  ExpectedOneOf(names: List(String))
+}
+
+/// The English description of a schema problem, as used by the HTTP API.
+pub fn describe(problem: SchemaProblem) -> String {
+  case problem {
+    ExpectedMapping -> "expected a mapping"
+    ExpectedOneDocument -> "expected exactly one YAML document"
+    UnsupportedVersion(found:, supported:) ->
+      "unsupported version "
+      <> int.to_string(found)
+      <> ", expected "
+      <> int.to_string(supported)
+    ExpectedInteger -> "expected an integer"
+    Required -> "is required"
+    UnknownKey -> "unknown key"
+    MustNotBeEmpty -> "must not be empty"
+    ExpectedText -> "expected text"
+    ExpectedList -> "expected a list"
+    ExpectedOneOf(names:) -> "expected one of: " <> string.join(names, ", ")
+  }
 }
 
 const supported_version = 1
@@ -85,10 +120,10 @@ pub fn from_yaml(source: String) -> Result(Cv, List(DecodeError)) {
 pub fn parse_document(source: String) -> Result(Node, List(DecodeError)) {
   case yaml.parse(source) {
     Ok([root]) -> Ok(root)
-    Ok([]) -> Error([SchemaError(path: "", message: "expected a mapping")])
+    Ok([]) -> Error([SchemaError(path: "", problem: ExpectedMapping)])
     Ok(_) ->
       Error([
-        SchemaError(path: "", message: "expected exactly one YAML document"),
+        SchemaError(path: "", problem: ExpectedOneDocument),
       ])
     Error(yaml.SyntaxError(message:, line:, column:)) ->
       Error([SyntaxError(message:, line:, column:)])
@@ -127,12 +162,9 @@ fn schema_version() -> Decoder(Int) {
       fail(
         version,
         path,
-        "unsupported version "
-          <> int.to_string(version)
-          <> ", expected "
-          <> int.to_string(supported_version),
+        UnsupportedVersion(found: version, supported: supported_version),
       )
-    _ -> fail(supported_version, path, "expected an integer")
+    _ -> fail(supported_version, path, ExpectedInteger)
   }
 }
 
@@ -278,8 +310,8 @@ fn succeed(value: a) -> Decoded(a) {
   Decoded(value:, errors: [])
 }
 
-fn fail(zero: a, path: String, message: String) -> Decoded(a) {
-  Decoded(value: zero, errors: [SchemaError(path:, message:)])
+fn fail(zero: a, path: String, problem: SchemaProblem) -> Decoded(a) {
+  Decoded(value: zero, errors: [SchemaError(path:, problem:)])
 }
 
 fn then(decoded: Decoded(a), next: fn(a) -> Decoded(b)) -> Decoded(b) {
@@ -303,7 +335,7 @@ fn object(
       |> list.map(fn(pair) { #(key_to_string(pair.0), pair.1) })
       |> Fields(path:, entries: _)
       |> next
-    _ -> fail(zero, path, "expected a mapping")
+    _ -> fail(zero, path, ExpectedMapping)
   }
 }
 
@@ -331,7 +363,7 @@ fn required(fields: Fields, key: String, decoder: Decoder(a)) -> Decoded(a) {
   let path = key_path(fields.path, key)
   case lookup(fields, key) {
     Some(node) -> decoder.run(node, path)
-    None -> fail(decoder.zero, path, "is required")
+    None -> fail(decoder.zero, path, Required)
   }
 }
 
@@ -356,7 +388,7 @@ fn no_unknown_keys(fields: Fields, known: List(String)) -> Decoded(Nil) {
     fields.entries
     |> list.filter(fn(entry) { !list.contains(known, entry.0) })
     |> list.map(fn(entry) {
-      SchemaError(path: key_path(fields.path, entry.0), message: "unknown key")
+      SchemaError(path: key_path(fields.path, entry.0), problem: UnknownKey)
     })
   Decoded(value: Nil, errors:)
 }
@@ -366,12 +398,12 @@ fn text() -> Decoder(String) {
   case node {
     yaml.String(value) ->
       case string.trim(value) {
-        "" -> fail("", path, "must not be empty")
+        "" -> fail("", path, MustNotBeEmpty)
         value -> succeed(value)
       }
     yaml.Int(value) -> succeed(int.to_string(value))
     yaml.Float(value) -> succeed(float.to_string(value))
-    _ -> fail("", path, "expected text")
+    _ -> fail("", path, ExpectedText)
   }
 }
 
@@ -388,7 +420,7 @@ fn list_of(decoder: Decoder(a)) -> Decoder(List(a)) {
         errors: list.flat_map(decoded, fn(item) { item.errors }),
       )
     }
-    _ -> fail([], path, "expected a list")
+    _ -> fail([], path, ExpectedList)
   }
 }
 
@@ -404,8 +436,7 @@ fn one_of(options: List(#(String, a)), zero: a) -> Decoder(a) {
       fail(
         zero,
         path,
-        "expected one of: "
-          <> options |> list.map(fn(option) { option.0 }) |> string.join(", "),
+        ExpectedOneOf(list.map(options, fn(option) { option.0 })),
       )
   }
 }

@@ -11,7 +11,11 @@ import gleam/int
 import gleam/list
 import gleam/string
 import yaml2cv/cv
-import yaml2cv/cv/decode.{type DecodeError, SchemaError}
+import yaml2cv/cv/decode.{
+  type DecodeError, type SchemaProblem, ExpectedInteger, ExpectedList,
+  ExpectedMapping, ExpectedOneOf, ExpectedText, SchemaError, UnknownKey,
+  UnsupportedVersion,
+}
 import yaml2cv/yaml.{type Node}
 
 /// A CV document as edited in the visual editor.
@@ -142,12 +146,8 @@ fn version(fields: Fields) -> Read(Nil) {
   case lookup(fields, "schema_version") {
     Error(Nil) | Ok(yaml.Int(1)) -> #(Nil, [])
     Ok(yaml.Int(version)) ->
-      fail(
-        Nil,
-        path,
-        "unsupported version " <> int.to_string(version) <> ", expected 1",
-      )
-    Ok(_) -> fail(Nil, path, "expected an integer")
+      fail(Nil, path, UnsupportedVersion(found: version, supported: 1))
+    Ok(_) -> fail(Nil, path, ExpectedInteger)
   }
 }
 
@@ -236,8 +236,8 @@ fn skill(node: Node, path: String) -> Read(Skill) {
 
 // --- Helpers -----------------------------------------------------------------
 
-fn fail(zero: a, path: String, message: String) -> Read(a) {
-  #(zero, [SchemaError(path:, message:)])
+fn fail(zero: a, path: String, problem: SchemaProblem) -> Read(a) {
+  #(zero, [SchemaError(path:, problem:)])
 }
 
 fn then(read: Read(a), next: fn(a) -> Read(b)) -> Read(b) {
@@ -261,7 +261,7 @@ fn object(
       |> list.map(fn(pair) { #(key_to_string(pair.0), pair.1) })
       |> Fields(path:, entries: _)
       |> next
-    _ -> fail(zero, path, "expected a mapping")
+    _ -> fail(zero, path, ExpectedMapping)
   }
 }
 
@@ -309,7 +309,7 @@ fn scalar(node: Node, path: String) -> Read(String) {
     yaml.Int(value) -> #(int.to_string(value), [])
     yaml.Float(value) -> #(float.to_string(value), [])
     yaml.Null -> #("", [])
-    _ -> fail("", path, "expected text")
+    _ -> fail("", path, ExpectedText)
   }
 }
 
@@ -325,9 +325,9 @@ fn choice(
     yaml.String(name) ->
       case list.contains(names, name) {
         True -> #(name, [])
-        False -> fail("", path, "expected one of: " <> string.join(names, ", "))
+        False -> fail("", path, ExpectedOneOf(names))
       }
-    _ -> fail("", path, "expected one of: " <> string.join(names, ", "))
+    _ -> fail("", path, ExpectedOneOf(names))
   }
 }
 
@@ -349,7 +349,7 @@ fn list_at(
         list.flat_map(read, fn(item) { item.1 }),
       )
     }
-    _ -> fail([], path, "expected a list")
+    _ -> fail([], path, ExpectedList)
   }
 }
 
@@ -358,7 +358,7 @@ fn no_unknown_keys(fields: Fields, known: List(String)) -> Read(Nil) {
     fields.entries
     |> list.filter(fn(entry) { !list.contains(known, entry.0) })
     |> list.map(fn(entry) {
-      SchemaError(path: key_path(fields.path, entry.0), message: "unknown key")
+      SchemaError(path: key_path(fields.path, entry.0), problem: UnknownKey)
     })
   #(Nil, errors)
 }

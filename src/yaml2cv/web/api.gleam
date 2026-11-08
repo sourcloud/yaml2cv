@@ -130,10 +130,10 @@ fn decode_problem(errors: List(decode.DecodeError)) -> Problem {
         "errors",
         json.array(errors, fn(error) {
           case error {
-            SchemaError(path:, message:) ->
+            SchemaError(path:, problem:) ->
               json.object([
                 #("path", json.string(path)),
-                #("message", json.string(message)),
+                #("message", json.string(decode.describe(problem))),
               ])
             // Syntax and size errors never mix with schema errors.
             SyntaxError(..) | DocumentTooLarge(..) | DocumentTooComplex ->
