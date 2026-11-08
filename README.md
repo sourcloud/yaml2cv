@@ -19,10 +19,12 @@ style:
   theme: classic   # or: minimal
   color: blue
   paper: a4        # or: letter
+  photo_shape: rectangle   # or: rounded, circle
 
 person:
   name: John Doe
   title: Software Engineer
+  # photo: data:image/jpeg;base64,...   # optional, see below
 
 contact:
   email: john.doe@example.com
@@ -73,6 +75,13 @@ The editor speaks English and German. It follows the browser's language;
 the **EN | DE** switch in the header changes it, keeps the current YAML and
 is remembered in the browser (ADR 0025). The HTTP API always answers in
 English.
+
+A profile photo is optional. It is stored inside the YAML as a base64 data
+URI (`person.photo`), so the CV stays one self-contained file and the
+service keeps nothing between requests. The editor's **Photo…** button (or
+the photo field in visual mode) crops and shrinks the picked image in the
+browser and re-encodes it as JPEG, which removes EXIF data such as the GPS
+location (ADR 0028).
 
 Render a CV:
 
@@ -204,6 +213,7 @@ can reach. The format is documented in
 - [x] M8 — Phone home: admin endpoint and UDP heartbeat
 - [x] M9 — Visual block editor next to the YAML source
 - [x] M10 — UI localisation (English, German)
+- [x] M11 — Optional profile photo, kept inside the CV document (ADR 0028)
 
 ## Contributing
 
