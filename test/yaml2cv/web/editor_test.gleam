@@ -51,6 +51,13 @@ pub fn editor_page_offers_copying_the_yaml_test() {
   assert string.contains(body, ">Copy YAML</button>")
 }
 
+pub fn editor_page_offers_adding_a_photo_to_the_yaml_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-photo-yaml=\"cv\"")
+  assert string.contains(body, "accept=\"image/jpeg,image/png\"")
+  assert string.contains(body, ">Photo…</button>")
+}
+
 pub fn editor_page_offers_the_schema_reference_test() {
   let body = get("/") |> simulate.read_body
   assert string.contains(body, "data-dialog-open=\"schema-help\"")

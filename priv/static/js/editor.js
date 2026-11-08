@@ -19,6 +19,12 @@
 // - Block buttons (`name="op"`) re-render all blocks. Afterwards the page
 //   scrolls so the affected block stays where it was on screen, focus moves
 //   to it, and it is briefly highlighted.
+// - Photos (ADR 0028): `[data-photo-choose]` opens the file input
+//   `[data-photo-input]` next to it. The picked JPEG or PNG is cropped to
+//   3.5 : 4.5, scaled to at most 600 × 771 pixels and re-encoded as JPEG,
+//   which drops EXIF data such as the GPS location. The result goes into the
+//   hidden input of a `[data-photo-field]` or, for `data-photo-yaml`, into
+//   the `person.photo` line of that YAML field. The file is not uploaded.
 (() => {
   "use strict";
 
@@ -255,4 +261,119 @@
   };
 
   document.addEventListener("htmx:afterSettle", restoreAnchor);
+  const photoWidth = 600;
+  const photoHeight = 771;
+
+  // Decodes, crops to cover the photo box and re-encodes as JPEG.
+  const preparePhoto = async (file) => {
+    if (!["image/jpeg", "image/png"].includes(file.type)) throw new Error("type");
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const ratio = photoWidth / photoHeight;
+    let sw = bitmap.width;
+    let sh = bitmap.height;
+    if (sw / sh > ratio) sw = sh * ratio;
+    else sh = sw / ratio;
+    const sx = (bitmap.width - sw) / 2;
+    const sy = (bitmap.height - sh) / 2;
+    const width = Math.round(Math.min(photoWidth, sw));
+    const height = Math.round(width / ratio);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    // A transparent PNG gets a white background instead of black.
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
+    bitmap.close();
+    return canvas.toDataURL("image/jpeg", 0.85);
+  };
+
+  // Sets `photo:` in the block-style `person:` mapping, replacing an existing
+  // value (and its continuation lines). Returns null without such a block.
+  const withYamlPhoto = (yaml, uri) => {
+    const lines = yaml.split("\n");
+    const start = lines.findIndex((line) => /^person:\s*(#.*)?$/.test(line));
+    if (start < 0) return null;
+    let end = start + 1;
+    let indent = null;
+    while (end < lines.length && (lines[end].trim() === "" || /^\s/.test(lines[end]))) {
+      if (indent === null && lines[end].trim() !== "") indent = lines[end].match(/^\s+/)[0];
+      end++;
+    }
+    indent ??= "  ";
+    const line = `${indent}photo: ${uri}`;
+    const at = lines.slice(start + 1, end).findIndex((l) => l.startsWith(`${indent}photo:`));
+    if (at < 0) {
+      // After the last key of the block, where the canonical layout has it.
+      let last = end;
+      while (last > start + 1 && lines[last - 1].trim() === "") last--;
+      lines.splice(last, 0, line);
+    } else {
+      const first = start + 1 + at;
+      let next = first + 1;
+      while (next < end && lines[next].startsWith(`${indent} `)) next++;
+      lines.splice(first, next - first, line);
+    }
+    return lines.join("\n");
+  };
+
+  const replaceText = (field, text) => {
+    field.focus();
+    field.select();
+    // execCommand keeps the browser's undo history intact.
+    if (!document.execCommand("insertText", false, text)) {
+      field.value = text;
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  };
+
+  const showPhoto = (container, uri) => {
+    const value = container.querySelector("[data-photo-value]");
+    const thumbnail = container.querySelector("[data-photo-thumbnail]");
+    const remove = container.querySelector("[data-photo-remove]");
+    value.value = uri;
+    if (uri) thumbnail.src = uri;
+    else thumbnail.removeAttribute("src");
+    thumbnail.hidden = !uri;
+    if (remove) remove.disabled = !uri;
+    value.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+
+  document.addEventListener("click", (event) => {
+    const choose = event.target.closest?.("[data-photo-choose]");
+    if (choose) {
+      choose.parentElement.querySelector("[data-photo-input]")?.click();
+      return;
+    }
+    const remove = event.target.closest?.("[data-photo-remove]");
+    const container = remove?.closest("[data-photo-field]");
+    if (container) showPhoto(container, "");
+  });
+
+  document.addEventListener("change", async (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !("photoInput" in input.dataset)) return;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    const labelled = input.closest("[data-photo-field]") || input;
+    let uri;
+    try {
+      uri = await preparePhoto(file);
+    } catch {
+      window.alert(labelled.dataset.photoFailedLabel || "The photo could not be read.");
+      return;
+    }
+    const container = input.closest("[data-photo-field]");
+    if (container) {
+      showPhoto(container, uri);
+      return;
+    }
+    const field = document.getElementById(input.dataset.photoYaml || "");
+    if (!(field instanceof HTMLTextAreaElement)) return;
+    const yaml = withYamlPhoto(field.value, uri);
+    if (yaml === null) window.alert(input.dataset.photoNeedsPersonLabel || "");
+    else replaceText(field, yaml);
+  });
 })();

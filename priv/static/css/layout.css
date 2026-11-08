@@ -19,7 +19,8 @@
 
 /* Edit modes of the CV panel (ADR 0024); editor.js sets data-mode. */
 .editor-modes[data-mode="yaml"] .editor-modes__visual,
-.editor-modes[data-mode="visual"] .editor-modes__source {
+.editor-modes[data-mode="visual"] .editor-modes__source,
+.editor-modes[data-mode="visual"] .editor-modes__yaml-only {
   display: none;
 }
 

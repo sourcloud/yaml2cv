@@ -30,6 +30,10 @@ pub type UiTexts {
     whole_document: String,
     show_in_editor: String,
     page: fn(Int) -> String,
+    /// Photo picker (ADR 0028).
+    choose_photo: String,
+    remove_photo: String,
+    photo_failed: String,
   )
 }
 
@@ -44,6 +48,9 @@ pub type EditorTexts {
     copy_yaml: String,
     copied: String,
     copy_failed: String,
+    add_photo: String,
+    /// The YAML has no `person:` block the photo could be added to.
+    photo_needs_person: String,
     source_label: String,
     preview_panel: String,
     rendering: String,
@@ -76,11 +83,13 @@ pub type VisualTexts {
     theme: String,
     colour: String,
     paper: String,
+    photo_shape: String,
     default_option: fn(String) -> String,
     person: String,
     name: String,
     title: String,
     address: String,
+    photo: String,
     contact: String,
     email: String,
     phone: String,

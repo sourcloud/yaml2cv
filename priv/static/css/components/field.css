@@ -49,3 +49,24 @@ select.ui-field__input {
   background-repeat: no-repeat;
   cursor: pointer;
 }
+
+/* Photo field (ADR 0028): thumbnail in the photo's 3.5 : 4.5 aspect ratio
+ * followed by its buttons. */
+.ui-field__photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ui-field__thumbnail {
+  width: 3.5rem;
+  aspect-ratio: 35 / 45;
+  object-fit: cover;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.ui-field__thumbnail[hidden] {
+  display: none;
+}

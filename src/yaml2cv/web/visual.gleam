@@ -37,7 +37,16 @@ const update_path = "/editor/visual/update"
 
 /// The blocks form for `draft`, labelled in the language of `texts`.
 pub fn view(draft: Draft, texts: Texts) -> Element(message) {
-  let t = Labels(texts.visual, field.Required(texts.ui.required_marker))
+  let t =
+    Labels(
+      texts.visual,
+      field.Required(texts.ui.required_marker),
+      field.PhotoLabels(
+        choose: texts.ui.choose_photo,
+        remove: texts.ui.remove_photo,
+        failed: texts.ui.photo_failed,
+      ),
+    )
   html.form(
     [
       attribute.id(form_id),
@@ -89,7 +98,7 @@ pub fn sync(yaml: String) -> Element(message) {
 
 /// The texts the blocks use, with the marker for required fields.
 type Labels {
-  Labels(v: VisualTexts, required: field.Requirement)
+  Labels(v: VisualTexts, required: field.Requirement, photo: field.PhotoLabels)
 }
 
 fn style_block(t: Labels, style: draft.Style) -> Element(message) {
@@ -98,6 +107,14 @@ fn style_block(t: Labels, style: draft.Style) -> Element(message) {
     choice(t, "style.theme", t.v.theme, cv.themes, default.theme, style.theme),
     choice(t, "style.color", t.v.colour, cv.colors, default.color, style.color),
     choice(t, "style.paper", t.v.paper, cv.papers, default.paper, style.paper),
+    choice(
+      t,
+      "style.photo_shape",
+      t.v.photo_shape,
+      cv.photo_shapes,
+      default.photo_shape,
+      style.photo_shape,
+    ),
   ])
 }
 
@@ -132,6 +149,12 @@ fn person_block(t: Labels, person: draft.Person) -> Element(message) {
     text("person.name", t.v.name, person.name, t.required),
     text("person.title", t.v.title, person.title, Optional),
     text("person.address", t.v.address, person.address, Optional),
+    field.photo(
+      name: "person.photo",
+      label: t.v.photo,
+      value: person.photo,
+      labels: t.photo,
+    ),
   ])
 }
 
