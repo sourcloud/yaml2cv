@@ -5,7 +5,7 @@ import yaml2cv/cv/decode
 import yaml2cv/cv/encode
 
 pub fn encodes_example_cv_test() {
-  let assert Ok(yaml) = simplifile.read("test/fixtures/example.yaml")
+  let assert Ok(yaml) = simplifile.read("priv/examples/example.yaml")
   let assert Ok(cv) = decode.from_yaml(yaml)
 
   cv

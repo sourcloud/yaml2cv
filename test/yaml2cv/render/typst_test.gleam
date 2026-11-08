@@ -18,7 +18,7 @@ fn config() -> Config {
 }
 
 fn example_cv() {
-  let assert Ok(yaml) = simplifile.read("test/fixtures/example.yaml")
+  let assert Ok(yaml) = simplifile.read("priv/examples/example.yaml")
   let assert Ok(cv) = decode.from_yaml(yaml)
   cv
 }

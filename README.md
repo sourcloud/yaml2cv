@@ -46,7 +46,7 @@ sections:
 
 The full schema is documented in
 [ADR 0007](docs/adr/0007-cv-schema-version-1.md); a complete example is in
-[`test/fixtures/example.yaml`](test/fixtures/example.yaml).
+[`priv/examples/example.yaml`](priv/examples/example.yaml).
 
 ## Quickstart
 
@@ -63,7 +63,7 @@ just run         # start the server on http://localhost:8000
 Render a CV:
 
 ```sh
-curl --data-binary @test/fixtures/example.yaml \
+curl --data-binary @priv/examples/example.yaml \
      -H 'content-type: application/yaml' \
      http://localhost:8000/api/v1/render -o cv.pdf
 ```

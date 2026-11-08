@@ -81,7 +81,7 @@ sections:
 }
 
 pub fn decodes_example_fixture_test() {
-  let assert Ok(yaml) = simplifile.read("test/fixtures/example.yaml")
+  let assert Ok(yaml) = simplifile.read("priv/examples/example.yaml")
   let assert Ok(cv) = decode.from_yaml(yaml)
   assert cv.person.name == "John Doe"
   assert cv.contact.phone == Some("0123 4 56 78 90")
