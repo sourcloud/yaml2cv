@@ -4,6 +4,7 @@ import gleam/bytes_tree
 import gleam/http/response
 import gleam/int
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/string
 import lustre/attribute
 import lustre/element.{type Element}
@@ -25,6 +26,9 @@ import yaml2cv/web/ui/panel
 import yaml2cv/web/ui/shell
 
 const title = "yaml2cv"
+
+/// The id of the YAML source field; error locations jump into it.
+const source_field = "cv"
 
 /// `GET /` — the editor, preloaded with `example`.
 pub fn page(example: String) -> Response {
@@ -48,7 +52,7 @@ pub fn page(example: String) -> Response {
           [
             panel.view(title: "CV", actions: [], body: [
               code_area.view(
-                id: "cv",
+                id: source_field,
                 name: "yaml",
                 label: "CV source in YAML",
                 value: example,
@@ -220,20 +224,37 @@ fn is_syntax_error(error: DecodeError) -> Bool {
   }
 }
 
-/// A decode error as a `#(location, message)` pair for the error list.
-fn describe_error(error: DecodeError) -> #(String, String) {
+/// A decode error as an error list item; syntax errors with a known
+/// position link to it in the editor.
+fn describe_error(error: DecodeError) -> error_list.Item {
   case error {
-    SchemaError(path:, message:) -> #(path, message)
-    SyntaxError(message:, line: 0, ..) -> #("", message)
-    SyntaxError(message:, line:, column:) -> #(
-      "line " <> int.to_string(line) <> ", column " <> int.to_string(column),
-      message,
-    )
-    DocumentTooComplex -> #("", "the document is nested too deeply to process")
-    DocumentTooLarge(max_nodes:) -> #(
-      "",
-      "the document has more than " <> int.to_string(max_nodes) <> " nodes",
-    )
+    SchemaError(path:, message:) ->
+      error_list.Item(location: path, message:, target: None)
+    SyntaxError(message:, line: 0, ..) ->
+      error_list.Item(location: "", message:, target: None)
+    SyntaxError(message:, line:, column:) ->
+      error_list.Item(
+        location: "line "
+          <> int.to_string(line)
+          <> ", column "
+          <> int.to_string(column),
+        message:,
+        target: Some(error_list.Target(field: source_field, line:, column:)),
+      )
+    DocumentTooComplex ->
+      error_list.Item(
+        location: "",
+        message: "the document is nested too deeply to process",
+        target: None,
+      )
+    DocumentTooLarge(max_nodes:) ->
+      error_list.Item(
+        location: "",
+        message: "the document has more than "
+          <> int.to_string(max_nodes)
+          <> " nodes",
+        target: None,
+      )
   }
 }
 

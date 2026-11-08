@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui error list with jump target
+---
+<ul class="ui-error-list"><li class="ui-error-list__item"><button class="ui-error-list__location ui-error-list__jump" data-jump-column="5" data-jump-field="cv" data-jump-line="2" title="Show in editor" type="button"><code>line 2, column 5</code></button><span class="ui-error-list__message">Unfinished flow collection</span></li></ul>

@@ -26,3 +26,4 @@ for the process.
 | [0018](0018-pdf-generator-metadata.md) | Mark generated PDFs with yaml2cv metadata | Accepted |
 | [0019](0019-svg-preview-and-gzip.md) | SVG page previews and gzip responses | Accepted |
 | [0020](0020-phone-home-observability.md) | Phone home: admin endpoint and UDP heartbeat | Accepted |
+| [0021](0021-editor-line-numbers.md) | Editor line numbers and jump to error | Accepted |

@@ -2,5 +2,6 @@
 version: 2.0.2
 title: ui code area
 ---
-<div class="ui-code-area"><label class="ui-visually-hidden" for="cv">CV (YAML)</label><textarea autocapitalize="off" autocomplete="off" class="ui-code-area__input" data-tab-indent="2" hx-post="/x" id="cv" name="yaml" spellcheck="false">person:
+<div class="ui-code-area"><label class="ui-visually-hidden" for="cv">CV (YAML)</label><pre aria-hidden="true" class="ui-code-area__gutter" data-gutter-for="cv">1
+2</pre><textarea autocapitalize="off" autocomplete="off" class="ui-code-area__input" data-tab-indent="2" hx-post="/x" id="cv" name="yaml" spellcheck="false" wrap="off">person:
   name: &lt;/textarea&gt;</textarea></div>

@@ -22,3 +22,19 @@
 .ui-error-list__message {
   color: var(--color-text);
 }
+
+/* A location that moves the cursor to the error in the editor (ADR 0021). */
+.ui-error-list__jump {
+  padding: 0;
+  font: inherit;
+  color: var(--color-accent);
+  background: none;
+  border: 0;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.ui-error-list__jump:hover {
+  color: var(--color-accent-hover);
+}

@@ -14,3 +14,9 @@ pub fn code_area_test() {
   |> element.to_string
   |> birdie.snap(title: "ui code area")
 }
+
+pub fn numbers_every_line_including_a_trailing_empty_one_test() {
+  assert code_area.line_numbers("a\nb\n") == "1\n2\n3"
+  assert code_area.line_numbers("") == "1"
+  assert code_area.line_numbers("a\r\nb") == "1\n2"
+}

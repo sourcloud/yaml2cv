@@ -1,25 +1,65 @@
-/* ui-code-area: monospaced editor. Gleam: yaml2cv/web/ui/code_area */
+/* ui-code-area: monospaced editor with line numbers (ADR 0021).
+ * Gleam: yaml2cv/web/ui/code_area
+ *
+ * The gutter is positioned over the left edge so its content never sets the
+ * field's height; the textarea starts right after it. Both must share font,
+ * size, line height and vertical padding so numbers line up with rows.
+ * editor.js sets --gutter-digits when the line count needs more digits. */
 .ui-code-area {
+  --gutter-width: calc(var(--gutter-digits, 3) * 1ch + 2 * var(--space-2) + var(--border-width));
+  position: relative;
   display: flex;
   flex: 1;
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.ui-code-area:has(.ui-code-area__input:focus-visible) {
+  border-color: var(--color-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.ui-code-area__gutter,
+.ui-code-area__input {
+  padding-block: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.ui-code-area__gutter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--gutter-width);
+  margin: 0;
+  padding-inline: var(--space-2);
+  /* Room for the textarea's horizontal scrollbar, so the gutter can scroll
+   * as far as the field. */
+  padding-block-end: calc(var(--space-3) + 2rem);
+  overflow: hidden;
+  text-align: end;
+  color: var(--color-text-muted);
+  border-inline-end: var(--border-width) solid var(--color-border);
+  user-select: none;
+  pointer-events: none;
 }
 
 .ui-code-area__input {
   flex: 1;
-  width: 100%;
+  min-width: 0;
   min-height: 60vh;
-  padding: var(--space-3);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
+  margin-inline-start: var(--gutter-width);
+  padding-inline: var(--space-3);
   tab-size: 2;
+  white-space: pre;
   color: var(--color-text);
-  background: var(--color-surface-sunken);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 0;
   resize: vertical;
 }
 
 .ui-code-area__input:focus-visible {
-  border-color: var(--color-focus);
+  box-shadow: none;
 }
