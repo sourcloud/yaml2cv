@@ -197,9 +197,27 @@ fn errors_view(errors: List(DecodeError)) -> Element(a) {
     1 -> "1 problem"
     _ -> int.to_string(count) <> " problems"
   }
+  // yamerl aborts at the first syntax error, so later problems stay hidden.
+  let hint = case list.any(errors, is_syntax_error) {
+    True ->
+      html.p([], [
+        html.text(
+          "Parsing stops at the first syntax error. Fix it to see any further problems.",
+        ),
+      ])
+    False -> element.none()
+  }
   alert.view(alert.Danger, title, [
     error_list.view(list.map(errors, describe_error)),
+    hint,
   ])
+}
+
+fn is_syntax_error(error: DecodeError) -> Bool {
+  case error {
+    SyntaxError(..) -> True
+    _ -> False
+  }
 }
 
 /// A decode error as a `#(location, message)` pair for the error list.

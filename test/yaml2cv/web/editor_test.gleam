@@ -80,6 +80,18 @@ pub fn validate_shows_syntax_error_location_test() {
   assert string.contains(body, "line 1, column 6")
 }
 
+pub fn validate_explains_that_parsing_stops_at_syntax_errors_test() {
+  let body = post_form("/editor/validate", "a: [b\n") |> simulate.read_body
+  assert string.contains(body, "Parsing stops at the first syntax error")
+}
+
+pub fn validate_omits_parsing_hint_for_schema_errors_test() {
+  let body =
+    post_form("/editor/validate", "schema_version: 1\nsections: []\n")
+    |> simulate.read_body
+  assert !string.contains(body, "Parsing stops at the first syntax error")
+}
+
 pub fn preview_shows_pages_test() {
   let response = post_form("/editor/preview", valid_cv)
   assert response.status == 200
