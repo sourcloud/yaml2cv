@@ -332,6 +332,41 @@ pub fn switching_language_without_yaml_shows_the_example_test() {
   assert string.contains(body, "&lt;Example&gt;")
 }
 
+fn switch_language(fields: List(#(String, String))) -> String {
+  simulate.request(http.Post, "/")
+  |> simulate.form_body(fields)
+  |> router.handle_request(context(Ok([])))
+  |> simulate.read_body
+}
+
+pub fn editor_form_carries_the_edit_mode_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-mode=\"yaml\"")
+  assert string.contains(body, "name=\"mode\" type=\"hidden\" value=\"yaml\"")
+}
+
+pub fn switching_language_keeps_visual_mode_test() {
+  let body =
+    switch_language([#("lang", "de"), #("yaml", valid_cv), #("mode", "visual")])
+  assert string.contains(body, "data-mode=\"visual\"")
+  assert string.contains(body, "name=\"mode\" type=\"hidden\" value=\"visual\"")
+  // The blocks come with the page, in the new language.
+  assert string.contains(body, "id=\"visual-form\"")
+  assert string.contains(body, "value=\"Jane Roe\"")
+  assert string.contains(body, ">Person</legend>")
+}
+
+pub fn switching_language_with_yaml_unfit_for_blocks_shows_yaml_test() {
+  let body =
+    switch_language([
+      #("lang", "de"),
+      #("yaml", "person: [\n"),
+      #("mode", "visual"),
+    ])
+  assert string.contains(body, "data-mode=\"yaml\"")
+  assert !string.contains(body, "id=\"visual-form\"")
+}
+
 pub fn fragments_follow_the_language_header_test() {
   let response =
     simulate.request(http.Post, "/editor/validate")

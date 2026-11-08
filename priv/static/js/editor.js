@@ -15,7 +15,9 @@
 //   Visual switch asks the server for blocks via htmx and switches on its
 //   `visual-ready` event. Regenerated YAML arrives in `#yaml-sync` and is
 //   copied into the source field, firing `input` so validation, preview
-//   and the gutter follow. Switching back flushes pending block edits first.
+//   and the gutter follow. Switching back, or switching the language, flushes
+//   pending block edits first. The editor form's `mode` field follows the
+//   mode, so the language switch comes back in it.
 // - Block buttons (`name="op"`) re-render all blocks. Afterwards the page
 //   scrolls so the affected block stays where it was on screen, focus moves
 //   to it, and it is briefly highlighted.
@@ -159,6 +161,8 @@
   const setMode = (root, mode) => {
     root.dataset.mode = mode;
     delete root.dataset.pendingMode;
+    const field = root.querySelector("[data-mode-field]");
+    if (field) field.value = mode;
     for (const button of root.querySelectorAll("[data-mode-switch]")) {
       button.setAttribute("aria-pressed", String(button.dataset.modeSwitch === mode));
     }
@@ -188,6 +192,18 @@
     }
   });
 
+  // The language switch posts the YAML; edits still waiting in the blocks
+  // go into it first, then the switch is submitted again.
+  document.addEventListener("click", (event) => {
+    const choice = event.target.closest?.("[data-language-choice]");
+    const root = document.querySelector("[data-mode]");
+    const form = document.getElementById("visual-form");
+    if (!choice || root?.dataset.mode !== "visual" || !form?.dataset.dirty || !window.htmx) return;
+    event.preventDefault();
+    root.dataset.pendingLanguage = choice.dataset.languageChoice;
+    window.htmx.trigger(form, "flush");
+  });
+
   const applySync = () => {
     const sync = document.getElementById("yaml-sync");
     if (!(sync instanceof HTMLTextAreaElement) || sync.dataset.applied) return;
@@ -201,6 +217,12 @@
       field.dispatchEvent(new Event("input", { bubbles: true }));
     }
     if (root.dataset.pendingMode) setMode(root, root.dataset.pendingMode);
+    const language = root.dataset.pendingLanguage;
+    if (language) {
+      delete root.dataset.pendingLanguage;
+      const choice = document.querySelector(`[data-language-choice="${language}"]`);
+      choice?.form?.requestSubmit(choice);
+    }
   };
 
   document.addEventListener("htmx:oobAfterSwap", applySync);

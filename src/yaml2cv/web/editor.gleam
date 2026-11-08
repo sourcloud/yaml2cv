@@ -3,7 +3,7 @@
 import gleam/bytes_tree
 import gleam/http/response
 import gleam/list
-import gleam/option.{None, Some}
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import lustre/attribute
@@ -43,8 +43,21 @@ const form_id = "editor-form"
 
 /// `GET /` — the editor in `locale`, preloaded with `source`.
 pub fn page(locale: Locale, source: String) -> Response {
+  editor_page(locale, source, None)
+}
+
+/// The editor page, in visual mode with the blocks of `blocks` if given.
+fn editor_page(
+  locale: Locale,
+  source: String,
+  blocks: Option(draft.Draft),
+) -> Response {
   let texts = i18n.texts(locale)
   let t = texts.editor
+  let mode = case blocks {
+    Some(_) -> "visual"
+    None -> "yaml"
+  }
   shell.view(
     locale:,
     language_form: Some(form_id),
@@ -54,12 +67,12 @@ pub fn page(locale: Locale, source: String) -> Response {
       html.div([attribute.class("layout-editor")], [
         // `editor.js` switches `data-mode` between `yaml` and `visual`.
         html.div(
-          [attribute.class("editor-modes"), attribute.data("mode", "yaml")],
+          [attribute.class("editor-modes"), attribute.data("mode", mode)],
           [
             panel.view(
               title: t.cv_panel,
               actions: [
-                mode_switch(t),
+                mode_switch(t, option.is_some(blocks)),
                 button.view(
                   button.Secondary,
                   [
@@ -89,6 +102,14 @@ pub fn page(locale: Locale, source: String) -> Response {
                     attribute.action("/editor/download"),
                   ],
                   [
+                    // Tells the language switch which mode to come back in;
+                    // `editor.js` keeps it current.
+                    html.input([
+                      attribute.type_("hidden"),
+                      attribute.name("mode"),
+                      attribute.value(mode),
+                      attribute.data("mode-field", ""),
+                    ]),
                     code_area.view(
                       id: source_field,
                       name: "yaml",
@@ -105,7 +126,10 @@ pub fn page(locale: Locale, source: String) -> Response {
                     attribute.id("visual"),
                     attribute.class("editor-modes__visual"),
                   ],
-                  [],
+                  case blocks {
+                    Some(cv) -> [visual.view(cv, texts)]
+                    None -> []
+                  },
                 ),
                 html.div(
                   [
@@ -155,10 +179,12 @@ pub fn page(locale: Locale, source: String) -> Response {
 
 /// YAML / Visual toggle. Visual asks the server for the blocks first; the
 /// switch happens once it answers with `visual-ready` (ADR 0024).
-fn mode_switch(t: texts.EditorTexts) -> Element(a) {
+fn mode_switch(t: texts.EditorTexts, visual: Bool) -> Element(a) {
   segmented.view(label: t.edit_mode, options: [
-    segmented.Option(t.mode_yaml, True, [attribute.data("mode-switch", "yaml")]),
-    segmented.Option(t.mode_visual, False, [
+    segmented.Option(t.mode_yaml, !visual, [
+      attribute.data("mode-switch", "yaml"),
+    ]),
+    segmented.Option(t.mode_visual, visual, [
       attribute.data("mode-switch", "visual"),
       attribute.attribute("hx-post", "/editor/visual"),
       attribute.attribute("hx-include", "#" <> source_field),
@@ -179,7 +205,8 @@ fn live_update(path: String, delay: String) -> List(attribute.Attribute(a)) {
 }
 
 /// `POST /` — the editor in the posted `lang`, keeping the posted `yaml`
-/// (`example` when missing). The language switch submits here (ADR 0025).
+/// (`example` when missing) and, if the YAML fits the blocks, the posted
+/// `mode`. The language switch submits here (ADR 0025).
 pub fn switch_language(
   request: Request,
   max_body_bytes: Int,
@@ -188,7 +215,12 @@ pub fn switch_language(
   use fields <- require_form_within(request, max_body_bytes)
   let lang = option.from_result(list.key_find(fields, "lang"))
   let source = list.key_find(fields, "yaml") |> result.unwrap(example)
-  page(i18n.from_request(request, lang), source)
+  let blocks = case list.key_find(fields, "mode") {
+    Ok("visual") ->
+      option.from_result(result.replace_error(draft.from_yaml(source), Nil))
+    _ -> None
+  }
+  editor_page(i18n.from_request(request, lang), source, blocks)
 }
 
 /// `POST /editor/validate` — validation status fragment.
