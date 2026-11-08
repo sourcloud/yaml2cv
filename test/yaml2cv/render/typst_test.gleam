@@ -3,6 +3,7 @@ import gleam/int
 import gleam/list
 import gleam/string
 import simplifile
+import yaml2cv/cv.{Style}
 import yaml2cv/cv/decode
 import yaml2cv/render.{CompileFailed, RendererUnavailable, TimedOut}
 import yaml2cv/render/typst.{type Config, Config}
@@ -34,6 +35,18 @@ pub fn renders_example_cv_to_pdf_test() {
   assert work_directory_is_empty()
 }
 
+fn with_theme(cv: cv.Cv, theme: cv.Theme) -> cv.Cv {
+  cv.Cv(..cv, style: Style(..cv.style, theme:))
+}
+
+pub fn renders_example_cv_in_every_theme_test() {
+  use #(_, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) =
+    typst.render_pdf(config(), with_theme(example_cv(), theme))
+  assert bit_array.slice(pdf, 0, 5) == Ok(<<"%PDF-">>)
+  assert work_directory_is_empty()
+}
+
 pub fn treats_user_content_as_text_not_markup_test() {
   let assert Ok(cv) =
     decode.from_yaml(
@@ -44,7 +57,8 @@ sections:
   - { name: '#read(\"/etc/passwd\")', kind: text, text: '$ \\\\ #{ ] *_' }
 ",
     )
-  let assert Ok(_) = typst.render_pdf(config(), cv)
+  use #(_, theme) <- list.each(cv.themes)
+  let assert Ok(_) = typst.render_pdf(config(), with_theme(cv, theme))
 }
 
 pub fn reports_compile_errors_test() {

@@ -16,7 +16,7 @@ documented as [architecture decision records](docs/adr/).
 schema_version: 1
 
 style:
-  theme: classic
+  theme: classic   # or: minimal
   color: blue
 
 person:
@@ -155,6 +155,7 @@ All settings are environment variables:
 - [x] M4 — HTTP API
 - [x] M5 — Browser editor (htmx)
 - [x] M6 — Container image, removal of the legacy Python app, v0.1.0
+- [x] M7 — Minimal single-column theme
 
 ## Contributing
 

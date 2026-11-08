@@ -14,6 +14,7 @@ pub type Style {
 
 pub type Theme {
   Classic
+  Minimal
 }
 
 pub type Color {
@@ -72,7 +73,7 @@ pub type Skill {
 }
 
 /// All themes, in the order they are listed to users.
-pub const themes = [#("classic", Classic)]
+pub const themes = [#("classic", Classic), #("minimal", Minimal)]
 
 /// All colors, in the order they are listed to users.
 pub const colors = [
@@ -90,5 +91,6 @@ pub const colors = [
 pub fn theme_name(theme: Theme) -> String {
   case theme {
     Classic -> "classic"
+    Minimal -> "minimal"
   }
 }

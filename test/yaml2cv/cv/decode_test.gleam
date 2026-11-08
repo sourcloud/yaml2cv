@@ -2,8 +2,8 @@ import gleam/option.{None, Some}
 import gleam/string
 import simplifile
 import yaml2cv/cv.{
-  Blue, Classic, Contact, Cv, Entries, Entry, Link, Person, Section, Skill,
-  Skills, Style, Text,
+  Blue, Classic, Contact, Cv, Entries, Entry, Link, Minimal, Person, Section,
+  Skill, Skills, Style, Text,
 }
 import yaml2cv/cv/decode.{
   DocumentTooComplex, DocumentTooLarge, SchemaError, SyntaxError,
@@ -28,6 +28,19 @@ pub fn decodes_minimal_document_with_defaults_test() {
         sections: [],
       ),
     )
+}
+
+pub fn decodes_minimal_theme_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { theme: minimal }
+person: { name: Jane Roe }
+sections: []
+",
+    )
+  assert cv.style == Style(theme: Minimal, color: Blue)
 }
 
 pub fn decodes_all_section_kinds_test() {
