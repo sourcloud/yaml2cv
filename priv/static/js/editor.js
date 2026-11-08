@@ -11,6 +11,11 @@
 //   and briefly show `data-copied-label`.
 // - Buttons with `data-dialog-open` open the modal `<dialog>` with that id;
 //   a click on its backdrop closes it (ADR 0022).
+// - Edit modes (ADR 0024): `[data-mode]` holds `yaml` or `visual`. The
+//   Visual switch asks the server for blocks via htmx and switches on its
+//   `visual-ready` event. Regenerated YAML arrives in `#yaml-sync` and is
+//   copied into the source field, firing `input` so validation, preview
+//   and the gutter follow. Switching back flushes pending block edits first.
 (() => {
   "use strict";
 
@@ -138,4 +143,54 @@
       if (!inside) dialog.close();
     }
   });
+
+  const setMode = (root, mode) => {
+    root.dataset.mode = mode;
+    delete root.dataset.pendingMode;
+    for (const button of root.querySelectorAll("[data-mode-switch]")) {
+      button.setAttribute("aria-pressed", String(button.dataset.modeSwitch === mode));
+    }
+  };
+
+  document.addEventListener("visual-ready", (event) => {
+    const root = event.target.closest?.("[data-mode]");
+    if (root) setMode(root, "visual");
+  });
+
+  document.addEventListener("input", (event) => {
+    const form = event.target.closest?.("#visual-form");
+    if (form) form.dataset.dirty = "true";
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.('[data-mode-switch="yaml"]');
+    const root = button?.closest("[data-mode]");
+    if (!root || root.dataset.mode !== "visual") return;
+    const form = document.getElementById("visual-form");
+    if (form?.dataset.dirty && window.htmx) {
+      // Switch once the pending edits are in the YAML.
+      root.dataset.pendingMode = "yaml";
+      window.htmx.trigger(form, "flush");
+    } else {
+      setMode(root, "yaml");
+    }
+  });
+
+  const applySync = () => {
+    const sync = document.getElementById("yaml-sync");
+    if (!(sync instanceof HTMLTextAreaElement) || sync.dataset.applied) return;
+    sync.dataset.applied = "true";
+    const root = document.querySelector("[data-mode]");
+    // Late answers must not overwrite YAML typed after leaving visual mode.
+    if (!root || root.dataset.mode !== "visual") return;
+    const field = document.getElementById("cv");
+    if (field instanceof HTMLTextAreaElement && field.value !== sync.value) {
+      field.value = sync.value;
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (root.dataset.pendingMode) setMode(root, root.dataset.pendingMode);
+  };
+
+  document.addEventListener("htmx:oobAfterSwap", applySync);
+  document.addEventListener("htmx:afterSettle", applySync);
 })();
