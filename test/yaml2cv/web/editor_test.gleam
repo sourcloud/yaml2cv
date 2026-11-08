@@ -189,8 +189,6 @@ pub fn visual_mode_shows_blocks_for_mappable_yaml_test() {
   assert string.contains(body, "id=\"visual-form\"")
   assert string.contains(body, "name=\"person.name\"")
   assert string.contains(body, "value=\"Jane Roe\"")
-  // Clears errors left over from an earlier refused switch.
-  assert string.contains(body, "id=\"mode-errors\"")
 }
 
 pub fn visual_mode_accepts_missing_required_values_test() {
@@ -203,8 +201,10 @@ pub fn visual_mode_refuses_unmappable_yaml_test() {
     post_form("/editor/visual", "schema_version: 1\nnickname: JR\n")
   assert response.status == 200
   assert response.get_header(response, "hx-trigger") == Error(Nil)
-  assert response.get_header(response, "hx-retarget") == Ok("#mode-errors")
+  // Replaces the validation status instead of adding a second alert.
+  assert response.get_header(response, "hx-retarget") == Ok("#validation")
   let body = simulate.read_body(response)
+  assert string.contains(body, "Visual mode needs these fixed first")
   assert string.contains(body, "ui-alert--danger")
   assert string.contains(body, ">nickname</code>")
   assert !string.contains(body, "visual-form")
@@ -266,5 +266,4 @@ pub fn editor_page_offers_edit_modes_test() {
   assert string.contains(body, "hx-post=\"/editor/visual\"")
   assert string.contains(body, "id=\"visual\"")
   assert string.contains(body, "id=\"yaml-sync\"")
-  assert string.contains(body, "id=\"mode-errors\"")
 }

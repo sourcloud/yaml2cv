@@ -68,7 +68,6 @@ pub fn page(example: String) -> Response {
               ),
             ],
             body: [
-              mode_errors([]),
               html.form(
                 [
                   attribute.id("editor-form"),
@@ -152,23 +151,6 @@ fn mode_switch() -> Element(a) {
       attribute.attribute("hx-target", "#visual"),
     ]),
   ])
-}
-
-/// Where errors go when the YAML cannot be shown as blocks.
-fn mode_errors(attributes: List(attribute.Attribute(a))) -> Element(a) {
-  html.div(
-    [
-      attribute.id("mode-errors"),
-      attribute.aria("live", "polite"),
-      ..attributes
-    ],
-    [],
-  )
-}
-
-/// Replaces the element with the same id elsewhere in the page.
-fn out_of_band() -> attribute.Attribute(a) {
-  attribute.attribute("hx-swap-oob", "true")
 }
 
 /// htmx attributes that post the editor content to `path` on load and after
@@ -259,13 +241,14 @@ pub fn visual(request: Request, max_body_bytes: Int) -> Response {
   use source <- require_yaml_field(request, max_body_bytes)
   case draft.from_yaml(source) {
     Ok(cv) ->
-      element.fragment([visual.view(cv), mode_errors([out_of_band()])])
-      |> fragment(200)
+      fragment(visual.view(cv), 200)
       |> response.set_header("hx-trigger", "visual-ready")
+    // Shown in place of the validation status, which would otherwise list
+    // the same problems in a second alert; the next edit validates again.
     Error(errors) ->
-      errors_view(errors)
+      errors_alert("Visual mode needs these fixed first", errors)
       |> fragment(200)
-      |> response.set_header("hx-retarget", "#mode-errors")
+      |> response.set_header("hx-retarget", "#validation")
       |> response.set_header("hx-reswap", "innerHTML")
   }
 }
@@ -326,11 +309,14 @@ fn require_form_within(
 }
 
 fn errors_view(errors: List(DecodeError)) -> Element(a) {
-  let count = list.length(errors)
-  let title = case count {
+  let title = case list.length(errors) {
     1 -> "1 problem"
-    _ -> int.to_string(count) <> " problems"
+    count -> int.to_string(count) <> " problems"
   }
+  errors_alert(title, errors)
+}
+
+fn errors_alert(title: String, errors: List(DecodeError)) -> Element(a) {
   // yamerl aborts at the first syntax error, so later problems stay hidden.
   let hint = case list.any(errors, is_syntax_error) {
     True ->
