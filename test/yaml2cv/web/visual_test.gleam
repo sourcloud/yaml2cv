@@ -62,6 +62,19 @@ pub fn places_the_photo_shape_next_to_the_photo_test() {
   assert string.contains(person_rest, "name=\"style.photo_shape\"")
 }
 
+pub fn offers_adding_sections_from_a_menu_test() {
+  let html = element.to_string(visual.view(sample(), i18n.texts(en)))
+  assert string.contains(
+    html,
+    "data-menu-trigger id=\"add-section\" type=\"button\">Add section</button>",
+  )
+  assert string.contains(html, "ui-menu__list ui-menu__list--start")
+  assert string.contains(
+    html,
+    "role=\"menuitem\" tabindex=\"-1\" type=\"button\" value=\"add-section:skills\">Skills</button>",
+  )
+}
+
 pub fn offers_only_possible_moves_test() {
   let html = element.to_string(visual.view(sample(), i18n.texts(en)))
   assert !string.contains(html, "value=\"up:sections.0\"")

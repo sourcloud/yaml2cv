@@ -179,7 +179,7 @@ const import_field = "yaml-import"
 fn file_menu(texts: Texts, max_body_bytes: Int) -> Element(a) {
   let t = texts.editor
   html.div([attribute.class("editor-file-menu")], [
-    menu.view(id: "file", label: t.file_menu, items: [
+    menu.view(id: "file", label: t.file_menu, align: menu.End, items: [
       menu.Item(t.copy_yaml, [
         attribute.data("copy-from", source_field),
         attribute.data("copied-label", t.copied),

@@ -381,10 +381,14 @@
 
   let anchor = null;
 
+  // A menu item is hidden once its menu closes; its menu button stands in.
+  const shown = (button) =>
+    button.closest("[data-menu]")?.querySelector("[data-menu-trigger]") || button;
+
   document.addEventListener("htmx:beforeRequest", (event) => {
     const button = event.detail.elt;
     if (button instanceof HTMLButtonElement && button.name === "op") {
-      anchor = { op: button.value, top: button.getBoundingClientRect().top };
+      anchor = { op: button.value, top: shown(button).getBoundingClientRect().top };
     }
   });
 
@@ -420,13 +424,13 @@
       .map((value) => form.querySelector(`button[name="op"][value="${CSS.escape(value)}"]`))
       .find(Boolean);
     if (!button) return;
-    window.scrollBy(0, button.getBoundingClientRect().top - top);
+    window.scrollBy(0, shown(button).getBoundingClientRect().top - top);
     // A new item sits right before its add button; start typing there.
     const added = op.startsWith("add")
       ? button.closest(".visual-editor__add")?.previousElementSibling
       : null;
     const field = added?.querySelector("input:not([type=hidden]), textarea");
-    (field || button).focus({ preventScroll: true });
+    (field || shown(button)).focus({ preventScroll: true });
     const block = (added || button).closest(".visual-editor__row, .ui-block");
     if (block && !op.startsWith("remove")) {
       block.classList.add("ui-block--moved");

@@ -30,6 +30,10 @@
   box-shadow: var(--shadow-md);
 }
 
+.ui-menu__list--start {
+  inset-inline: 0 auto;
+}
+
 .ui-menu__list[hidden] {
   display: none;
 }

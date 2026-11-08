@@ -106,7 +106,7 @@ pub fn texts() -> texts.Texts {
         }
       },
       section_title: fn(kind) { kind <> " section" },
-      add_section: fn(kind) { "Add " <> string.lowercase(kind) <> " section" },
+      add_section: "Add section",
       heading: "Heading",
       text: "Text",
       entries: "Entries",

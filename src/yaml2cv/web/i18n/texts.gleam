@@ -110,7 +110,7 @@ pub type VisualTexts {
     /// The title of a section block, given the kind's label.
     section_title: fn(String) -> String,
     /// The add button for a section kind, given the kind's label.
-    add_section: fn(String) -> String,
+    add_section: String,
     heading: String,
     text: String,
     entries: String,

@@ -111,7 +111,7 @@ pub fn texts() -> texts.Texts {
         }
       },
       section_title: fn(kind) { "Abschnitt „" <> kind <> "“" },
-      add_section: fn(kind) { "Abschnitt „" <> kind <> "“ hinzufügen" },
+      add_section: "Abschnitt hinzufügen",
       heading: "Name des Abschnitts",
       text: "Freitext",
       entries: "Datierte Einträge",

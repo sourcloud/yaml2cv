@@ -22,6 +22,7 @@ import yaml2cv/web/ui/alert
 import yaml2cv/web/ui/block
 import yaml2cv/web/ui/button
 import yaml2cv/web/ui/field.{Optional}
+import yaml2cv/web/ui/menu
 import yaml2cv/web/visual_form.{
   type ListRef, type Op, Add, AddSection, Bullets, EntriesOf, Links, MoveDown,
   MoveUp, Remove, Sections, SkillsOf,
@@ -68,9 +69,16 @@ pub fn view(draft: Draft, texts: Texts) -> Element(message) {
         list.index_map(draft.sections, fn(section, index) {
           section_block(t, section, index, list.length(draft.sections))
         }),
-        list.map(decode.section_kinds, fn(kind) {
-          op_button(AddSection(kind.0), t.v.add_section(t.v.kind(kind.0)), "")
-        }),
+        [
+          menu.view(
+            id: "add-section",
+            label: t.v.add_section,
+            align: menu.Start,
+            items: list.map(decode.section_kinds, fn(kind) {
+              menu.Item(t.v.kind(kind.0), op_attributes(AddSection(kind.0)))
+            }),
+          ),
+        ],
       ),
     ],
   )
@@ -391,7 +399,7 @@ fn unavailable_move(label: String) -> Element(message) {
 /// `description` labels it for assistive technology when `label` is terse.
 fn op_button(op: Op, label: String, description: String) -> Element(message) {
   let variant = case op {
-    AddSection(..) | Add(..) -> button.Secondary
+    Add(..) -> button.Secondary
     _ -> button.Quiet
   }
   let class = case op {
@@ -402,16 +410,22 @@ fn op_button(op: Op, label: String, description: String) -> Element(message) {
     variant,
     [
       attribute.type_("button"),
-      attribute.name("op"),
-      attribute.value(visual_form.op_value(op)),
-      attribute.attribute("hx-post", update_path),
-      attribute.attribute("hx-target", "#" <> form_id),
-      attribute.attribute("hx-swap", "outerHTML"),
-      attribute.attribute("hx-sync", "closest form:queue all"),
-      ..list.append(class, described(description))
+      ..list.flatten([op_attributes(op), class, described(description)])
     ],
     label,
   )
+}
+
+/// Makes a button post `op` with the blocks and swap in the answer.
+fn op_attributes(op: Op) -> List(Attribute(message)) {
+  [
+    attribute.name("op"),
+    attribute.value(visual_form.op_value(op)),
+    attribute.attribute("hx-post", update_path),
+    attribute.attribute("hx-target", "#" <> form_id),
+    attribute.attribute("hx-swap", "outerHTML"),
+    attribute.attribute("hx-sync", "closest form:queue all"),
+  ]
 }
 
 fn described(description: String) -> List(Attribute(message)) {

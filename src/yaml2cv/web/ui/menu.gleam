@@ -11,6 +11,13 @@ pub type Item(message) {
   Item(label: String, attributes: List(Attribute(message)))
 }
 
+/// Which edge of the button the list lines up with: `Start` opens it towards
+/// the inline end, for buttons at the start of a row; `End` the other way.
+pub type Align {
+  Start
+  End
+}
+
 /// A button labelled `label` that opens a list of `items` below it, following
 /// the WAI-ARIA menu button pattern. `editor.js` opens and closes the list
 /// and moves focus between the items with the arrow keys; an item's click
@@ -18,9 +25,14 @@ pub type Item(message) {
 pub fn view(
   id id: String,
   label label: String,
+  align align: Align,
   items items: List(Item(message)),
 ) -> Element(message) {
   let list_id = id <> "-menu"
+  let list_class = case align {
+    Start -> "ui-menu__list ui-menu__list--start"
+    End -> "ui-menu__list"
+  }
   html.div([attribute.class("ui-menu"), attribute.data("menu", "")], [
     html.button(
       [
@@ -37,7 +49,7 @@ pub fn view(
     html.div(
       [
         attribute.id(list_id),
-        attribute.class("ui-menu__list"),
+        attribute.class(list_class),
         attribute.role("menu"),
         attribute.aria_labelledby(id),
         attribute.attribute("hidden", ""),
