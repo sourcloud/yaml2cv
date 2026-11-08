@@ -33,3 +33,5 @@ for the process.
 | [0025](0025-ui-localisation.md) | Localise the web UI | Accepted |
 | [0026](0026-container-image-in-release-notes.md) | Reference the container image in the GitHub Release | Accepted |
 | [0027](0027-lockfile-drift-check.md) | Fail CI when manifest.toml drifts from gleam.toml | Accepted |
+| [0028](0028-profile-photo.md) | Profile photo inside the CV document | Accepted |
+| [0029](0029-yaml-file-menu.md) | Copy, download and import the YAML from one menu | Proposed |
