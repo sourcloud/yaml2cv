@@ -78,6 +78,9 @@ pub type Skill {
   Skill(name: String, level: Option(String))
 }
 
+/// The style used for settings a document leaves out.
+pub const default_style = Style(theme: Classic, color: Blue, paper: A4)
+
 /// All themes, in the order they are listed to users.
 pub const themes = [#("classic", Classic), #("minimal", Minimal)]
 

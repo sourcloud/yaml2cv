@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
 import simplifile
@@ -224,4 +225,23 @@ pub fn rejects_documents_with_too_many_nodes_test() {
 pub fn rejects_documents_too_complex_to_parse_in_time_test() {
   let yaml = string.repeat("[", 30_000) <> string.repeat("]", 30_000)
   assert decode.from_yaml(yaml) == Error([DocumentTooComplex])
+}
+
+pub fn accepts_every_exported_section_kind_with_its_content_key_test() {
+  list.each(decode.section_kinds, fn(kind) {
+    let #(name, key) = kind
+    let content = case key {
+      "text" -> " Some text."
+      _ -> " []"
+    }
+    let source =
+      "schema_version: 1\nperson: {name: X}\nsections:\n  - name: S\n    kind: "
+      <> name
+      <> "\n    "
+      <> key
+      <> ":"
+      <> content
+      <> "\n"
+    let assert Ok(_) = decode.from_yaml(source)
+  })
 }

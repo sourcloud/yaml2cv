@@ -32,6 +32,43 @@ pub type DecodeError {
 
 const supported_version = 1
 
+/// The keys of the document root, in documentation order. The schema
+/// reference (`web/schema_help`) is tested against these lists.
+pub const root_keys = [
+  "schema_version", "style", "person", "contact", "sections",
+]
+
+/// The keys of `style`.
+pub const style_keys = ["theme", "color", "paper"]
+
+/// The keys of `person`.
+pub const person_keys = ["name", "title", "address"]
+
+/// The keys of `contact`.
+pub const contact_keys = ["email", "phone", "website", "links"]
+
+/// The keys of each `contact.links` item.
+pub const link_keys = ["label", "url"]
+
+/// The keys every section has; the content key depends on its kind.
+pub const section_keys = ["name", "kind"]
+
+/// Section kinds with the key that holds their content; the first is the
+/// default.
+pub const section_kinds = [
+  #("entries", "entries"),
+  #("skills", "items"),
+  #("text", "text"),
+]
+
+/// The keys of each `entries` item.
+pub const entry_keys = [
+  "timespan", "title", "organization", "location", "bullets",
+]
+
+/// The keys of each `items` item of a skills section.
+pub const skill_keys = ["name", "level"]
+
 /// Parses and validates a CV document, returning every error found.
 pub fn from_yaml(source: String) -> Result(Cv, List(DecodeError)) {
   case yaml.parse(source) {
@@ -72,11 +109,7 @@ fn cv() -> Decoder(Cv) {
   use person <- then(required(fields, "person", person()))
   use contact <- then(optional_or(fields, "contact", contact()))
   use sections <- then(required(fields, "sections", list_of(section())))
-  use _ <- then(
-    no_unknown_keys(fields, [
-      "schema_version", "style", "person", "contact", "sections",
-    ]),
-  )
+  use _ <- then(no_unknown_keys(fields, root_keys))
   succeed(Cv(style:, person:, contact:, sections:))
 }
 
@@ -98,13 +131,13 @@ fn schema_version() -> Decoder(Int) {
 }
 
 fn style() -> Decoder(cv.Style) {
-  let zero = Style(theme: cv.Classic, color: cv.Blue, paper: cv.A4)
+  let zero = cv.default_style
   use node, path <- Decoder(zero:)
   use fields <- object(node, path, zero)
-  use theme <- then(optional_or(fields, "theme", one_of(cv.themes, cv.Classic)))
-  use color <- then(optional_or(fields, "color", one_of(cv.colors, cv.Blue)))
-  use paper <- then(optional_or(fields, "paper", one_of(cv.papers, cv.A4)))
-  use _ <- then(no_unknown_keys(fields, ["theme", "color", "paper"]))
+  use theme <- then(optional_or(fields, "theme", one_of(cv.themes, zero.theme)))
+  use color <- then(optional_or(fields, "color", one_of(cv.colors, zero.color)))
+  use paper <- then(optional_or(fields, "paper", one_of(cv.papers, zero.paper)))
+  use _ <- then(no_unknown_keys(fields, style_keys))
   succeed(Style(theme:, color:, paper:))
 }
 
@@ -115,7 +148,7 @@ fn person() -> Decoder(cv.Person) {
   use name <- then(required(fields, "name", text()))
   use title <- then(optional(fields, "title", text()))
   use address <- then(optional(fields, "address", text()))
-  use _ <- then(no_unknown_keys(fields, ["name", "title", "address"]))
+  use _ <- then(no_unknown_keys(fields, person_keys))
   succeed(Person(name:, title:, address:))
 }
 
@@ -127,7 +160,7 @@ fn contact() -> Decoder(cv.Contact) {
   use phone <- then(optional(fields, "phone", text()))
   use website <- then(optional(fields, "website", text()))
   use links <- then(optional_or(fields, "links", list_of(link())))
-  use _ <- then(no_unknown_keys(fields, ["email", "phone", "website", "links"]))
+  use _ <- then(no_unknown_keys(fields, contact_keys))
   succeed(Contact(email:, phone:, website:, links:))
 }
 
@@ -137,7 +170,7 @@ fn link() -> Decoder(Link) {
   use fields <- object(node, path, zero)
   use label <- then(required(fields, "label", text()))
   use url <- then(required(fields, "url", text()))
-  use _ <- then(no_unknown_keys(fields, ["label", "url"]))
+  use _ <- then(no_unknown_keys(fields, link_keys))
   succeed(Link(label:, url:))
 }
 
@@ -177,7 +210,10 @@ fn section() -> Decoder(Section) {
     None -> succeed(zero)
     Some(#(content_key, content)) -> {
       use content <- then(content)
-      use _ <- then(no_unknown_keys(fields, ["name", "kind", content_key]))
+      use _ <- then(no_unknown_keys(
+        fields,
+        list.append(section_keys, [content_key]),
+      ))
       succeed(Section(name:, content:))
     }
   }
@@ -199,11 +235,7 @@ fn entry() -> Decoder(Entry) {
   use organization <- then(optional(fields, "organization", text()))
   use location <- then(optional(fields, "location", text()))
   use bullets <- then(optional_or(fields, "bullets", list_of(text())))
-  use _ <- then(
-    no_unknown_keys(fields, [
-      "timespan", "title", "organization", "location", "bullets",
-    ]),
-  )
+  use _ <- then(no_unknown_keys(fields, entry_keys))
   succeed(Entry(timespan:, title:, organization:, location:, bullets:))
 }
 
@@ -213,7 +245,7 @@ fn skill() -> Decoder(Skill) {
   use fields <- object(node, path, zero)
   use name <- then(required(fields, "name", text()))
   use level <- then(optional(fields, "level", text()))
-  use _ <- then(no_unknown_keys(fields, ["name", "level"]))
+  use _ <- then(no_unknown_keys(fields, skill_keys))
   succeed(Skill(name:, level:))
 }
 
