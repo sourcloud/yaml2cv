@@ -328,17 +328,22 @@ fn item_actions(
   noun: String,
 ) -> List(Element(message)) {
   let which = numbered(noun, index)
-  list.flatten([
-    case index > 0 {
-      True -> [op_button(MoveUp(ref, index), "↑", t.v.move_up(which))]
-      False -> []
-    },
-    case index + 1 < count {
-      True -> [op_button(MoveDown(ref, index), "↓", t.v.move_down(which))]
-      False -> []
-    },
-    [op_button(Remove(ref, index), t.v.remove, t.v.remove_item(which))],
-  ])
+  let moves =
+    list.flatten([
+      case index > 0 {
+        True -> [op_button(MoveUp(ref, index), "↑", t.v.move_up(which))]
+        False -> []
+      },
+      case index + 1 < count {
+        True -> [op_button(MoveDown(ref, index), "↓", t.v.move_down(which))]
+        False -> []
+      },
+    ])
+  let remove = op_button(Remove(ref, index), t.v.remove, t.v.remove_item(which))
+  case moves {
+    [] -> [remove]
+    _ -> [html.div([attribute.class("visual-editor__move")], moves), remove]
+  }
 }
 
 /// A button that posts the form with `op` and replaces it with the result.
@@ -347,6 +352,10 @@ fn op_button(op: Op, label: String, description: String) -> Element(message) {
   let variant = case op {
     AddSection(..) | Add(..) -> button.Secondary
     _ -> button.Quiet
+  }
+  let class = case op {
+    Remove(..) -> [attribute.class("visual-editor__remove")]
+    _ -> []
   }
   button.view(
     variant,
@@ -358,7 +367,7 @@ fn op_button(op: Op, label: String, description: String) -> Element(message) {
       attribute.attribute("hx-target", "#" <> form_id),
       attribute.attribute("hx-swap", "outerHTML"),
       attribute.attribute("hx-sync", "closest form:queue all"),
-      ..described(description)
+      ..list.append(class, described(description))
     ],
     label,
   )
