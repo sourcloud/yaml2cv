@@ -16,3 +16,4 @@ for the process.
 | [0008](0008-own-yaml-bindings-over-yamerl.md) | Own YAML bindings over yamerl | Accepted |
 | [0009](0009-typst-renderer-execution-and-themes.md) | Typst renderer: execution, limits and themes | Accepted |
 | [0010](0010-http-api.md) | HTTP API, configuration, limits and logging | Accepted |
+| [0011](0011-browser-editor.md) | Browser editor and UI component library | Accepted |
