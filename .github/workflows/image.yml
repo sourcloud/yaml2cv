@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - id: build-date
+        run: echo "value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
       - name: Build image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -19,6 +21,9 @@ jobs:
           file: Containerfile
           load: true
           tags: yaml2cv:ci
+          build-args: |
+            GIT_REVISION=${{ github.sha }}
+            BUILD_DATE=${{ steps.build-date.outputs.value }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Check image architecture
@@ -28,8 +33,8 @@ jobs:
           test "$arch" = "x86_64"
       - name: Smoke test
         run: |
-          docker run -d --name yaml2cv -p 8000:8000 yaml2cv:ci
-          scripts/smoke-test.sh http://localhost:8000
+          docker run -d --name yaml2cv -p 8000:8000 -p 9000:9000 yaml2cv:ci
+          scripts/smoke-test.sh http://localhost:8000 http://localhost:9000
       - name: Show logs on failure
         if: failure()
         run: docker logs yaml2cv
@@ -57,6 +62,8 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+      - id: build-date
+        run: echo "value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
       - name: Build and push multi-arch image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -64,6 +71,9 @@ jobs:
           file: Containerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args: |
+            GIT_REVISION=${{ github.sha }}
+            BUILD_DATE=${{ steps.build-date.outputs.value }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

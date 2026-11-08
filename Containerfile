@@ -77,8 +77,16 @@ COPY --from=build /build/build/erlang-shipment /app
 COPY LICENSE /app/LICENSE
 
 ENV PORT=8000 \
+    ADMIN_BIND_ADDRESS=0.0.0.0 \
     TYPST_PATH=/usr/local/bin/typst \
     WORK_DIR=/tmp/yaml2cv
+
+# Build metadata for the admin endpoint (ADR 0020). Declared last so changing
+# them only rebuilds this layer.
+ARG GIT_REVISION=""
+ARG BUILD_DATE=""
+ENV GIT_REVISION=${GIT_REVISION} \
+    BUILD_DATE=${BUILD_DATE}
 
 USER yaml2cv
 WORKDIR /app

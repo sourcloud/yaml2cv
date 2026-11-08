@@ -26,4 +26,6 @@ watch:
 
 # Build the production container image
 image tag="yaml2cv:dev":
-    podman build -t {{tag}} .
+    podman build -t {{tag}} \
+        --build-arg GIT_REVISION="$(git rev-parse HEAD)" \
+        --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .

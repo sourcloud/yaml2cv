@@ -1,9 +1,11 @@
 #!/bin/sh
 # Smoke-tests a running yaml2cv instance: health check, PDF render, editor
-# page and preview. Usage: scripts/smoke-test.sh [base-url]
+# page and preview, plus the admin endpoint when its URL is given.
+# Usage: scripts/smoke-test.sh [base-url] [admin-url]
 set -eu
 
 base="${1:-http://localhost:8000}"
+admin="${2:-}"
 example="$(dirname "$0")/../priv/examples/example.yaml"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -31,3 +33,11 @@ echo "ok   editor"
 curl -sf --data-urlencode yaml@"$example" "$base/editor/preview" \
   | grep -q 'data:image/svg+xml;base64,' || { echo "preview broken" >&2; exit 1; }
 echo "ok   preview"
+
+if [ -n "$admin" ]; then
+  curl -sf "$admin/" | grep -q '"name":"yaml2cv"' || { echo "admin document broken" >&2; exit 1; }
+  for path in /config /status /healthz; do
+    curl -sf "$admin$path" >/dev/null || { echo "admin $path broken" >&2; exit 1; }
+  done
+  echo "ok   admin"
+fi
