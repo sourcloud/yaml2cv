@@ -1,0 +1,19 @@
+/* ui-page-stack: rendered page previews. Gleam: yaml2cv/web/ui/page_stack */
+.ui-page-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.ui-page-stack__page {
+  display: block;
+  width: 100%;
+  max-width: 794px; /* A4 at 96 dpi */
+  height: auto;
+  background: var(--color-neutral-0);
+  box-shadow: var(--shadow-md);
+}

@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui alert success
+---
+<div class="ui-alert ui-alert--success" role="status"><p class="ui-alert__title">Valid CV</p></div>

@@ -1,0 +1,18 @@
+/* Page layouts. */
+.layout-editor {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .layout-editor {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .layout-editor__preview {
+    position: sticky;
+    top: var(--space-6);
+  }
+}

@@ -1,0 +1,24 @@
+/* ui-error-list: validation errors. Gleam: yaml2cv/web/ui/error_list */
+.ui-error-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+}
+
+.ui-error-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ui-error-list__location {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-error-list__message {
+  color: var(--color-text);
+}

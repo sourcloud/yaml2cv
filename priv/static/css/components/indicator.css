@@ -1,0 +1,13 @@
+/* ui-indicator: shown while an htmx request is in flight.
+ * Gleam: yaml2cv/web/ui/indicator */
+.ui-indicator {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  opacity: 0;
+  transition: opacity var(--duration-fast);
+}
+
+.htmx-request .ui-indicator,
+.ui-indicator.htmx-request {
+  opacity: 1;
+}

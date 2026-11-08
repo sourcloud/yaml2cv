@@ -1,0 +1,22 @@
+/*
+ * yaml2cv design system entry point (ADR 0011).
+ *
+ * Layers, lowest precedence first:
+ *   tokens      design tokens as custom properties
+ *   base        element defaults and utilities
+ *   components  one file per `ui-*` component, mirrored in src/yaml2cv/web/ui
+ *   layout      page-level arrangement
+ */
+@layer tokens, base, components, layout;
+
+@import url("tokens.css") layer(tokens);
+@import url("base.css") layer(base);
+@import url("components/shell.css") layer(components);
+@import url("components/panel.css") layer(components);
+@import url("components/button.css") layer(components);
+@import url("components/alert.css") layer(components);
+@import url("components/error-list.css") layer(components);
+@import url("components/code-area.css") layer(components);
+@import url("components/page-stack.css") layer(components);
+@import url("components/indicator.css") layer(components);
+@import url("layout.css") layer(layout);

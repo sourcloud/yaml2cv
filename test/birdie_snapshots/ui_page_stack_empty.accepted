@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui page stack empty
+---
+<div class="ui-page-stack"></div>

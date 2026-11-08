@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui panel
+---
+<section class="ui-panel"><header class="ui-panel__header"><h2 class="ui-panel__title">Preview</h2><div class="ui-panel__actions">action</div></header><div class="ui-panel__body">body</div></section>

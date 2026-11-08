@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui alert danger with body
+---
+<div class="ui-alert ui-alert--danger" role="alert"><p class="ui-alert__title">2 problems</p><div class="ui-alert__body">Fix them.</div></div>

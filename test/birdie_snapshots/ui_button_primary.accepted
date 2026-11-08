@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui button primary
+---
+<button class="ui-button ui-button--primary" type="submit">Download PDF</button>

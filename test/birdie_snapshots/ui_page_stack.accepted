@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui page stack
+---
+<div class="ui-page-stack"><img alt="Page 1" class="ui-page-stack__page" src="data:image/png;base64,AQID"><img alt="Page 2" class="ui-page-stack__page" src="data:image/png;base64,BAU="></div>

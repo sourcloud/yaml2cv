@@ -1,0 +1,33 @@
+/* ui-shell: application chrome. Gleam: yaml2cv/web/ui/shell */
+.ui-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.ui-shell__brand {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.ui-shell__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.ui-shell__main {
+  flex: 1;
+  padding: var(--space-6);
+}

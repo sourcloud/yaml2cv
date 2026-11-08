@@ -1,0 +1,90 @@
+/* Design tokens. Components use only these, never raw values. */
+:root {
+  color-scheme: light dark;
+
+  /* Palette */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f6f7f9;
+  --color-neutral-100: #eceef2;
+  --color-neutral-200: #d9dde4;
+  --color-neutral-500: #6b7280;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2633;
+  --color-neutral-900: #151a23;
+  --color-neutral-950: #0d1117;
+  --color-blue-500: #3973b3;
+  --color-blue-600: #2f5f95;
+  --color-blue-300: #7fa8d8;
+  --color-green-600: #2f7d3b;
+  --color-green-100: #e3f3e5;
+  --color-red-600: #b42318;
+  --color-red-100: #fde8e6;
+
+  /* Semantic colours */
+  --color-background: var(--color-neutral-50);
+  --color-surface: var(--color-neutral-0);
+  --color-surface-sunken: var(--color-neutral-100);
+  --color-border: var(--color-neutral-200);
+  --color-text: var(--color-neutral-900);
+  --color-text-muted: var(--color-neutral-500);
+  --color-accent: var(--color-blue-500);
+  --color-accent-hover: var(--color-blue-600);
+  --color-on-accent: var(--color-neutral-0);
+  --color-success: var(--color-green-600);
+  --color-success-surface: var(--color-green-100);
+  --color-danger: var(--color-red-600);
+  --color-danger-surface: var(--color-red-100);
+  --color-focus: var(--color-blue-500);
+
+  /* Spacing (4 px grid) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+
+  /* Shape and depth */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --border-width: 1px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 2px 8px rgb(0 0 0 / 0.12);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-focus) 40%, transparent);
+
+  /* Motion */
+  --duration-fast: 120ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--color-neutral-950);
+    --color-surface: var(--color-neutral-900);
+    --color-surface-sunken: var(--color-neutral-800);
+    --color-border: var(--color-neutral-700);
+    --color-text: var(--color-neutral-100);
+    --color-text-muted: #9aa3b2;
+    --color-accent: var(--color-blue-300);
+    --color-accent-hover: #a5c3e6;
+    --color-on-accent: var(--color-neutral-950);
+    --color-success: #7cc98a;
+    --color-success-surface: #16301b;
+    --color-danger: #f28b82;
+    --color-danger-surface: #3a1714;
+    --color-focus: var(--color-blue-300);
+    --shadow-sm: none;
+    --shadow-md: none;
+  }
+}

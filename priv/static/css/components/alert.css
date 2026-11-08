@@ -1,0 +1,30 @@
+/* ui-alert: status messages. Gleam: yaml2cv/web/ui/alert */
+.ui-alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--alert-color);
+  border-radius: var(--radius-sm);
+  background: var(--alert-surface);
+}
+
+.ui-alert__title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--alert-color);
+}
+
+.ui-alert--info {
+  --alert-color: var(--color-accent);
+  --alert-surface: var(--color-surface-sunken);
+}
+
+.ui-alert--success {
+  --alert-color: var(--color-success);
+  --alert-surface: var(--color-success-surface);
+}
+
+.ui-alert--danger {
+  --alert-color: var(--color-danger);
+  --alert-surface: var(--color-danger-surface);
+}

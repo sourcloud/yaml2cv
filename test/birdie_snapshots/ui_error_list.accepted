@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui error list
+---
+<ul class="ui-error-list"><li class="ui-error-list__item"><code class="ui-error-list__location">person.name</code><span class="ui-error-list__message">is required</span></li><li class="ui-error-list__item"><code class="ui-error-list__location">document</code><span class="ui-error-list__message">expected a mapping</span></li><li class="ui-error-list__item"><code class="ui-error-list__location">&lt;script&gt;</code><span class="ui-error-list__message">is &lt;escaped&gt;</span></li></ul>

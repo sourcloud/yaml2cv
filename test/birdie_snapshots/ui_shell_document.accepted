@@ -1,0 +1,6 @@
+---
+version: 2.0.2
+title: ui shell document
+---
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1" name="viewport"><meta content="{&quot;includeIndicatorStyles&quot;:false}" name="htmx-config"><title>yaml2cv</title><link href="/static/css/app.css" rel="stylesheet"><script defer src="/static/vendor/htmx-2.0.4.min.js"></script><script defer src="/static/js/editor.js"></script></head><body class="ui-shell"><header class="ui-shell__header"><a class="ui-shell__brand" href="/">yaml2cv</a><div class="ui-shell__actions">actions</div></header><main class="ui-shell__main">content</main></body></html>

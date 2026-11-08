@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui indicator
+---
+<span aria-live="polite" class="ui-indicator" id="preview-indicator">Rendering…</span>

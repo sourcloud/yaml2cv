@@ -1,0 +1,25 @@
+/* ui-code-area: monospaced editor. Gleam: yaml2cv/web/ui/code_area */
+.ui-code-area {
+  display: flex;
+  flex: 1;
+}
+
+.ui-code-area__input {
+  flex: 1;
+  width: 100%;
+  min-height: 60vh;
+  padding: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  tab-size: 2;
+  color: var(--color-text);
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.ui-code-area__input:focus-visible {
+  border-color: var(--color-focus);
+}
