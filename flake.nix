@@ -12,7 +12,7 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        beamPackages = pkgs.beam27Packages;
+        beamPackages = pkgs.beam29Packages;
       in
       {
         devShells.default = pkgs.mkShell {

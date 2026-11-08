@@ -1,3 +1,4 @@
+# check=error=true
 # yaml2cv production image (ADR 0013).
 #
 #   podman build -t yaml2cv .
@@ -6,7 +7,10 @@
 # Versions match the Nix dev shell. When upgrading, update the version and
 # the SHA-256 for every architecture (GitHub shows asset digests).
 
-ARG ERLANG_IMAGE=docker.io/library/erlang:27.3.4.19-alpine@sha256:09c44bf58074095eb97f1973621c27a9bf3d5a5024e10b558816e93f445ea528
+# Pin the multi-arch index digest and check that it lists every platform we
+# publish (linux/amd64, linux/arm64); otherwise BuildKit silently falls back
+# to another platform's image (ADR 0014).
+ARG ERLANG_IMAGE=docker.io/library/erlang:29.1.2-alpine@sha256:0ac9b63db11be156be4e2834546e44aa0d7446aaffb05fedd4aea8c5a33ad998
 
 # --- Build ---------------------------------------------------------------------
 FROM ${ERLANG_IMAGE} AS build

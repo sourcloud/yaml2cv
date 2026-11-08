@@ -19,3 +19,4 @@ for the process.
 | [0011](0011-browser-editor.md) | Browser editor and UI component library | Accepted |
 | [0012](0012-colour-theme-switch.md) | Colour theme switch | Accepted |
 | [0013](0013-container-image-and-release.md) | Container image, third-party notices and releases | Accepted |
+| [0014](0014-upgrade-to-erlang-otp-29.md) | Upgrade to Erlang/OTP 29 | Accepted |
