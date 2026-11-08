@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "mkhl.direnv",
+    "gleam.gleam",
+    "myriad-dreamin.tinymist",
+    "pgourlain.erlang",
+    "jnoortheen.nix-ide",
+    "editorconfig.editorconfig"
+  ]
+}

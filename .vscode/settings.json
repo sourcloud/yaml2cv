@@ -1,0 +1,15 @@
+{
+  "[gleam]": {
+    "editor.formatOnSave": true
+  },
+  "tinymist.exportPdf": "never",
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.direnv/**": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.direnv": true,
+    "**/*.min.js": true
+  }
+}
