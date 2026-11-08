@@ -48,9 +48,6 @@ pub type EditorTexts {
     copy_yaml: String,
     copied: String,
     copy_failed: String,
-    add_photo: String,
-    /// The YAML has no `person:` block the photo could be added to.
-    photo_needs_person: String,
     source_label: String,
     preview_panel: String,
     rendering: String,

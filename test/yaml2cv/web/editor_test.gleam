@@ -51,11 +51,11 @@ pub fn editor_page_offers_copying_the_yaml_test() {
   assert string.contains(body, ">Copy YAML</button>")
 }
 
-pub fn editor_page_offers_adding_a_photo_to_the_yaml_test() {
+pub fn editor_header_has_no_photo_picker_test() {
+  // The photo is picked in the visual person block only; the YAML header
+  // stays uncluttered.
   let body = get("/") |> simulate.read_body
-  assert string.contains(body, "data-photo-yaml=\"cv\"")
-  assert string.contains(body, "accept=\"image/jpeg,image/png\"")
-  assert string.contains(body, ">Photo…</button>")
+  assert !string.contains(body, "data-photo-input")
 }
 
 pub fn editor_page_offers_the_schema_reference_test() {

@@ -78,9 +78,9 @@ English.
 
 A profile photo is optional. It is stored inside the YAML as a base64 data
 URI (`person.photo`), so the CV stays one self-contained file and the
-service keeps nothing between requests. The editor's **Photo…** button (or
-the photo field in visual mode) crops and shrinks the picked image in the
-browser and re-encodes it as JPEG, which removes EXIF data such as the GPS
+service keeps nothing between requests. The photo field of the person block
+in the editor's visual mode, next to the photo shape, crops and shrinks the
+picked image in the browser and re-encodes it as JPEG, which removes EXIF data such as the GPS
 location (ADR 0028).
 
 Render a CV:

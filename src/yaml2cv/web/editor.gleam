@@ -69,7 +69,6 @@ pub fn page(locale: Locale, source: String) -> Response {
                   ],
                   t.schema_button,
                 ),
-                photo_button(texts),
                 button.view(
                   button.Secondary,
                   [
@@ -152,31 +151,6 @@ pub fn page(locale: Locale, source: String) -> Response {
   )
   |> element.to_document_string
   |> wisp.html_response(200)
-}
-
-/// Sets `person.photo` in the YAML source from a picked file, shrunk in the
-/// browser by `editor.js` (ADR 0028). Shown in YAML mode only; the visual
-/// person block has a photo field of its own.
-fn photo_button(texts: Texts) -> Element(a) {
-  html.span([attribute.class("editor-modes__yaml-only")], [
-    html.input([
-      attribute.type_("file"),
-      attribute.accept(["image/jpeg", "image/png"]),
-      attribute.attribute("hidden", ""),
-      attribute.data("photo-input", ""),
-      attribute.data("photo-yaml", source_field),
-      attribute.data("photo-failed-label", texts.ui.photo_failed),
-      attribute.data(
-        "photo-needs-person-label",
-        texts.editor.photo_needs_person,
-      ),
-    ]),
-    button.view(
-      button.Secondary,
-      [attribute.type_("button"), attribute.data("photo-choose", "")],
-      texts.editor.add_photo,
-    ),
-  ])
 }
 
 /// YAML / Visual toggle. Visual asks the server for the blocks first; the

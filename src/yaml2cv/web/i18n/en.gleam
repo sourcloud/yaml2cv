@@ -34,8 +34,6 @@ pub fn texts() -> texts.Texts {
       copy_yaml: "Copy YAML",
       copied: "Copied",
       copy_failed: "Copy failed",
-      add_photo: "Photo…",
-      photo_needs_person: "The photo goes into the person block. Add a `person:` block with one key per line first.",
       source_label: "CV source in YAML",
       preview_panel: "Preview",
       rendering: "Rendering…",

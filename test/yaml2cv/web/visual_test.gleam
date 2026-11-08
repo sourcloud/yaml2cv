@@ -54,6 +54,14 @@ pub fn renders_a_field_for_every_draft_value_test() {
   })
 }
 
+pub fn places_the_photo_shape_next_to_the_photo_test() {
+  let html = element.to_string(visual.view(sample(), i18n.texts(en)))
+  let assert [_, after_person] = string.split(html, "name=\"person.photo\"")
+  let assert [person_rest, _] =
+    string.split(after_person, "name=\"contact.email\"")
+  assert string.contains(person_rest, "name=\"style.photo_shape\"")
+}
+
 pub fn offers_only_possible_moves_test() {
   let html = element.to_string(visual.view(sample(), i18n.texts(en)))
   assert !string.contains(html, "value=\"up:sections.0\"")

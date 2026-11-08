@@ -59,6 +59,12 @@ select.ui-field__input {
   gap: var(--space-3);
 }
 
+/* Buttons as tall as the text inputs beside them in the block grid. */
+.ui-field__photo .ui-button {
+  padding-block: var(--space-2);
+  line-height: var(--line-height-normal);
+}
+
 .ui-field__thumbnail {
   width: 3.5rem;
   aspect-ratio: 35 / 45;

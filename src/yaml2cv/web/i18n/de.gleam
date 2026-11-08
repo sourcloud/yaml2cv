@@ -39,8 +39,6 @@ pub fn texts() -> texts.Texts {
       copy_yaml: "YAML kopieren",
       copied: "Kopiert",
       copy_failed: "Kopieren fehlgeschlagen",
-      add_photo: "Foto…",
-      photo_needs_person: "Das Foto gehört in den Personenblock. Bitte zuerst einen `person:`-Block mit einem Key pro Zeile anlegen.",
       source_label: "Lebenslauf als YAML",
       preview_panel: "Vorschau",
       rendering: "Wird gesetzt…",

@@ -23,8 +23,7 @@
 //   `[data-photo-input]` next to it. The picked JPEG or PNG is cropped to
 //   3.5 : 4.5, scaled to at most 600 × 771 pixels and re-encoded as JPEG,
 //   which drops EXIF data such as the GPS location. The result goes into the
-//   hidden input of a `[data-photo-field]` or, for `data-photo-yaml`, into
-//   the `person.photo` line of that YAML field. The file is not uploaded.
+//   hidden input of its `[data-photo-field]`. The file is not uploaded.
 (() => {
   "use strict";
 
@@ -289,45 +288,6 @@
     return canvas.toDataURL("image/jpeg", 0.85);
   };
 
-  // Sets `photo:` in the block-style `person:` mapping, replacing an existing
-  // value (and its continuation lines). Returns null without such a block.
-  const withYamlPhoto = (yaml, uri) => {
-    const lines = yaml.split("\n");
-    const start = lines.findIndex((line) => /^person:\s*(#.*)?$/.test(line));
-    if (start < 0) return null;
-    let end = start + 1;
-    let indent = null;
-    while (end < lines.length && (lines[end].trim() === "" || /^\s/.test(lines[end]))) {
-      if (indent === null && lines[end].trim() !== "") indent = lines[end].match(/^\s+/)[0];
-      end++;
-    }
-    indent ??= "  ";
-    const line = `${indent}photo: ${uri}`;
-    const at = lines.slice(start + 1, end).findIndex((l) => l.startsWith(`${indent}photo:`));
-    if (at < 0) {
-      // After the last key of the block, where the canonical layout has it.
-      let last = end;
-      while (last > start + 1 && lines[last - 1].trim() === "") last--;
-      lines.splice(last, 0, line);
-    } else {
-      const first = start + 1 + at;
-      let next = first + 1;
-      while (next < end && lines[next].startsWith(`${indent} `)) next++;
-      lines.splice(first, next - first, line);
-    }
-    return lines.join("\n");
-  };
-
-  const replaceText = (field, text) => {
-    field.focus();
-    field.select();
-    // execCommand keeps the browser's undo history intact.
-    if (!document.execCommand("insertText", false, text)) {
-      field.value = text;
-      field.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-  };
-
   const showPhoto = (container, uri) => {
     const value = container.querySelector("[data-photo-value]");
     const thumbnail = container.querySelector("[data-photo-thumbnail]");
@@ -357,23 +317,15 @@
     const file = input.files?.[0];
     input.value = "";
     if (!file) return;
-    const labelled = input.closest("[data-photo-field]") || input;
+    const container = input.closest("[data-photo-field]");
+    if (!container) return;
     let uri;
     try {
       uri = await preparePhoto(file);
     } catch {
-      window.alert(labelled.dataset.photoFailedLabel || "The photo could not be read.");
+      window.alert(container.dataset.photoFailedLabel || "The photo could not be read.");
       return;
     }
-    const container = input.closest("[data-photo-field]");
-    if (container) {
-      showPhoto(container, uri);
-      return;
-    }
-    const field = document.getElementById(input.dataset.photoYaml || "");
-    if (!(field instanceof HTMLTextAreaElement)) return;
-    const yaml = withYamlPhoto(field.value, uri);
-    if (yaml === null) window.alert(input.dataset.photoNeedsPersonLabel || "");
-    else replaceText(field, yaml);
+    showPhoto(container, uri);
   });
 })();

@@ -60,7 +60,7 @@ pub fn view(draft: Draft, texts: Texts) -> Element(message) {
     [
       alert.view(alert.Info, t.v.rewrite_title, [html.text(t.v.rewrite_body)]),
       style_block(t, draft.style),
-      person_block(t, draft.person),
+      person_block(t, draft.person, draft.style.photo_shape),
       contact_block(t, draft.contact),
       list_of(
         t.v.sections,
@@ -107,14 +107,6 @@ fn style_block(t: Labels, style: draft.Style) -> Element(message) {
     choice(t, "style.theme", t.v.theme, cv.themes, default.theme, style.theme),
     choice(t, "style.color", t.v.colour, cv.colors, default.color, style.color),
     choice(t, "style.paper", t.v.paper, cv.papers, default.paper, style.paper),
-    choice(
-      t,
-      "style.photo_shape",
-      t.v.photo_shape,
-      cv.photo_shapes,
-      default.photo_shape,
-      style.photo_shape,
-    ),
   ])
 }
 
@@ -144,7 +136,13 @@ fn choice(
   )
 }
 
-fn person_block(t: Labels, person: draft.Person) -> Element(message) {
+/// Holds the photo shape too: it belongs to `style` in the YAML, but is
+/// edited next to the photo it shapes.
+fn person_block(
+  t: Labels,
+  person: draft.Person,
+  photo_shape: String,
+) -> Element(message) {
   block.view(title: t.v.person, actions: [], body: [
     text("person.name", t.v.name, person.name, t.required),
     text("person.title", t.v.title, person.title, Optional),
@@ -154,6 +152,14 @@ fn person_block(t: Labels, person: draft.Person) -> Element(message) {
       label: t.v.photo,
       value: person.photo,
       labels: t.photo,
+    ),
+    choice(
+      t,
+      "style.photo_shape",
+      t.v.photo_shape,
+      cv.photo_shapes,
+      cv.default_style.photo_shape,
+      photo_shape,
     ),
   ])
 }
