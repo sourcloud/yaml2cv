@@ -16,6 +16,9 @@
 //   `visual-ready` event. Regenerated YAML arrives in `#yaml-sync` and is
 //   copied into the source field, firing `input` so validation, preview
 //   and the gutter follow. Switching back flushes pending block edits first.
+// - Block buttons (`name="op"`) re-render all blocks. Afterwards the page
+//   scrolls so the affected block stays where it was on screen, focus moves
+//   to it, and it is briefly highlighted.
 (() => {
   "use strict";
 
@@ -193,4 +196,61 @@
 
   document.addEventListener("htmx:oobAfterSwap", applySync);
   document.addEventListener("htmx:afterSettle", applySync);
+
+  let anchor = null;
+
+  document.addEventListener("htmx:beforeRequest", (event) => {
+    const button = event.detail.elt;
+    if (button instanceof HTMLButtonElement && button.name === "op") {
+      anchor = { op: button.value, top: button.getBoundingClientRect().top };
+    }
+  });
+
+  // Button values to look for after the swap, best first: the moved item's
+  // buttons at its new index, the item that took a removed one's place, or
+  // the add button that was clicked.
+  const anchorCandidates = (op) => {
+    const [action, path] = op.split(":");
+    const parts = path.split(".");
+    const index = Number(parts.pop());
+    const list = parts.join(".");
+    const item = (i) => `${list}.${i}`;
+    const addList = list === "sections" ? "add-section:entries" : `add:${list}`;
+    switch (action) {
+      case "up":
+      case "down": {
+        const moved = item(action === "up" ? index - 1 : index + 1);
+        return [`${action}:${moved}`, `up:${moved}`, `down:${moved}`, `remove:${moved}`];
+      }
+      case "remove":
+        return [`remove:${item(index)}`, `remove:${item(index - 1)}`, addList];
+      default:
+        return [op];
+    }
+  };
+
+  const restoreAnchor = () => {
+    const form = document.getElementById("visual-form");
+    if (!anchor || !form) return;
+    const { op, top } = anchor;
+    anchor = null;
+    const button = anchorCandidates(op)
+      .map((value) => form.querySelector(`button[name="op"][value="${CSS.escape(value)}"]`))
+      .find(Boolean);
+    if (!button) return;
+    window.scrollBy(0, button.getBoundingClientRect().top - top);
+    // A new item sits right before its add button; start typing there.
+    const added = op.startsWith("add")
+      ? button.closest(".visual-editor__add")?.previousElementSibling
+      : null;
+    const field = added?.querySelector("input:not([type=hidden]), textarea");
+    (field || button).focus({ preventScroll: true });
+    const block = (added || button).closest(".visual-editor__row, .ui-block");
+    if (block && !op.startsWith("remove")) {
+      block.classList.add("ui-block--moved");
+      block.addEventListener("animationend", () => block.classList.remove("ui-block--moved"), { once: true });
+    }
+  };
+
+  document.addEventListener("htmx:afterSettle", restoreAnchor);
 })();
