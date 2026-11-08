@@ -45,6 +45,7 @@
 }
 
 .visual-editor__row {
+  border-radius: var(--radius-sm);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;

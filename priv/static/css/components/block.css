@@ -1,8 +1,8 @@
 /* ui-block: building block of the visual editor (ADR 0024).
  * Gleam: yaml2cv/web/ui/block
  *
- * Actions sit on the title row; the legend cannot be a flex item, so they
- * are positioned over the block's top edge instead. */
+ * The legend is floated so it renders as the block's first row inside the
+ * border instead of on it; the actions share that row on the right. */
 .ui-block {
   position: relative;
   min-width: 0;
@@ -22,22 +22,28 @@
 }
 
 .ui-block__title {
-  padding-inline: var(--space-1);
+  float: inline-start;
+  width: 100%;
+  min-height: 1.75rem;
+  margin-block-end: var(--space-3);
+  padding: 0;
+  /* Room for up to three actions. */
+  padding-inline-end: 11rem;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
+  line-height: 1.75rem;
 }
 
 .ui-block__actions {
   position: absolute;
-  inset-block-start: calc(-1 * var(--space-3));
+  inset-block-start: var(--space-3);
   inset-inline-end: var(--space-3);
   display: flex;
   gap: var(--space-1);
-  background: inherit;
-  border-radius: var(--radius-sm);
 }
 
 .ui-block__body {
+  clear: both;
   display: grid;
   gap: var(--space-3);
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
@@ -48,4 +54,17 @@
 .ui-block__body > .ui-block-list,
 .ui-block__body > .ui-field:has(.ui-field__input--multiline) {
   grid-column: 1 / -1;
+}
+
+/* Briefly marks a block that was just moved or added (editor.js). */
+@media (prefers-reduced-motion: no-preference) {
+  .ui-block--moved {
+    animation: ui-block-moved 900ms ease-out;
+  }
+}
+
+@keyframes ui-block-moved {
+  from {
+    box-shadow: var(--focus-ring);
+  }
 }
