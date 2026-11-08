@@ -3,7 +3,7 @@ import yaml2cv/config.{Config}
 import yaml2cv/render/typst
 
 fn parse(env: List(#(String, String))) {
-  config.parse(dict.from_list(env), schedulers: 4, themes_directory: "/themes")
+  config.parse(dict.from_list(env), schedulers: 4, priv_directory: "/priv")
 }
 
 pub fn uses_defaults_for_empty_environment_test() {
@@ -14,9 +14,11 @@ pub fn uses_defaults_for_empty_environment_test() {
       max_body_bytes: 262_144,
       render_concurrency: 4,
       render_queue_wait: 5000,
+      static_directory: "/priv/static",
+      example_path: "/priv/examples/example.yaml",
       typst: typst.Config(
         executable: "typst",
-        themes_directory: "/themes",
+        themes_directory: "/priv/themes",
         work_directory: "/tmp/yaml2cv",
         timeout: 10_000,
       ),
@@ -44,7 +46,7 @@ pub fn reads_all_variables_test() {
   assert config.typst
     == typst.Config(
       executable: "/usr/bin/typst",
-      themes_directory: "/themes",
+      themes_directory: "/priv/themes",
       work_directory: "/var/yaml2cv",
       timeout: 3000,
     )

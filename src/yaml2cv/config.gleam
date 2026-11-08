@@ -18,6 +18,10 @@ pub type Config {
     render_concurrency: Int,
     /// Milliseconds a request waits for a free render slot.
     render_queue_wait: Int,
+    /// Directory served under `/static`.
+    static_directory: String,
+    /// CV preloaded into the editor.
+    example_path: String,
     typst: typst.Config,
   )
 }
@@ -26,21 +30,18 @@ pub type Config {
 pub fn load() -> Result(Config, List(String)) {
   case application.priv_directory("yaml2cv") {
     Ok(priv) ->
-      parse(
-        envoy.all(),
-        schedulers: schedulers_online(),
-        themes_directory: priv <> "/themes",
-      )
+      parse(envoy.all(), schedulers: schedulers_online(), priv_directory: priv)
     Error(Nil) -> Error(["could not locate the priv directory of yaml2cv"])
   }
 }
 
 /// Builds a configuration from environment variables, reporting every
-/// invalid variable. `schedulers` sets the default render concurrency.
+/// invalid variable. `schedulers` sets the default render concurrency;
+/// themes, static files and examples are found in `priv_directory`.
 pub fn parse(
   env: Dict(String, String),
   schedulers schedulers: Int,
-  themes_directory themes_directory: String,
+  priv_directory priv_directory: String,
 ) -> Result(Config, List(String)) {
   let tmp = case dict.get(env, "TMPDIR") {
     Ok(dir) if dir != "" -> trim_trailing_slash(dir)
@@ -67,9 +68,11 @@ pub fn parse(
         max_body_bytes:,
         render_concurrency:,
         render_queue_wait:,
+        static_directory: priv_directory <> "/static",
+        example_path: priv_directory <> "/examples/example.yaml",
         typst: typst.Config(
           executable:,
-          themes_directory:,
+          themes_directory: priv_directory <> "/themes",
           work_directory:,
           timeout:,
         ),

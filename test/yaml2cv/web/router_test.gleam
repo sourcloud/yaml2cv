@@ -18,6 +18,8 @@ fn context(result: Result(BitArray, RenderError)) -> router.Context {
       Ok([])
     }),
     max_body_bytes: 1024,
+    static_directory: "priv/static",
+    example_cv: "",
   )
 }
 
