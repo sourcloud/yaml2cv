@@ -24,6 +24,8 @@
 //   3.5 : 4.5, scaled to at most 600 × 771 pixels and re-encoded as JPEG,
 //   which drops EXIF data such as the GPS location. The result goes into the
 //   hidden input of its `[data-photo-field]`. The file is not uploaded.
+//   The choose button reads "change" and the remove button shows once
+//   there is a photo.
 (() => {
   "use strict";
 
@@ -291,12 +293,16 @@
   const showPhoto = (container, uri) => {
     const value = container.querySelector("[data-photo-value]");
     const thumbnail = container.querySelector("[data-photo-thumbnail]");
+    const choose = container.querySelector("[data-photo-choose]");
     const remove = container.querySelector("[data-photo-remove]");
     value.value = uri;
     if (uri) thumbnail.src = uri;
     else thumbnail.removeAttribute("src");
     thumbnail.hidden = !uri;
-    if (remove) remove.disabled = !uri;
+    choose.textContent = uri ? choose.dataset.changeLabel : choose.dataset.chooseLabel;
+    remove.hidden = !uri;
+    // The removed button had focus; keep it in the field.
+    if (!uri) choose.focus();
     value.dispatchEvent(new Event("input", { bubbles: true }));
   };
 

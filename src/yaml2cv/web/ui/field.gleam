@@ -73,11 +73,12 @@ pub fn select(
 
 /// Labels of the photo field.
 pub type PhotoLabels {
-  PhotoLabels(choose: String, remove: String, failed: String)
+  PhotoLabels(choose: String, change: String, remove: String, failed: String)
 }
 
 /// A profile photo (ADR 0028), held as a data URI in a hidden input, with a
-/// thumbnail and buttons to choose or remove it. `editor.js` shrinks a
+/// thumbnail and a button to choose it, which reads "change" and is joined
+/// by a remove button once there is a photo. `editor.js` shrinks a
 /// chosen file in the browser and writes it into the hidden input. Only
 /// JPEG and PNG data URIs are shown as thumbnail.
 pub fn photo(
@@ -86,9 +87,14 @@ pub fn photo(
   value value: String,
   labels labels: PhotoLabels,
 ) -> Element(message) {
+  let has_photo = value != ""
   let thumbnail = case is_photo_uri(value) {
     True -> [attribute.src(value)]
     False -> [attribute.attribute("hidden", "")]
+  }
+  let choose_label = case has_photo {
+    True -> labels.change
+    False -> labels.choose
   }
   html.div(
     [
@@ -124,15 +130,17 @@ pub fn photo(
             attribute.class("ui-button ui-button--secondary"),
             attribute.type_("button"),
             attribute.data("photo-choose", ""),
+            attribute.data("choose-label", labels.choose),
+            attribute.data("change-label", labels.change),
           ],
-          [html.text(labels.choose)],
+          [html.text(choose_label)],
         ),
         html.button(
           [
             attribute.class("ui-button ui-button--quiet"),
             attribute.type_("button"),
             attribute.data("photo-remove", ""),
-            attribute.disabled(value == ""),
+            attribute.hidden(!has_photo),
           ],
           [html.text(labels.remove)],
         ),

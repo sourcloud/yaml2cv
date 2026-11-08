@@ -26,8 +26,9 @@ pub fn texts() -> texts.Texts {
       whole_document: "Dokument",
       show_in_editor: "Im Editor zeigen",
       page: fn(number) { "Seite " <> int.to_string(number) },
-      choose_photo: "Foto auswählen…",
-      remove_photo: "Foto entfernen",
+      choose_photo: "Auswählen…",
+      change_photo: "Ändern…",
+      remove_photo: "Entfernen",
       photo_failed: "Das Foto konnte nicht gelesen werden. Bitte ein JPEG- oder PNG-Bild wählen.",
     ),
     editor: EditorTexts(

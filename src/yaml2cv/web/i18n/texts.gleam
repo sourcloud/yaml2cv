@@ -32,6 +32,7 @@ pub type UiTexts {
     page: fn(Int) -> String,
     /// Photo picker (ADR 0028).
     choose_photo: String,
+    change_photo: String,
     remove_photo: String,
     photo_failed: String,
   )

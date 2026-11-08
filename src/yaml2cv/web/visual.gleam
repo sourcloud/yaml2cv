@@ -43,6 +43,7 @@ pub fn view(draft: Draft, texts: Texts) -> Element(message) {
       field.Required(texts.ui.required_marker),
       field.PhotoLabels(
         choose: texts.ui.choose_photo,
+        change: texts.ui.change_photo,
         remove: texts.ui.remove_photo,
         failed: texts.ui.photo_failed,
       ),

@@ -51,28 +51,34 @@ select.ui-field__input {
 }
 
 /* Photo field (ADR 0028): thumbnail in the photo's 3.5 : 4.5 aspect ratio
- * followed by its buttons. */
+ * followed by its buttons, all on one row as tall as a text input so the
+ * field lines up with its neighbours in the block grid. */
 .ui-field__photo {
+  --ui-field-height: calc(
+    var(--font-size-sm) * var(--line-height-normal) + 2 * var(--space-2) + 2 *
+      var(--border-width)
+  );
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  min-height: var(--ui-field-height);
 }
 
 /* Buttons as tall as the text inputs beside them in the block grid. */
 .ui-field__photo .ui-button {
   padding-block: var(--space-2);
   line-height: var(--line-height-normal);
+  white-space: nowrap;
 }
 
 .ui-field__thumbnail {
-  width: 3.5rem;
+  height: var(--ui-field-height);
   aspect-ratio: 35 / 45;
   object-fit: cover;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
-.ui-field__thumbnail[hidden] {
+.ui-field__photo [hidden] {
   display: none;
 }
