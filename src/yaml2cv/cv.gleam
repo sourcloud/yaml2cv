@@ -38,6 +38,17 @@ pub type Person {
   Person(name: String, title: Option(String), address: Option(String))
 }
 
+/// A validated profile photo (ADR 0028).
+pub type Photo {
+  Photo(format: PhotoFormat, data: BitArray)
+}
+
+/// The image formats accepted for profile photos.
+pub type PhotoFormat {
+  Jpeg
+  Png
+}
+
 pub type Contact {
   Contact(
     email: Option(String),
