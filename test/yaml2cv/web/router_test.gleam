@@ -187,3 +187,11 @@ pub fn rejects_too_deeply_nested_yaml_test() {
   assert problem_type(response) == "/problems/content-too-large"
   assert string.contains(simulate.read_body(response), "nested")
 }
+
+pub fn compresses_editor_page_test() {
+  let response =
+    simulate.request(http.Get, "/")
+    |> simulate.header("accept-encoding", "gzip")
+    |> router.handle_request(context(Ok(<<"%PDF-fake">>)))
+  assert response.get_header(response, "content-encoding") == Ok("gzip")
+}

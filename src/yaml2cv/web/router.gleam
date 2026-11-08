@@ -6,6 +6,7 @@ import gleam/json
 import wisp.{type Request, type Response}
 import yaml2cv/render.{type Renderer}
 import yaml2cv/web/api
+import yaml2cv/web/compress
 import yaml2cv/web/editor
 
 /// Everything a request handler needs, injected so tests can swap parts.
@@ -30,6 +31,7 @@ pub fn handle_request(request: Request, context: Context) -> Response {
   use <- wisp.log_request(request)
   use <- wisp.rescue_crashes
   use request <- wisp.handle_head(request)
+  use <- compress.gzip(request)
   use <- security_headers
   use <- wisp.serve_static(
     request,

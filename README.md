@@ -95,6 +95,8 @@ Released images are published to `ghcr.io/sourcloud/yaml2cv` for
 - Set memory and CPU limits on the container (e.g. `--memory 512m
   --cpus 2`). Renders are bounded in time (`RENDER_TIMEOUT_MS`) but Typst's
   memory use is not limited by the application.
+- HTML, JSON and preview responses are gzip-compressed by the service when
+  the client accepts it; static files are not.
 - `/healthz` is suitable for liveness and readiness probes.
 - The image runs as an unprivileged user and works with a read-only root
   filesystem as long as `/tmp` is writable:
