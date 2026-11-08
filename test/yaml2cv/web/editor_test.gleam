@@ -57,6 +57,13 @@ pub fn editor_page_offers_the_schema_reference_test() {
   assert string.contains(body, "id=\"schema-help\"")
 }
 
+pub fn editor_page_offers_download_in_preview_panel_test() {
+  let body = get("/") |> simulate.read_body
+  let assert Ok(#(_, preview_panel)) = string.split_once(body, ">Preview</h2>")
+  assert string.contains(preview_panel, ">Download PDF</button>")
+  assert string.contains(body, "form=\"editor-form\"")
+}
+
 pub fn pages_send_security_headers_test() {
   let response = get("/")
   let assert Ok(csp) = response.get_header(response, "content-security-policy")

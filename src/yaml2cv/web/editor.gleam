@@ -33,89 +33,85 @@ const source_field = "cv"
 
 /// `GET /` — the editor, preloaded with `example`.
 pub fn page(example: String) -> Response {
-  shell.view(
-    title:,
-    actions: [
-      button.view(
-        button.Primary,
-        [attribute.type_("submit"), attribute.form("editor-form")],
-        "Download PDF",
-      ),
-    ],
-    content: [
-      html.div([attribute.class("layout-editor")], [
-        html.form(
-          [
-            attribute.id("editor-form"),
-            attribute.method("post"),
-            attribute.action("/editor/download"),
-          ],
-          [
-            panel.view(
-              title: "CV",
-              actions: [
-                button.view(
-                  button.Secondary,
-                  [
-                    attribute.type_("button"),
-                    attribute.data("dialog-open", schema_help.dialog_id),
-                    attribute.aria_haspopup("dialog"),
-                  ],
-                  "Schema",
-                ),
-                button.view(
-                  button.Secondary,
-                  [
-                    attribute.type_("button"),
-                    attribute.data("copy-from", source_field),
-                    attribute.data("copied-label", "Copied"),
-                  ],
-                  "Copy YAML",
-                ),
-              ],
-              body: [
-                code_area.view(
-                  id: source_field,
-                  name: "yaml",
-                  label: "CV source in YAML",
-                  value: example,
-                  attributes: [],
-                ),
-                html.div(
-                  [
-                    attribute.id("validation"),
-                    attribute.aria("live", "polite"),
-                    ..live_update("/editor/validate", "400ms")
-                  ],
-                  [],
-                ),
-              ],
-            ),
-          ],
-        ),
-        html.div([attribute.class("layout-editor__preview")], [
+  shell.view(title:, actions: [], content: [
+    html.div([attribute.class("layout-editor")], [
+      html.form(
+        [
+          attribute.id("editor-form"),
+          attribute.method("post"),
+          attribute.action("/editor/download"),
+        ],
+        [
           panel.view(
-            title: "Preview",
+            title: "CV",
             actions: [
-              indicator.view(id: "preview-indicator", label: "Rendering…"),
+              button.view(
+                button.Secondary,
+                [
+                  attribute.type_("button"),
+                  attribute.data("dialog-open", schema_help.dialog_id),
+                  attribute.aria_haspopup("dialog"),
+                ],
+                "Schema",
+              ),
+              button.view(
+                button.Secondary,
+                [
+                  attribute.type_("button"),
+                  attribute.data("copy-from", source_field),
+                  attribute.data("copied-label", "Copied"),
+                ],
+                "Copy YAML",
+              ),
             ],
             body: [
+              code_area.view(
+                id: source_field,
+                name: "yaml",
+                label: "CV source in YAML",
+                value: example,
+                attributes: [],
+              ),
               html.div(
                 [
-                  attribute.id("preview"),
-                  attribute.attribute("hx-indicator", "#preview-indicator"),
-                  ..live_update("/editor/preview", "1s")
+                  attribute.id("validation"),
+                  attribute.aria("live", "polite"),
+                  ..live_update("/editor/validate", "400ms")
                 ],
                 [],
               ),
             ],
           ),
-        ]),
+        ],
+      ),
+      html.div([attribute.class("layout-editor__preview")], [
+        panel.view(
+          title: "Preview",
+          actions: [
+            indicator.view(id: "preview-indicator", label: "Rendering…"),
+            // Outside the form; `form` makes it submit the editor form.
+            button.view(
+              button.Primary,
+              [attribute.type_("submit"), attribute.form("editor-form")],
+              "Download PDF",
+            ),
+          ],
+          body: [
+            html.div(
+              [
+                attribute.id("preview"),
+                attribute.attribute("hx-indicator", "#preview-indicator"),
+                ..live_update("/editor/preview", "1s")
+              ],
+              [],
+            ),
+          ],
+        ),
       ]),
-      // Outside the editor form: the dialog has a form of its own.
-      schema_help.view(),
-    ],
-  )
+    ]),
+    // Outside the editor form: the dialog has a form of its own.
+    schema_help.view(),
+  ])
   |> element.to_document_string
   |> wisp.html_response(200)
 }
