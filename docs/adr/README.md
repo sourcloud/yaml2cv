@@ -22,3 +22,4 @@ for the process.
 | [0014](0014-upgrade-to-erlang-otp-29.md) | Upgrade to Erlang/OTP 29 | Accepted |
 | [0015](0015-minimal-theme.md) | Minimal single-column theme | Accepted |
 | [0016](0016-print-typography-refinements.md) | Print typography refinements for both themes | Accepted |
+| [0017](0017-paper-size-margins-and-spacing.md) | Paper size, margins, spacing and black | Accepted |
