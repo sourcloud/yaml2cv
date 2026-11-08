@@ -8,11 +8,11 @@ test:
 
 # Format sources
 fmt:
-    gleam format src test
+    gleam format src test dev
 
 # Check formatting and types, then run tests (what CI runs)
 check:
-    gleam format --check src test
+    gleam format --check src test dev
     gleam check
     gleam test
 
