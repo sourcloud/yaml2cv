@@ -1,0 +1,28 @@
+/* ui-field-table: documented keys. Gleam: yaml2cv/web/ui/field_table */
+.ui-field-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ui-field-table th,
+.ui-field-table td {
+  padding: var(--space-1) var(--space-2);
+  text-align: start;
+  vertical-align: top;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.ui-field-table thead th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.ui-field-table tbody th {
+  font-weight: var(--font-weight-regular);
+  white-space: nowrap;
+}
+
+.ui-field-table__requirement {
+  white-space: nowrap;
+  color: var(--color-text-muted);
+}

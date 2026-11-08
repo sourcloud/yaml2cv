@@ -9,6 +9,8 @@
 //   move the cursor to that 1-based position in the field.
 // - Buttons with `data-copy-from` copy that field's text to the clipboard
 //   and briefly show `data-copied-label`.
+// - Buttons with `data-dialog-open` open the modal `<dialog>` with that id;
+//   a click on its backdrop closes it (ADR 0022).
 (() => {
   "use strict";
 
@@ -116,5 +118,24 @@
     state.timer = setTimeout(() => {
       button.textContent = state.text;
     }, 2000);
+  });
+
+  document.addEventListener("click", (event) => {
+    const opener = event.target.closest?.("[data-dialog-open]");
+    if (opener) {
+      const dialog = document.getElementById(opener.dataset.dialogOpen);
+      if (dialog instanceof HTMLDialogElement && !dialog.open) dialog.showModal();
+      return;
+    }
+    // A click on the backdrop targets the dialog element itself, outside its
+    // content box. Browsers supporting `closedby="any"` handle this natively.
+    const dialog = event.target;
+    if (dialog instanceof HTMLDialogElement && dialog.open) {
+      const box = dialog.getBoundingClientRect();
+      const inside =
+        event.clientX >= box.left && event.clientX <= box.right &&
+        event.clientY >= box.top && event.clientY <= box.bottom;
+      if (!inside) dialog.close();
+    }
   });
 })();

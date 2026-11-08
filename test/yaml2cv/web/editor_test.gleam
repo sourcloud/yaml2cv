@@ -50,6 +50,13 @@ pub fn editor_page_offers_copying_the_yaml_test() {
   assert string.contains(body, ">Copy YAML</button>")
 }
 
+pub fn editor_page_offers_the_schema_reference_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-dialog-open=\"schema-help\"")
+  assert string.contains(body, "<dialog")
+  assert string.contains(body, "id=\"schema-help\"")
+}
+
 pub fn pages_send_security_headers_test() {
   let response = get("/")
   let assert Ok(csp) = response.get_header(response, "content-security-policy")

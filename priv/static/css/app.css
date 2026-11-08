@@ -20,4 +20,6 @@
 @import url("components/page-stack.css") layer(components);
 @import url("components/indicator.css") layer(components);
 @import url("components/theme-switch.css") layer(components);
+@import url("components/dialog.css") layer(components);
+@import url("components/field-table.css") layer(components);
 @import url("layout.css") layer(layout);

@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui field table
+---
+<table class="ui-field-table"><thead><tr><th scope="col">Key</th><th scope="col">Required</th><th scope="col">Description</th></tr></thead><tbody><tr><th scope="row"><code class="ui-field-table__key">name</code></th><td class="ui-field-table__requirement">required</td><td>Your &lt;full&gt; name.</td></tr><tr><th scope="row"><code class="ui-field-table__key">title</code></th><td class="ui-field-table__requirement">optional</td><td></td></tr></tbody></table>

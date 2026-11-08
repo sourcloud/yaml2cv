@@ -1,0 +1,54 @@
+/* ui-dialog: modal dialog. Gleam: yaml2cv/web/ui/dialog */
+.ui-dialog {
+  width: min(48rem, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100dvh - 2 * var(--space-8));
+  padding: 0;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.ui-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.ui-dialog__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.ui-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow-y: auto;
+  font-size: var(--font-size-sm);
+}
+
+.ui-dialog__body h3 {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-dialog__body ul {
+  padding-inline-start: var(--space-6);
+}

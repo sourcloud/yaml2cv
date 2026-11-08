@@ -16,6 +16,7 @@ import yaml2cv/cv/decode.{
   SyntaxError,
 }
 import yaml2cv/render.{type RenderError, type Renderer}
+import yaml2cv/web/schema_help
 import yaml2cv/web/ui/alert
 import yaml2cv/web/ui/button
 import yaml2cv/web/ui/code_area
@@ -53,6 +54,15 @@ pub fn page(example: String) -> Response {
             panel.view(
               title: "CV",
               actions: [
+                button.view(
+                  button.Secondary,
+                  [
+                    attribute.type_("button"),
+                    attribute.data("dialog-open", schema_help.dialog_id),
+                    attribute.aria_haspopup("dialog"),
+                  ],
+                  "Schema",
+                ),
                 button.view(
                   button.Secondary,
                   [
@@ -102,6 +112,8 @@ pub fn page(example: String) -> Response {
           ),
         ]),
       ]),
+      // Outside the editor form: the dialog has a form of its own.
+      schema_help.view(),
     ],
   )
   |> element.to_document_string

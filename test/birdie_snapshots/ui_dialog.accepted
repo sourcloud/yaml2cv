@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui dialog
+---
+<dialog aria-labelledby="help-title" class="ui-dialog" closedby="any" id="help"><header class="ui-dialog__header"><h2 class="ui-dialog__title" id="help-title">Help &lt;me&gt;</h2><form method="dialog"><button class="ui-button ui-button--secondary">Close</button></form></header><div class="ui-dialog__body">body</div></dialog>
