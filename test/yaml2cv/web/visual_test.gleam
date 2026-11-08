@@ -11,7 +11,6 @@ import yaml2cv/web/visual_form
 
 fn sample() -> draft.Draft {
   Draft(
-    ..draft.empty,
     style: draft.Style(theme: "minimal", color: "", paper: ""),
     person: draft.Person(name: "Jane <Roe>", title: "", address: ""),
     contact: Contact(..draft.empty.contact, links: [Link("GitHub", "https://x")]),

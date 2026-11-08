@@ -6,6 +6,7 @@
 //// `sections.1.entries.0.bullets.2`. Every section carries a hidden
 //// `sections.N.kind` field, so empty sections keep their kind.
 
+import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/result
@@ -140,22 +141,31 @@ fn section_fields(section: Section, index: Int) -> List(#(String, String)) {
 
 // --- Fields to draft ---------------------------------------------------------
 
+/// The submitted fields by name, and the item count of every list, keyed
+/// by the list's name. Both are built in one pass, so parsing stays linear
+/// in the number of fields.
 type Form {
-  Form(values: List(#(String, String)), max_items: Int)
+  Form(values: Dict(String, String), counts: Dict(String, Int))
 }
 
 /// Rebuilds a draft from submitted form fields. Missing fields are empty;
 /// unknown fields and section kinds are ignored.
 pub fn parse(values: List(#(String, String))) -> Draft {
+  // A list cannot have more items than the form has fields; larger indices
+  // are ignored so a crafted name cannot allocate a huge list.
+  let max_items = list.length(values)
   let form =
-    Form(
-      values: list.map(values, fn(pair) {
-        #(pair.0, string.replace(pair.1, "\r\n", "\n"))
-      }),
-      // A list cannot have more items than the form has fields; larger
-      // indices are ignored so a crafted name cannot allocate a huge list.
-      max_items: list.length(values),
-    )
+    list.fold(values, Form(dict.new(), dict.new()), fn(form, pair) {
+      let #(name, value) = pair
+      Form(
+        values: dict.insert(
+          form.values,
+          name,
+          string.replace(value, "\r\n", "\n"),
+        ),
+        counts: count_indices(form.counts, string.split(name, "."), max_items),
+      )
+    })
   Draft(
     style: Style(
       theme: get(form, "style.theme"),
@@ -213,7 +223,30 @@ fn parse_section(form: Form, prefix: String, index: Int) -> Section {
 }
 
 fn get(form: Form, name: String) -> String {
-  list.key_find(form.values, name) |> result.unwrap("")
+  dict.get(form.values, name) |> result.unwrap("")
+}
+
+/// Records, for every numeric segment of a field name, that the list named
+/// by the segments before it has at least that index plus one items.
+fn count_indices(
+  counts: Dict(String, Int),
+  segments: List(String),
+  max_items: Int,
+) -> Dict(String, Int) {
+  let #(counts, _) =
+    list.fold(segments, #(counts, []), fn(state, segment) {
+      let #(counts, before) = state
+      let counts = case before, int.parse(segment) {
+        [_, ..], Ok(index) if index >= 0 && index < max_items -> {
+          let list_name = name(list.reverse(before))
+          let count = dict.get(counts, list_name) |> result.unwrap(0)
+          dict.insert(counts, list_name, int.max(count, index + 1))
+        }
+        _, _ -> counts
+      }
+      #(counts, [segment, ..before])
+    })
+  counts
 }
 
 fn items(form: Form, ref: ListRef, item: fn(String) -> a) -> List(a) {
@@ -226,22 +259,7 @@ fn items_indexed(
   ref: ListRef,
   item: fn(String, Int) -> a,
 ) -> List(a) {
-  let prefix = list_name(ref) <> "."
-  let count =
-    form.values
-    |> list.filter_map(fn(pair) {
-      use rest <- result.try(case string.starts_with(pair.0, prefix) {
-        True -> Ok(string.drop_start(pair.0, string.length(prefix)))
-        False -> Error(Nil)
-      })
-      let segment = case string.split_once(rest, ".") {
-        Ok(#(segment, _)) -> segment
-        Error(Nil) -> rest
-      }
-      int.parse(segment)
-    })
-    |> list.filter(fn(index) { index >= 0 && index < form.max_items })
-    |> list.fold(0, fn(count, index) { int.max(count, index + 1) })
+  let count = dict.get(form.counts, list_name(ref)) |> result.unwrap(0)
   list.repeat(Nil, count)
   |> list.index_map(fn(_, index) { item(item_name(ref, index), index) })
 }
