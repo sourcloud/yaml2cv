@@ -97,8 +97,17 @@ fn in_job(
 
 fn prepare(config: Config, job: String, cv: Cv) -> Result(Nil, RenderError) {
   let theme = config.themes_directory <> "/" <> cv.theme_name(cv.style.theme)
+  // CVs are personal data: keep the work and job directories private to the
+  // service user. Restricting an existing work directory also fails, rather
+  // than writing into it, when it belongs to someone else.
   {
-    use _ <- result.try(simplifile.create_directory_all(job))
+    use _ <- result.try(simplifile.create_directory_all(config.work_directory))
+    use _ <- result.try(simplifile.set_permissions_octal(
+      config.work_directory,
+      0o700,
+    ))
+    use _ <- result.try(simplifile.create_directory(job))
+    use _ <- result.try(simplifile.set_permissions_octal(job, 0o700))
     use _ <- result.try(simplifile.copy_directory(at: theme, to: job))
     simplifile.write(
       to: job <> "/cv.json",

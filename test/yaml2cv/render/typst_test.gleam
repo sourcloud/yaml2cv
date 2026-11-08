@@ -1,4 +1,5 @@
 import gleam/bit_array
+import gleam/int
 import gleam/list
 import gleam/string
 import simplifile
@@ -84,4 +85,14 @@ pub fn renders_png_pages_up_to_the_page_limit_test() {
   let assert Ok(pages) = typst.render_png_pages(config(), cv)
   assert list.length(pages) == typst.max_preview_pages
   assert work_directory_is_empty()
+}
+
+pub fn keeps_render_directories_private_test() {
+  let config = Config(..config(), executable: "test/fixtures/bin/mode-typst")
+  let assert Error(CompileFailed(job_mode)) =
+    typst.render_pdf(config, example_cv())
+  assert job_mode == "drwx------\n"
+
+  let assert Ok(info) = simplifile.file_info(work_directory)
+  assert int.bitwise_and(info.mode, 0o777) == 0o700
 }

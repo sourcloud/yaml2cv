@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fake typst: reports the permission bits of its working directory.
+ls -ld . | cut -c1-10
+exit 1
