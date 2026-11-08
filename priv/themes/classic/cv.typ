@@ -24,7 +24,13 @@
 // The paragraph leading; all vertical gaps are multiples of it (ADR 0017).
 #let unit = 0.6em
 
-#set document(title: cv.person.name, author: cv.person.name)
+// The generator text is set by the service, not the CV (ADR 0018).
+#set document(
+  title: cv.person.name,
+  author: cv.person.name,
+  description: sys.inputs.at("generator", default: none),
+  keywords: ("yaml2cv",),
+)
 #set page(
   paper: papers.at(cv.style.paper),
   margin: (x: 2cm, top: 2cm, bottom: 2.5cm),

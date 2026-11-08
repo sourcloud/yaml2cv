@@ -16,6 +16,7 @@ fn config() -> Config {
     themes_directory: "priv/themes",
     work_directory:,
     timeout: 10_000,
+    generator: "Generated with yaml2cv test",
   )
 }
 
@@ -58,6 +59,21 @@ pub fn renders_letter_paper_in_every_theme_test() {
   assert #(width, height)
     == #(typst.preview_ppi * 17 / 2, typst.preview_ppi * 11)
 }
+
+pub fn marks_pdf_as_generated_by_yaml2cv_in_every_theme_test() {
+  use #(_, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) =
+    typst.render_pdf(config(), with_theme(example_cv(), theme))
+  assert contains(pdf, <<"/Subject(Generated with yaml2cv test)">>)
+  assert contains(pdf, <<"/Keywords(yaml2cv)">>)
+}
+
+fn contains(haystack: BitArray, needle: BitArray) -> Bool {
+  binary_matches(haystack, needle) != []
+}
+
+@external(erlang, "binary", "matches")
+fn binary_matches(subject: BitArray, pattern: BitArray) -> List(#(Int, Int))
 
 pub fn treats_user_content_as_text_not_markup_test() {
   let assert Ok(cv) =

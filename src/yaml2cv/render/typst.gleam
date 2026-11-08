@@ -23,6 +23,9 @@ pub type Config {
     work_directory: String,
     /// Maximum compile time in milliseconds.
     timeout: Int,
+    /// Text identifying the producing software; themes write it into the
+    /// PDF metadata (ADR 0018).
+    generator: String,
   )
 }
 
@@ -131,6 +134,8 @@ fn compile(
     "--root",
     ".",
     "--ignore-system-fonts",
+    "--input",
+    "generator=" <> config.generator,
     "cv.typ",
     ..output_arguments
   ]

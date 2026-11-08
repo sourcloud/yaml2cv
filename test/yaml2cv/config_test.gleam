@@ -3,7 +3,12 @@ import yaml2cv/config.{Config}
 import yaml2cv/render/typst
 
 fn parse(env: List(#(String, String))) {
-  config.parse(dict.from_list(env), schedulers: 4, priv_directory: "/priv")
+  config.parse(
+    dict.from_list(env),
+    schedulers: 4,
+    priv_directory: "/priv",
+    version: "1.2.3",
+  )
 }
 
 pub fn uses_defaults_for_empty_environment_test() {
@@ -21,6 +26,7 @@ pub fn uses_defaults_for_empty_environment_test() {
         themes_directory: "/priv/themes",
         work_directory: "/tmp/yaml2cv",
         timeout: 10_000,
+        generator: "Generated with yaml2cv 1.2.3 (https://github.com/sourcloud/yaml2cv)",
       ),
     ))
 }
@@ -49,6 +55,7 @@ pub fn reads_all_variables_test() {
       themes_directory: "/priv/themes",
       work_directory: "/var/yaml2cv",
       timeout: 3000,
+      generator: "Generated with yaml2cv 1.2.3 (https://github.com/sourcloud/yaml2cv)",
     )
 }
 
@@ -70,4 +77,9 @@ pub fn reports_every_invalid_variable_test() {
       "RENDER_CONCURRENCY must be a positive integer, got \"0\"",
       "TYPST_PATH must not be empty",
     ])
+}
+
+pub fn reads_application_version_test() {
+  let assert Ok(version) = config.version()
+  assert version != ""
 }

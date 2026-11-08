@@ -28,20 +28,28 @@ pub type Config {
 
 /// Reads the configuration from the process environment.
 pub fn load() -> Result(Config, List(String)) {
-  case application.priv_directory("yaml2cv") {
-    Ok(priv) ->
-      parse(envoy.all(), schedulers: schedulers_online(), priv_directory: priv)
-    Error(Nil) -> Error(["could not locate the priv directory of yaml2cv"])
+  case application.priv_directory("yaml2cv"), version() {
+    Ok(priv), Ok(version) ->
+      parse(
+        envoy.all(),
+        schedulers: schedulers_online(),
+        priv_directory: priv,
+        version:,
+      )
+    Error(Nil), _ -> Error(["could not locate the priv directory of yaml2cv"])
+    _, Error(Nil) -> Error(["could not read the version of yaml2cv"])
   }
 }
 
 /// Builds a configuration from environment variables, reporting every
 /// invalid variable. `schedulers` sets the default render concurrency;
-/// themes, static files and examples are found in `priv_directory`.
+/// themes, static files and examples are found in `priv_directory`;
+/// `version` is the yaml2cv release named in generated PDFs.
 pub fn parse(
   env: Dict(String, String),
   schedulers schedulers: Int,
   priv_directory priv_directory: String,
+  version version: String,
 ) -> Result(Config, List(String)) {
   let tmp = case dict.get(env, "TMPDIR") {
     Ok(dir) if dir != "" -> trim_trailing_slash(dir)
@@ -75,6 +83,9 @@ pub fn parse(
           themes_directory: priv_directory <> "/themes",
           work_directory:,
           timeout:,
+          generator: "Generated with yaml2cv "
+            <> version
+            <> " (https://github.com/sourcloud/yaml2cv)",
         ),
       ))
     _ -> Error(list.reverse(errors))
@@ -153,6 +164,10 @@ fn trim_trailing_slash(path: String) -> String {
     False -> path
   }
 }
+
+/// The version of the yaml2cv OTP application, taken from `gleam.toml`.
+@external(erlang, "yaml2cv_system_ffi", "application_version")
+pub fn version() -> Result(String, Nil)
 
 @external(erlang, "yaml2cv_system_ffi", "schedulers_online")
 fn schedulers_online() -> Int
