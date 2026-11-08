@@ -23,3 +23,4 @@ for the process.
 | [0015](0015-minimal-theme.md) | Minimal single-column theme | Accepted |
 | [0016](0016-print-typography-refinements.md) | Print typography refinements for both themes | Accepted |
 | [0017](0017-paper-size-margins-and-spacing.md) | Paper size, margins, spacing and black | Accepted |
+| [0018](0018-pdf-generator-metadata.md) | Mark generated PDFs with yaml2cv metadata | Accepted |
