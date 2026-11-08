@@ -1,0 +1,167 @@
+//// English UI texts, the default (ADR 0025).
+
+import gleam/int
+import gleam/string
+import yaml2cv/cv/decode
+import yaml2cv/web/i18n/texts.{
+  EditorTexts, SchemaTexts, Texts, UiTexts, VisualTexts,
+}
+
+/// Every English UI text.
+pub fn texts() -> texts.Texts {
+  Texts(
+    ui: UiTexts(
+      theme_label: "Colour theme",
+      theme_system: "System",
+      theme_light: "Light",
+      theme_dark: "Dark",
+      language_label: "Language",
+      close: "Close",
+      required_marker: " (required)",
+      whole_document: "document",
+      show_in_editor: "Show in editor",
+      page: fn(number) { "Page " <> int.to_string(number) },
+    ),
+    editor: EditorTexts(
+      cv_panel: "CV",
+      edit_mode: "Edit mode",
+      mode_yaml: "YAML",
+      mode_visual: "Visual",
+      schema_button: "Schema",
+      copy_yaml: "Copy YAML",
+      copied: "Copied",
+      copy_failed: "Copy failed",
+      source_label: "CV source in YAML",
+      preview_panel: "Preview",
+      rendering: "Rendering…",
+      download_pdf: "Download PDF",
+      valid: "Valid CV",
+      problems: fn(count) {
+        case count {
+          1 -> "1 problem"
+          _ -> int.to_string(count) <> " problems"
+        }
+      },
+      visual_needs_fixes: "Visual mode needs these fixed first",
+      syntax_hint: "Parsing stops at the first syntax error. Fix it to see any further problems.",
+      location: fn(line, column) {
+        "line " <> int.to_string(line) <> ", column " <> int.to_string(column)
+      },
+      schema_problem: decode.describe,
+      too_complex: "the document is nested too deeply to process",
+      too_large: fn(max_nodes) {
+        "the document has more than " <> int.to_string(max_nodes) <> " nodes"
+      },
+      preview_unavailable: "Preview unavailable",
+      download_failed: "Download failed",
+      busy: "The server is busy right now. Try again in a moment.",
+      timed_out: "Rendering took too long.",
+      renderer_unavailable: "The renderer is currently unavailable.",
+      render_failed: "The CV could not be rendered.",
+      cannot_create_pdf: "Cannot create PDF",
+      back_to_editor: "Back to editor",
+    ),
+    visual: VisualTexts(
+      rewrite_title: "Editing here rewrites the YAML",
+      rewrite_body: "The first change made with the blocks rewrites the YAML in a uniform layout; comments and custom formatting are removed.",
+      style: "Style",
+      theme: "Theme",
+      colour: "Colour",
+      paper: "Paper",
+      default_option: fn(name) { "Default (" <> name <> ")" },
+      person: "Person",
+      name: "Name",
+      title: "Title",
+      address: "Address",
+      contact: "Contact",
+      email: "Email",
+      phone: "Phone",
+      website: "Website",
+      links: "Links",
+      link: "Link",
+      add_link: "Add link",
+      label: "Label",
+      url: "URL",
+      sections: "Sections",
+      section: "Section",
+      kind: fn(kind) {
+        case kind {
+          "skills" -> "Skills"
+          "text" -> "Text"
+          _ -> "Entries"
+        }
+      },
+      section_title: fn(kind) { kind <> " section" },
+      add_section: fn(kind) { "Add " <> string.lowercase(kind) <> " section" },
+      heading: "Heading",
+      text: "Text",
+      entries: "Entries",
+      entry: "Entry",
+      add_entry: "Add entry",
+      timespan: "Timespan",
+      organisation: "Organisation",
+      location: "Location",
+      bullets: "Bullets",
+      bullet: "Bullet",
+      add_bullet: "Add bullet",
+      skills: "Skills",
+      skill: "Skill",
+      add_skill: "Add skill",
+      level: "Level",
+      remove: "Remove",
+      move_up: fn(item) { "Move " <> string.lowercase(item) <> " up" },
+      move_down: fn(item) { "Move " <> string.lowercase(item) <> " down" },
+      remove_item: fn(item) { "Remove " <> string.lowercase(item) },
+    ),
+    schema: SchemaTexts(
+      title: "CV schema",
+      intro: "A CV is one YAML document. Keys not listed here are errors. Text values may be strings or numbers and must not be empty. Problems are listed below the editor while you type.",
+      key_header: "Key",
+      requirement_header: "Required",
+      description_header: "Description",
+      required: "required",
+      optional: "optional",
+      if_kind: fn(kind) { "if kind is " <> kind },
+      one_of: "One of:",
+      default: "Default:",
+      document_title: "Document",
+      document_intro: "The top level of the document.",
+      schema_version: "Schema version. Must be `1`.",
+      style_key: "Visual settings; see `style`.",
+      person_key: "Who the CV is about; see `person`.",
+      contact_key: "Contact details; see `contact`.",
+      sections_key: "The sections in the order they appear; see `sections[]`. May be empty: `[]`.",
+      style_intro: "How the CV looks. Every key has a default.",
+      theme: "Layout and typography.",
+      color: "Accent colour.",
+      paper: "Paper size.",
+      person_intro: "Shown at the top of the CV.",
+      person_name: "Full name, shown as the heading.",
+      person_title: "Job title or tagline under the name.",
+      person_address: "Postal address.",
+      contact_intro: "How to reach you. Every key is optional.",
+      email: "Email address.",
+      phone: "Phone number.",
+      website: "Website address.",
+      links: "Further links; see `contact.links[]`.",
+      link_intro: "Each item of the links list.",
+      link_label: "Text shown, for example `GitHub`.",
+      link_url: "Address the link points to.",
+      section_intro: "Each section has a name and a kind; the kind decides which key holds its content.",
+      section_name: "Section heading.",
+      section_kind: "What the section contains.",
+      section_entries: "List of dated items; see `sections[].entries[]`.",
+      section_items: "List of skills or languages; see `sections[].items[]`.",
+      section_text: "A paragraph of free text.",
+      entry_intro: "A dated item such as a job or a degree.",
+      timespan: "Period as text, for example `2019 – 2023` or `since 2020`.",
+      entry_title: "Role, degree or similar.",
+      organization: "Employer, school or similar.",
+      location: "City or place.",
+      bullets: "List of text lines shown as bullet points.",
+      skill_intro: "A skill or language.",
+      skill_name: "Name of the skill or language.",
+      skill_level: "Level as text, for example `Fluent`.",
+    ),
+  )
+}

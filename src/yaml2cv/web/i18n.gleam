@@ -8,6 +8,9 @@ import gleam/option.{type Option}
 import gleam/result
 import gleam/string
 import wisp.{type Request}
+import yaml2cv/web/i18n/de
+import yaml2cv/web/i18n/en
+import yaml2cv/web/i18n/texts.{type Texts}
 
 /// A supported UI language.
 pub type Locale {
@@ -20,6 +23,14 @@ pub const all = [En, De]
 
 /// The request header htmx sends with the page's locale.
 pub const header = "x-yaml2cv-lang"
+
+/// Every UI text in `locale`.
+pub fn texts(locale: Locale) -> Texts {
+  case locale {
+    En -> en.texts()
+    De -> de.texts()
+  }
+}
 
 /// The ISO 639-1 code of a locale, as used in `lang` attributes.
 pub fn code(locale: Locale) -> String {

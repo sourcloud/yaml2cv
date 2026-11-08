@@ -2,6 +2,7 @@ import gleam/http
 import gleam/http/request
 import gleam/option.{None, Some}
 import wisp/simulate
+import yaml2cv/cv/decode
 import yaml2cv/web/i18n.{De, En}
 
 pub fn code_round_trip_test() {
@@ -62,4 +63,19 @@ pub fn from_request_precedence_test() {
     )
     == De
   assert i18n.from_request(simulate.request(http.Get, "/"), None) == En
+}
+
+pub fn texts_per_locale_test() {
+  assert i18n.texts(En).editor.download_pdf == "Download PDF"
+  assert i18n.texts(De).editor.download_pdf == "PDF herunterladen"
+  assert i18n.texts(En).editor.problems(1) == "1 problem"
+  assert i18n.texts(De).editor.problems(3) == "3 Probleme"
+}
+
+pub fn english_schema_problems_match_the_api_test() {
+  let problem = decode.ExpectedOneOf(["a", "b"])
+  assert i18n.texts(En).editor.schema_problem(problem)
+    == decode.describe(problem)
+  assert i18n.texts(De).editor.schema_problem(problem)
+    != decode.describe(problem)
 }
