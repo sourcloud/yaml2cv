@@ -73,10 +73,33 @@ to_node(#yamerl_map{pairs = Pairs}, Budget) ->
 to_node(Other, _) ->
     throw({unsupported_node, atom_to_binary(element(1, Other))}).
 
+syntax_error(#yamerl_parsing_error{
+    name = unexpected_token, token = Token, text = Text, line = Line, column = Column
+}) when is_tuple(Token), is_list(Text) ->
+    {syntax_error, unexpected_token(element(1, Token), Text), location(Line), location(Column)};
 syntax_error(#yamerl_parsing_error{text = Text, line = Line, column = Column}) ->
     {syntax_error, message(Text), location(Line), location(Column)};
 syntax_error(#yamerl_invalid_option{text = Text}) ->
     {syntax_error, message(Text), 0, 0}.
+
+%% yamerl names its internal token records in this message, e.g.
+%% `Unexpected "yamerl_scalar" token following a "yamerl_scalar" token`.
+%% The offending token is a scalar or a collection start; the preceding one,
+%% only named in the text, is a scalar or a collection end.
+unexpected_token(Kind, Text) ->
+    Offending =
+        case Kind of
+            yamerl_scalar -> <<"value">>;
+            yamerl_collection_start -> <<"list or mapping">>;
+            _ -> <<"content">>
+        end,
+    Preceding =
+        case string:find(Text, "following a \"yamerl_collection_end\"") of
+            nomatch -> <<"a value">>;
+            _ -> <<"the end of a list or mapping">>
+        end,
+    <<"Unexpected ", Offending/binary, " after ", Preceding/binary,
+        "; check the indentation or a missing \":\"">>.
 
 message(undefined) -> <<"invalid YAML">>;
 message(Text) -> unicode:characters_to_binary(Text).

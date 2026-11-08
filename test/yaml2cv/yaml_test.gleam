@@ -53,6 +53,33 @@ pub fn reports_syntax_error_with_location_test() {
     ))
 }
 
+pub fn describes_value_after_value_without_yamerl_internals_test() {
+  assert yaml.parse("a: 1\nb\nc: 2\n")
+    == Error(SyntaxError(
+      message: "Unexpected value after a value; check the indentation or a missing \":\"",
+      line: 2,
+      column: 1,
+    ))
+}
+
+pub fn describes_value_after_collection_end_test() {
+  assert yaml.parse("a: [1] b\n")
+    == Error(SyntaxError(
+      message: "Unexpected value after the end of a list or mapping; check the indentation or a missing \":\"",
+      line: 1,
+      column: 8,
+    ))
+}
+
+pub fn describes_collection_after_collection_end_test() {
+  assert yaml.parse("a: [1] [2]\n")
+    == Error(SyntaxError(
+      message: "Unexpected list or mapping after the end of a list or mapping; check the indentation or a missing \":\"",
+      line: 1,
+      column: 8,
+    ))
+}
+
 pub fn rejects_alias_expansion_bombs_test() {
   // Seven levels of ten aliases each expand to ten million nodes.
   let level = fn(name, item) {
