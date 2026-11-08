@@ -13,7 +13,12 @@ import yaml2cv/web/router.{Context}
 const valid_cv = "schema_version: 1\nperson: {name: Jane Roe}\nsections: []\n"
 
 fn context(result: Result(BitArray, RenderError)) -> router.Context {
-  Context(renderer: Renderer(render: fn(_) { result }), max_body_bytes: 1024)
+  Context(
+    renderer: Renderer(render_pdf: fn(_) { result }, render_png_pages: fn(_) {
+      Ok([])
+    }),
+    max_body_bytes: 1024,
+  )
 }
 
 fn post(path: String, body: String, content_type: String) {

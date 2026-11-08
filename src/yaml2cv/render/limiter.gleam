@@ -11,7 +11,7 @@ import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervision
 import gleam/result
-import yaml2cv/render.{type Renderer, Overloaded, Renderer}
+import yaml2cv/render.{type RenderError, type Renderer, Overloaded, Renderer}
 
 pub opaque type Limiter {
   Limiter(subject: Subject(Message))
@@ -85,25 +85,39 @@ pub fn limit(
   with limiter: Limiter,
   wait wait: Int,
 ) -> Renderer {
-  Renderer(render: fn(cv) {
-    let slot = process.new_subject()
-    process.send(limiter.subject, Acquire(slot:, caller: process.self()))
-    case process.receive(slot, wait) {
-      Ok(Nil) -> {
-        use <- exception.defer(fn() {
-          process.send(limiter.subject, Leave(slot))
-        })
-        renderer.render(cv)
-      }
-      Error(Nil) -> {
-        process.call(limiter.subject, 1000, Cancel(slot, _))
-        // A slot granted just before the cancel is released by it; drop the
-        // grant message so it does not linger in the mailbox.
-        let _ = process.receive(slot, 0)
-        Error(Overloaded)
-      }
+  Renderer(
+    render_pdf: fn(cv) {
+      use <- with_slot(limiter, wait)
+      renderer.render_pdf(cv)
+    },
+    render_png_pages: fn(cv) {
+      use <- with_slot(limiter, wait)
+      renderer.render_png_pages(cv)
+    },
+  )
+}
+
+/// Runs `task` while holding a slot.
+fn with_slot(
+  limiter: Limiter,
+  wait: Int,
+  task: fn() -> Result(a, RenderError),
+) -> Result(a, RenderError) {
+  let slot = process.new_subject()
+  process.send(limiter.subject, Acquire(slot:, caller: process.self()))
+  case process.receive(slot, wait) {
+    Ok(Nil) -> {
+      use <- exception.defer(fn() { process.send(limiter.subject, Leave(slot)) })
+      task()
     }
-  })
+    Error(Nil) -> {
+      process.call(limiter.subject, 1000, Cancel(slot, _))
+      // A slot granted just before the cancel is released by it; drop the
+      // grant message so it does not linger in the mailbox.
+      let _ = process.receive(slot, 0)
+      Error(Overloaded)
+    }
+  }
 }
 
 fn handle_message(

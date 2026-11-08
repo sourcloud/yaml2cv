@@ -54,7 +54,7 @@ pub fn handle_request(request: Request, context: Context) -> Response {
 }
 
 fn render(renderer: Renderer, cv: Cv) -> Response {
-  case renderer.render(cv) {
+  case renderer.render_pdf(cv) {
     Ok(pdf) ->
       wisp.response(200)
       |> response.set_header("content-type", "application/pdf")

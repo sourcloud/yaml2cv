@@ -2,7 +2,9 @@
 
 import gleam/int
 import gleam/json
+import gleam/list
 import gleam/result
+import gleam/string
 import simplifile
 import yaml2cv/cv.{type Cv}
 import yaml2cv/cv/encode
@@ -24,14 +26,60 @@ pub type Config {
   )
 }
 
+/// Resolution of preview images, in pixels per inch.
+pub const preview_ppi = 110
+
+/// Preview images are rendered for at most this many pages.
+pub const max_preview_pages = 10
+
 /// Creates a renderer backed by Typst.
 pub fn new(config: Config) -> Renderer {
-  Renderer(render: render(config, _))
+  Renderer(
+    render_pdf: render_pdf(config, _),
+    render_png_pages: render_png_pages(config, _),
+  )
 }
 
-/// Renders a CV to PDF bytes. The temporary job directory is removed
-/// afterwards, whatever the outcome.
-pub fn render(config: Config, cv: Cv) -> Result(BitArray, RenderError) {
+/// Renders a CV to PDF bytes.
+pub fn render_pdf(config: Config, cv: Cv) -> Result(BitArray, RenderError) {
+  use job <- in_job(config, cv, ["cv.pdf"])
+  read(job <> "/cv.pdf")
+}
+
+/// Renders the first `max_preview_pages` pages of a CV as PNG images.
+pub fn render_png_pages(
+  config: Config,
+  cv: Cv,
+) -> Result(List(BitArray), RenderError) {
+  let arguments = [
+    "--ppi",
+    int.to_string(preview_ppi),
+    "--pages",
+    "1-" <> int.to_string(max_preview_pages),
+    // Zero-padded page numbers make the file names sort in page order.
+    "page-{0p}.png",
+  ]
+  use job <- in_job(config, cv, arguments)
+  use files <- result.try(
+    simplifile.read_directory(job) |> result.map_error(file_error),
+  )
+  files
+  |> list.filter(fn(file) {
+    string.starts_with(file, "page-") && string.ends_with(file, ".png")
+  })
+  |> list.sort(string.compare)
+  |> list.try_map(fn(file) { read(job <> "/" <> file) })
+}
+
+/// Prepares a temporary job directory, compiles `cv.typ` in it with the
+/// given output arguments and hands the directory to `collect`. The
+/// directory is removed afterwards, whatever the outcome.
+fn in_job(
+  config: Config,
+  cv: Cv,
+  output_arguments: List(String),
+  collect: fn(String) -> Result(a, RenderError),
+) -> Result(a, RenderError) {
   let job =
     config.work_directory
     <> "/job-"
@@ -40,7 +88,8 @@ pub fn render(config: Config, cv: Cv) -> Result(BitArray, RenderError) {
     <> int.to_string(int.random(1_000_000_000))
   let result = {
     use _ <- result.try(prepare(config, job, cv))
-    compile(config, job)
+    use _ <- result.try(compile(config, job, output_arguments))
+    collect(job)
   }
   let _ = simplifile.delete(job)
   result
@@ -63,25 +112,38 @@ fn prepare(config: Config, job: String, cv: Cv) -> Result(Nil, RenderError) {
   })
 }
 
-fn compile(config: Config, job: String) -> Result(BitArray, RenderError) {
+fn compile(
+  config: Config,
+  job: String,
+  output_arguments: List(String),
+) -> Result(Nil, RenderError) {
   let arguments = [
-    "compile", "--root", ".", "--ignore-system-fonts", "cv.typ", "cv.pdf",
+    "compile",
+    "--root",
+    ".",
+    "--ignore-system-fonts",
+    "cv.typ",
+    ..output_arguments
   ]
   case
     process.run(config.executable, arguments, in: job, timeout: config.timeout)
   {
-    Ok(Exit(status: 0, ..)) ->
-      simplifile.read_bits(job <> "/cv.pdf")
-      |> result.map_error(fn(error) {
-        RendererUnavailable(
-          "could not read rendered PDF: " <> simplifile.describe_error(error),
-        )
-      })
+    Ok(Exit(status: 0, ..)) -> Ok(Nil)
     Ok(Exit(output:, ..)) -> Error(CompileFailed(output))
     Error(process.TimedOut) -> Error(render.TimedOut)
     Error(process.ExecutableNotFound(name)) ->
       Error(RendererUnavailable("typst executable not found: " <> name))
   }
+}
+
+fn read(path: String) -> Result(BitArray, RenderError) {
+  simplifile.read_bits(path) |> result.map_error(file_error)
+}
+
+fn file_error(error: simplifile.FileError) -> RenderError {
+  RendererUnavailable(
+    "could not read render output: " <> simplifile.describe_error(error),
+  )
 }
 
 @external(erlang, "erlang", "unique_integer")

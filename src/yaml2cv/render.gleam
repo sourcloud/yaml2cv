@@ -18,5 +18,10 @@ pub type RenderError {
 /// swapped or wrapped (for example by a concurrency limiter, or a fake in
 /// tests).
 pub type Renderer {
-  Renderer(render: fn(Cv) -> Result(BitArray, RenderError))
+  Renderer(
+    /// Renders the whole CV as one PDF document.
+    render_pdf: fn(Cv) -> Result(BitArray, RenderError),
+    /// Renders preview images, one PNG per page, in page order.
+    render_png_pages: fn(Cv) -> Result(List(BitArray), RenderError),
+  )
 }
