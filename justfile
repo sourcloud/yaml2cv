@@ -23,3 +23,7 @@ run:
 # Re-run tests on every change
 watch:
     watchexec --exts gleam,typ,yaml --clear -- gleam test
+
+# Build the production container image
+image tag="yaml2cv:dev":
+    podman build -t {{tag}} .

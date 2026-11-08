@@ -1,0 +1,7 @@
+*
+!gleam.toml
+!manifest.toml
+!LICENSE
+!src/
+!priv/
+!dev/
