@@ -87,6 +87,13 @@ Released images are published to `ghcr.io/sourcloud/yaml2cv` for
   available to the container.
 - It speaks plain HTTP. Terminate TLS at a reverse proxy or the platform's
   ingress.
+- Rate-limit requests per client at that proxy, especially `POST
+  /api/v1/render` and `/editor/*`. The built-in limiter caps parallel
+  renders for the whole service, not per client, and the editor renders a
+  preview whenever typing pauses.
+- Set memory and CPU limits on the container (e.g. `--memory 512m
+  --cpus 2`). Renders are bounded in time (`RENDER_TIMEOUT_MS`) but Typst's
+  memory use is not limited by the application.
 - `/healthz` is suitable for liveness and readiness probes.
 - The image runs as an unprivileged user and works with a read-only root
   filesystem as long as `/tmp` is writable:
