@@ -25,11 +25,13 @@ pub type Draft {
 
 /// Style names as written in YAML; `""` means the default.
 pub type Style {
-  Style(theme: String, color: String, paper: String)
+  Style(theme: String, color: String, paper: String, photo_shape: String)
 }
 
+/// `photo` holds the data URI as written; it is validated by
+/// `decode.from_yaml` only.
 pub type Person {
-  Person(name: String, title: String, address: String)
+  Person(name: String, title: String, address: String, photo: String)
 }
 
 pub type Contact {
@@ -68,8 +70,8 @@ pub type Skill {
 /// The draft with nothing filled in.
 pub const empty =
   Draft(
-    style: Style(theme: "", color: "", paper: ""),
-    person: Person(name: "", title: "", address: ""),
+    style: Style(theme: "", color: "", paper: "", photo_shape: ""),
+    person: Person(name: "", title: "", address: "", photo: ""),
     contact: Contact(email: "", phone: "", website: "", links: []),
     sections: [],
   )
@@ -156,8 +158,9 @@ fn style(node: Node, path: String) -> Read(Style) {
   use theme <- then(choice(fields, "theme", cv.themes))
   use color <- then(choice(fields, "color", cv.colors))
   use paper <- then(choice(fields, "paper", cv.papers))
+  use photo_shape <- then(choice(fields, "photo_shape", cv.photo_shapes))
   use _ <- then(no_unknown_keys(fields, decode.style_keys))
-  #(Style(theme:, color:, paper:), [])
+  #(Style(theme:, color:, paper:, photo_shape:), [])
 }
 
 fn person(node: Node, path: String) -> Read(Person) {
@@ -165,8 +168,9 @@ fn person(node: Node, path: String) -> Read(Person) {
   use name <- then(text(fields, "name"))
   use title <- then(text(fields, "title"))
   use address <- then(text(fields, "address"))
+  use photo <- then(text(fields, "photo"))
   use _ <- then(no_unknown_keys(fields, decode.person_keys))
-  #(Person(name:, title:, address:), [])
+  #(Person(name:, title:, address:, photo:), [])
 }
 
 fn contact(node: Node, path: String) -> Read(Contact) {

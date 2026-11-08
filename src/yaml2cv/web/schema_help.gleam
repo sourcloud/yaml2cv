@@ -73,11 +73,19 @@ pub fn groups(t: SchemaTexts) -> List(Group(message)) {
       optional_choice(t, "theme", t.theme, cv.themes, style.theme),
       optional_choice(t, "color", t.color, cv.colors, style.color),
       optional_choice(t, "paper", t.paper, cv.papers, style.paper),
+      optional_choice(
+        t,
+        "photo_shape",
+        t.photo_shape,
+        cv.photo_shapes,
+        style.photo_shape,
+      ),
     ]),
     Group(id: "person", title: "person", intro: rich(t.person_intro), fields: [
       required("name", t.person_name),
       optional("title", t.person_title),
       optional("address", t.person_address),
+      optional("photo", t.person_photo),
     ]),
     Group(
       id: "contact",

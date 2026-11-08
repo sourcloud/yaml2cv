@@ -171,11 +171,13 @@ pub fn parse(values: List(#(String, String))) -> Draft {
       theme: get(form, "style.theme"),
       color: get(form, "style.color"),
       paper: get(form, "style.paper"),
+      photo_shape: get(form, "style.photo_shape"),
     ),
     person: Person(
       name: get(form, "person.name"),
       title: get(form, "person.title"),
       address: get(form, "person.address"),
+      photo: get(form, "person.photo"),
     ),
     contact: Contact(
       email: get(form, "contact.email"),

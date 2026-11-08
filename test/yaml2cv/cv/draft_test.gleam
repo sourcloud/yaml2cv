@@ -34,8 +34,13 @@ sections:
   assert draft.from_yaml(yaml)
     == Ok(
       Draft(
-        style: Style(theme: "minimal", color: "red", paper: ""),
-        person: Person(name: "Jane Roe", title: "Engineer", address: ""),
+        style: Style(theme: "minimal", color: "red", paper: "", photo_shape: ""),
+        person: Person(
+          name: "Jane Roe",
+          title: "Engineer",
+          address: "",
+          photo: "",
+        ),
         contact: Contact(
           email: "jane@example.com",
           phone: "",

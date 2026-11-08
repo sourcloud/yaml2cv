@@ -4,9 +4,10 @@ import gleam/int
 import gleam/string
 import yaml2cv/cv/decode.{
   ExpectedInteger, ExpectedList, ExpectedMapping, ExpectedOneDocument,
-  ExpectedOneOf, ExpectedText, MustNotBeEmpty, Required, UnknownKey,
-  UnsupportedVersion,
+  ExpectedOneOf, ExpectedText, InvalidPhoto, MustNotBeEmpty, Required,
+  UnknownKey, UnsupportedVersion,
 }
+import yaml2cv/cv/photo
 import yaml2cv/web/i18n/texts.{
   EditorTexts, SchemaTexts, Texts, UiTexts, VisualTexts,
 }
@@ -139,10 +140,12 @@ pub fn texts() -> texts.Texts {
       theme: "Layout und Typografie.",
       color: "Akzentfarbe.",
       paper: "Papierformat.",
+      photo_shape: "Zuschnitt des Bewerbungsfotos.",
       person_intro: "Steht oben im Lebenslauf.",
       person_name: "Vollständiger Name, als Überschrift gezeigt.",
       person_title: "Berufsbezeichnung oder Untertitel.",
       person_address: "Postanschrift.",
+      person_photo: "Bewerbungsfoto, neben dem Namen gezeigt: ein JPEG oder PNG mit höchstens 512 KiB und 4000 × 4000 Pixeln als Data-URI, `data:image/jpeg;base64,…`. Die Foto-Schaltfläche des Editors erzeugt sie. Der Dienst speichert das Foto nicht.",
       contact_intro: "Kontaktmöglichkeit. Jeder Key ist optional.",
       email: "E-Mail-Adresse.",
       phone: "Telefonnummer.",
@@ -187,5 +190,18 @@ fn schema_problem(problem: decode.SchemaProblem) -> String {
     ExpectedList -> "muss eine Liste sein"
     ExpectedOneOf(names:) ->
       "muss einer dieser Werte sein: " <> string.join(names, ", ")
+    InvalidPhoto(photo.NotAPhotoDataUri) ->
+      "muss ein JPEG- oder PNG-Bild als data:image/jpeg;base64,… "
+      <> "oder data:image/png;base64,… sein"
+    InvalidPhoto(photo.InvalidImage) ->
+      "ist kein gültiges Bild des angegebenen Typs"
+    InvalidPhoto(photo.TooLarge(max_bytes:)) ->
+      "darf höchstens " <> int.to_string(max_bytes / 1024) <> " KiB groß sein"
+    InvalidPhoto(photo.TooManyPixels(max_side:)) ->
+      "darf höchstens "
+      <> int.to_string(max_side)
+      <> " × "
+      <> int.to_string(max_side)
+      <> " Pixel groß sein"
   }
 }

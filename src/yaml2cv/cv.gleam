@@ -9,7 +9,7 @@ pub type Cv {
 
 /// Visual settings passed to the renderer.
 pub type Style {
-  Style(theme: Theme, color: Color, paper: Paper)
+  Style(theme: Theme, color: Color, paper: Paper, photo_shape: PhotoShape)
 }
 
 pub type Theme {
@@ -34,8 +34,20 @@ pub type Paper {
   Letter
 }
 
+/// How the profile photo is cropped (ADR 0028).
+pub type PhotoShape {
+  Rectangle
+  Rounded
+  Circle
+}
+
 pub type Person {
-  Person(name: String, title: Option(String), address: Option(String))
+  Person(
+    name: String,
+    title: Option(String),
+    address: Option(String),
+    photo: Option(Photo),
+  )
 }
 
 /// A validated profile photo (ADR 0028).
@@ -90,7 +102,8 @@ pub type Skill {
 }
 
 /// The style used for settings a document leaves out.
-pub const default_style = Style(theme: Classic, color: Blue, paper: A4)
+pub const default_style =
+  Style(theme: Classic, color: Blue, paper: A4, photo_shape: Rectangle)
 
 /// All themes, in the order they are listed to users.
 pub const themes = [#("classic", Classic), #("minimal", Minimal)]
@@ -109,6 +122,13 @@ pub const colors = [
 
 /// All paper sizes, in the order they are listed to users.
 pub const papers = [#("a4", A4), #("letter", Letter)]
+
+/// All photo shapes, in the order they are listed to users.
+pub const photo_shapes = [
+  #("rectangle", Rectangle),
+  #("rounded", Rounded),
+  #("circle", Circle),
+]
 
 /// The name of a theme as written in YAML and used as theme directory name.
 pub fn theme_name(theme: Theme) -> String {

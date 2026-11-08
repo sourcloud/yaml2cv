@@ -1,5 +1,7 @@
 import birdie
+import gleam/bit_array
 import gleam/list
+import gleam/option
 import simplifile
 import yaml2cv/cv/decode
 import yaml2cv/cv/draft.{
@@ -68,7 +70,12 @@ pub fn writes_plain_scalars_when_safe_test() {
   let cv =
     Draft(
       ..draft.empty,
-      person: Person(name: "Jane Roe", title: "2021", address: "1.50"),
+      person: Person(
+        name: "Jane Roe",
+        title: "2021",
+        address: "1.50",
+        photo: "",
+      ),
     )
   assert emit.to_yaml(cv)
     == "schema_version: 1\n\nperson:\n  name: Jane Roe\n  title: 2021\n  address: \"1.50\"\n\nsections: []\n"
@@ -108,4 +115,19 @@ pub fn round_trips_bullets_test() {
       ),
     ])
   assert draft.from_yaml(emit.to_yaml(cv)) == Ok(cv)
+}
+
+pub fn round_trips_photo_and_photo_shape_test() {
+  let assert Ok(bytes) = simplifile.read_bits("test/fixtures/photo.jpg")
+  let uri = "data:image/jpeg;base64," <> bit_array.base64_encode(bytes, True)
+  let cv =
+    Draft(
+      ..draft.empty,
+      style: draft.Style(..draft.empty.style, photo_shape: "circle"),
+      person: Person(..draft.empty.person, name: "Jane Roe", photo: uri),
+    )
+  let yaml = emit.to_yaml(cv)
+  assert draft.from_yaml(yaml) == Ok(cv)
+  let assert Ok(decoded) = decode.from_yaml(yaml)
+  assert decoded.person.photo != option.None
 }

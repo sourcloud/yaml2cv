@@ -1,14 +1,16 @@
+import gleam/bit_array
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
 import simplifile
 import yaml2cv/cv.{
-  A4, Blue, Classic, Contact, Cv, Entries, Entry, Letter, Link, Minimal, Person,
-  Section, Skill, Skills, Style, Text,
+  A4, Blue, Circle, Classic, Contact, Cv, Entries, Entry, Letter, Link, Minimal,
+  Person, Photo, Png, Rectangle, Section, Skill, Skills, Style, Text,
 }
 import yaml2cv/cv/decode.{
-  DocumentTooComplex, DocumentTooLarge, SchemaError, SyntaxError,
+  DocumentTooComplex, DocumentTooLarge, InvalidPhoto, SchemaError, SyntaxError,
 }
+import yaml2cv/cv/photo
 import yaml2cv/yaml
 
 const minimal =
@@ -23,8 +25,18 @@ pub fn decodes_minimal_document_with_defaults_test() {
   assert decode.from_yaml(minimal)
     == Ok(
       Cv(
-        style: Style(theme: Classic, color: Blue, paper: A4),
-        person: Person(name: "Jane Roe", title: None, address: None),
+        style: Style(
+          theme: Classic,
+          color: Blue,
+          paper: A4,
+          photo_shape: Rectangle,
+        ),
+        person: Person(
+          name: "Jane Roe",
+          title: None,
+          address: None,
+          photo: None,
+        ),
         contact: Contact(email: None, phone: None, website: None, links: []),
         sections: [],
       ),
@@ -41,7 +53,8 @@ person: { name: Jane Roe }
 sections: []
 ",
     )
-  assert cv.style == Style(theme: Minimal, color: Blue, paper: A4)
+  assert cv.style
+    == Style(theme: Minimal, color: Blue, paper: A4, photo_shape: Rectangle)
 }
 
 pub fn decodes_paper_size_test() {
@@ -67,6 +80,73 @@ person: { name: Jane Roe }
 sections: []
 ",
     )
+}
+
+pub fn decodes_photo_shape_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { photo_shape: circle }
+person: { name: Jane Roe }
+sections: []
+",
+    )
+  assert cv.style.photo_shape == Circle
+}
+
+pub fn rejects_unknown_photo_shape_test() {
+  let assert Error([SchemaError(path: "style.photo_shape", ..)]) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { photo_shape: hexagon }
+person: { name: Jane Roe }
+sections: []
+",
+    )
+}
+
+pub fn decodes_photo_data_uri_test() {
+  let assert Ok(bytes) = simplifile.read_bits("test/fixtures/photo.png")
+  let uri = "data:image/png;base64," <> bit_array.base64_encode(bytes, True)
+  let assert Ok(cv) = decode.from_yaml("
+schema_version: 1
+person:
+  name: Jane Roe
+  photo: " <> uri <> "
+sections: []
+")
+  assert cv.person.photo == Some(Photo(format: Png, data: bytes))
+}
+
+pub fn rejects_photo_that_is_not_a_data_uri_test() {
+  assert decode.from_yaml(
+      "
+schema_version: 1
+person: { name: Jane Roe, photo: /etc/passwd }
+sections: []
+",
+    )
+    == Error([
+      SchemaError(
+        path: "person.photo",
+        problem: InvalidPhoto(photo.NotAPhotoDataUri),
+      ),
+    ])
+}
+
+pub fn photo_errors_do_not_repeat_the_photo_test() {
+  let assert Error([SchemaError(problem:, ..)]) =
+    decode.from_yaml(
+      "
+schema_version: 1
+person: { name: Jane Roe, photo: 'data:image/png;base64,c2VjcmV0' }
+sections: []
+",
+    )
+  assert problem == InvalidPhoto(photo.InvalidImage)
+  assert !string.contains(decode.describe(problem), "c2VjcmV0")
 }
 
 pub fn decodes_all_section_kinds_test() {

@@ -14,6 +14,7 @@ import yaml2cv/cv.{
   type Cv, type Entry, type Link, type Section, type Skill, Contact, Cv, Entries,
   Entry, Link, Person, Section, Skill, Skills, Style, Text,
 }
+import yaml2cv/cv/photo.{type PhotoError}
 import yaml2cv/yaml.{type Node}
 
 /// Why a document could not be decoded.
@@ -44,6 +45,8 @@ pub type SchemaProblem {
   ExpectedList
   /// The value is not one of the allowed `names`.
   ExpectedOneOf(names: List(String))
+  /// The value is not an acceptable profile photo (ADR 0028).
+  InvalidPhoto(PhotoError)
 }
 
 /// The English description of a schema problem, as used by the HTTP API.
@@ -63,6 +66,19 @@ pub fn describe(problem: SchemaProblem) -> String {
     ExpectedText -> "expected text"
     ExpectedList -> "expected a list"
     ExpectedOneOf(names:) -> "expected one of: " <> string.join(names, ", ")
+    InvalidPhoto(photo.NotAPhotoDataUri) ->
+      "expected a JPEG or PNG image as data:image/jpeg;base64,… "
+      <> "or data:image/png;base64,… URI"
+    InvalidPhoto(photo.InvalidImage) ->
+      "is not a valid image of the declared type"
+    InvalidPhoto(photo.TooLarge(max_bytes:)) ->
+      "must be at most " <> int.to_string(max_bytes / 1024) <> " KiB"
+    InvalidPhoto(photo.TooManyPixels(max_side:)) ->
+      "must be at most "
+      <> int.to_string(max_side)
+      <> " × "
+      <> int.to_string(max_side)
+      <> " pixels"
   }
 }
 
@@ -75,10 +91,10 @@ pub const root_keys = [
 ]
 
 /// The keys of `style`.
-pub const style_keys = ["theme", "color", "paper"]
+pub const style_keys = ["theme", "color", "paper", "photo_shape"]
 
 /// The keys of `person`.
-pub const person_keys = ["name", "title", "address"]
+pub const person_keys = ["name", "title", "address", "photo"]
 
 /// The keys of `contact`.
 pub const contact_keys = ["email", "phone", "website", "links"]
@@ -175,19 +191,38 @@ fn style() -> Decoder(cv.Style) {
   use theme <- then(optional_or(fields, "theme", one_of(cv.themes, zero.theme)))
   use color <- then(optional_or(fields, "color", one_of(cv.colors, zero.color)))
   use paper <- then(optional_or(fields, "paper", one_of(cv.papers, zero.paper)))
+  use photo_shape <- then(optional_or(
+    fields,
+    "photo_shape",
+    one_of(cv.photo_shapes, zero.photo_shape),
+  ))
   use _ <- then(no_unknown_keys(fields, style_keys))
-  succeed(Style(theme:, color:, paper:))
+  succeed(Style(theme:, color:, paper:, photo_shape:))
 }
 
 fn person() -> Decoder(cv.Person) {
-  let zero = Person(name: "", title: None, address: None)
+  let zero = Person(name: "", title: None, address: None, photo: None)
   use node, path <- Decoder(zero:)
   use fields <- object(node, path, zero)
   use name <- then(required(fields, "name", text()))
   use title <- then(optional(fields, "title", text()))
   use address <- then(optional(fields, "address", text()))
+  use photo <- then(optional(fields, "photo", photo()))
   use _ <- then(no_unknown_keys(fields, person_keys))
-  succeed(Person(name:, title:, address:))
+  succeed(Person(name:, title:, address:, photo:))
+}
+
+fn photo() -> Decoder(cv.Photo) {
+  let zero = cv.Photo(format: cv.Jpeg, data: <<>>)
+  use node, path <- Decoder(zero:)
+  case node {
+    yaml.String(value) ->
+      case photo.from_data_uri(string.trim(value)) {
+        Ok(photo) -> succeed(photo)
+        Error(error) -> fail(zero, path, InvalidPhoto(error))
+      }
+    _ -> fail(zero, path, InvalidPhoto(photo.NotAPhotoDataUri))
+  }
 }
 
 fn contact() -> Decoder(cv.Contact) {

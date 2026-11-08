@@ -43,6 +43,7 @@ fn style(style: Style) -> List(String) {
       field(2, "theme", style.theme, Optional),
       field(2, "color", style.color, Optional),
       field(2, "paper", style.paper, Optional),
+      field(2, "photo_shape", style.photo_shape, Optional),
     ])
   nested("style", fields)
 }
@@ -52,6 +53,7 @@ fn person(person: Person) -> List(String) {
   |> list.append(field(2, "name", person.name, Required))
   |> list.append(field(2, "title", person.title, Optional))
   |> list.append(field(2, "address", person.address, Optional))
+  |> list.append(field(2, "photo", person.photo, Optional))
 }
 
 fn contact(contact: Contact) -> List(String) {

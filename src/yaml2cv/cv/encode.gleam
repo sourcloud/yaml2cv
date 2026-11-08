@@ -7,6 +7,7 @@ import yaml2cv/cv.{
   type Color, type Contact, type Cv, type Entry, type Paper, type Person,
   type Section, type Skill, type Style,
 }
+import yaml2cv/cv/photo
 
 /// Encodes a CV as a JSON value.
 pub fn to_json(cv: Cv) -> Json {
@@ -23,7 +24,16 @@ fn style(style: Style) -> Json {
     #("theme", json.string(cv.theme_name(style.theme))),
     #("color", json.string(color_name(style.color))),
     #("paper", json.string(paper_name(style.paper))),
+    #("photo_shape", json.string(photo_shape_name(style.photo_shape))),
   ])
+}
+
+fn photo_shape_name(shape: cv.PhotoShape) -> String {
+  case shape {
+    cv.Rectangle -> "rectangle"
+    cv.Rounded -> "rounded"
+    cv.Circle -> "circle"
+  }
 }
 
 fn paper_name(paper: Paper) -> String {
@@ -51,6 +61,12 @@ fn person(person: Person) -> Json {
     #("name", json.string(person.name)),
     #("title", json.nullable(person.title, json.string)),
     #("address", json.nullable(person.address, json.string)),
+    // The renderer writes the photo next to the JSON under this name; the
+    // bytes are not part of the JSON (ADR 0028).
+    #(
+      "photo",
+      json.nullable(person.photo, fn(p) { json.string(photo.file_name(p)) }),
+    ),
   ])
 }
 
