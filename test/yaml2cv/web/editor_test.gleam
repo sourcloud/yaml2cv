@@ -288,6 +288,11 @@ pub fn visual_update_rejects_oversized_forms_test() {
   assert response.status == 413
 }
 
+pub fn editor_page_keeps_the_validation_status_in_view_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "aria-live=\"polite\" class=\"editor-status\"")
+}
+
 pub fn editor_page_offers_edit_modes_test() {
   let body = get("/") |> simulate.read_body
   assert string.contains(body, "data-mode-switch=\"yaml\"")

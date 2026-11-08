@@ -128,6 +128,8 @@ fn editor_page(
                 html.div(
                   [
                     attribute.id("validation"),
+                    // Sticks to the bottom of the viewport (layout.css).
+                    attribute.class("editor-status"),
                     attribute.aria("live", "polite"),
                     ..live_update("/editor/validate", "400ms")
                   ],

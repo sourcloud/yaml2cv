@@ -23,6 +23,28 @@
   display: none;
 }
 
+/* The validation status follows the CV panel's content but sticks to the
+ * bottom of the viewport, so a long CV or an enlarged field does not push
+ * it out of sight. A long error list scrolls within it. */
+.editor-status {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 5;
+  margin-block-end: calc(-1 * var(--space-4));
+  padding-block: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+}
+
+.editor-status:empty {
+  display: none;
+}
+
+.editor-status > .ui-alert {
+  max-height: 33vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .editor-modes .ui-panel__header {
   flex-wrap: wrap;
 }
