@@ -1,6 +1,6 @@
 # 0028. Profile photo inside the CV document
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-08
 
 ## Context
