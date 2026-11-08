@@ -32,3 +32,4 @@ for the process.
 | [0024](0024-visual-block-editor.md) | Visual block editor next to the YAML source | Accepted |
 | [0025](0025-ui-localisation.md) | Localise the web UI | Accepted |
 | [0026](0026-container-image-in-release-notes.md) | Reference the container image in the GitHub Release | Proposed |
+| [0027](0027-lockfile-drift-check.md) | Fail CI when manifest.toml drifts from gleam.toml | Accepted |

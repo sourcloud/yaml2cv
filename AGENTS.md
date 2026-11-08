@@ -64,6 +64,8 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
 | Type-check    | `gleam check`                    |
 | Run the app   | `gleam run`                      |
 | All CI checks | `just check`                     |
+| Lockfile check | `just deps-check`               |
+| Update deps   | `gleam deps update`, then commit `gleam.toml` + `manifest.toml` (ADR 0027) |
 | Build image   | `just image`                     |
 | Smoke test    | `scripts/smoke-test.sh <url>`    |
 

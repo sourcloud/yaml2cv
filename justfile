@@ -10,8 +10,22 @@ test:
 fmt:
     gleam format src test dev
 
-# Check formatting and types, then run tests (what CI runs)
-check:
+# Fail if manifest.toml is out of date with gleam.toml (ADR 0027)
+deps-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    locked="$(mktemp)"
+    trap 'rm -f "$locked"' EXIT
+    cp manifest.toml "$locked"
+    gleam deps download
+    if ! diff -u "$locked" manifest.toml; then
+        echo "manifest.toml is out of date with gleam.toml." >&2
+        echo "Commit the regenerated manifest.toml together with gleam.toml." >&2
+        exit 1
+    fi
+
+# Check the lockfile, formatting and types, then run tests (what CI runs)
+check: deps-check
     gleam format --check src test dev
     gleam check
     gleam test
