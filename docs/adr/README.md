@@ -20,3 +20,4 @@ for the process.
 | [0012](0012-colour-theme-switch.md) | Colour theme switch | Accepted |
 | [0013](0013-container-image-and-release.md) | Container image, third-party notices and releases | Accepted |
 | [0014](0014-upgrade-to-erlang-otp-29.md) | Upgrade to Erlang/OTP 29 | Accepted |
+| [0015](0015-minimal-theme.md) | Minimal single-column theme | Accepted |
