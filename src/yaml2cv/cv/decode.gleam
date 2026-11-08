@@ -8,6 +8,7 @@ import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/result
 import gleam/string
 import yaml2cv/cv.{
   type Cv, type Entry, type Link, type Section, type Skill, Contact, Cv, Entries,
@@ -71,14 +72,19 @@ pub const skill_keys = ["name", "level"]
 
 /// Parses and validates a CV document, returning every error found.
 pub fn from_yaml(source: String) -> Result(Cv, List(DecodeError)) {
+  use root <- result.try(parse_document(source))
+  let Decoded(value:, errors:) = cv().run(root, "")
+  case errors {
+    [] -> Ok(value)
+    _ -> Error(errors)
+  }
+}
+
+/// Parses `source` into the root node of its single YAML document. Shared
+/// with the lenient decoder in `cv/draft`.
+pub fn parse_document(source: String) -> Result(Node, List(DecodeError)) {
   case yaml.parse(source) {
-    Ok([root]) -> {
-      let Decoded(value:, errors:) = cv().run(root, "")
-      case errors {
-        [] -> Ok(value)
-        _ -> Error(errors)
-      }
-    }
+    Ok([root]) -> Ok(root)
     Ok([]) -> Error([SchemaError(path: "", message: "expected a mapping")])
     Ok(_) ->
       Error([
