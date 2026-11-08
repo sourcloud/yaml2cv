@@ -5,6 +5,7 @@ import gleam/dict.{type Dict}
 import gleam/erlang/application
 import gleam/int
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import yaml2cv/render/typst
@@ -23,6 +24,46 @@ pub type Config {
     /// CV preloaded into the editor.
     example_path: String,
     typst: typst.Config,
+    /// The yaml2cv release, from the OTP application.
+    version: String,
+    /// The listener for operational endpoints (ADR 0020).
+    admin: Admin,
+    phone_home: PhoneHome,
+  )
+}
+
+/// Where the admin listener accepts connections.
+pub type Admin {
+  Admin(bind_address: String, port: Int)
+}
+
+/// Observability settings (ADR 0020).
+pub type PhoneHome {
+  PhoneHome(
+    /// Collector receiving UDP heartbeats; none disables them.
+    target: Option(Target),
+    /// Milliseconds between heartbeats.
+    interval: Int,
+    /// Milliseconds without a heartbeat after which an instance is missing.
+    mia_interval: Int,
+    /// Components this instance depends on.
+    requires: List(String),
+    metadata: Metadata,
+  )
+}
+
+pub type Target {
+  Target(host: String, port: Int)
+}
+
+/// Build and deployment details; `None` when not provided.
+pub type Metadata {
+  Metadata(
+    git_revision: Option(String),
+    build_date: Option(String),
+    deployed_from: Option(String),
+    deployed_by: Option(String),
+    deployed_on: Option(String),
   )
 }
 
@@ -55,7 +96,7 @@ pub fn parse(
     Ok(dir) if dir != "" -> trim_trailing_slash(dir)
     _ -> "/tmp"
   }
-  let #(port, errors) = port(env, "PORT", 8000, [])
+  let #(port, errors) = port_number(env, "PORT", 8000, [])
   let #(bind_address, errors) = text(env, "BIND_ADDRESS", "0.0.0.0", errors)
   let #(max_body_bytes, errors) =
     positive(env, "MAX_BODY_BYTES", 262_144, errors)
@@ -67,6 +108,46 @@ pub fn parse(
   let #(executable, errors) = text(env, "TYPST_PATH", "typst", errors)
   let #(work_directory, errors) =
     text(env, "WORK_DIR", tmp <> "/yaml2cv", errors)
+  let #(admin_bind_address, errors) =
+    text(env, "ADMIN_BIND_ADDRESS", "127.0.0.1", errors)
+  let #(admin_port, errors) = port_number(env, "ADMIN_PORT", 9000, errors)
+  let errors = case admin_port == port {
+    True -> ["ADMIN_PORT must differ from PORT", ..errors]
+    False -> errors
+  }
+  let #(target, errors) =
+    read(env, "PHONE_HOME_TARGET", None, errors, fn(value) {
+      target(value)
+      |> result.map(Some)
+      |> result.replace_error(
+        "PHONE_HOME_TARGET must be host:port, got " <> string.inspect(value),
+      )
+    })
+  let #(interval, errors) =
+    positive(env, "HEARTBEAT_INTERVAL_MS", 10_000, errors)
+  let #(mia_interval, errors) =
+    positive(env, "HEARTBEAT_MIA_MS", 3 * interval, errors)
+  let errors = case mia_interval > interval {
+    True -> errors
+    False -> [
+      "HEARTBEAT_MIA_MS must be greater than HEARTBEAT_INTERVAL_MS",
+      ..errors
+    ]
+  }
+  let requires =
+    dict.get(env, "REQUIRES")
+    |> result.unwrap("")
+    |> string.split(",")
+    |> list.map(string.trim)
+    |> list.filter(fn(name) { name != "" })
+  let metadata =
+    Metadata(
+      git_revision: optional(env, "GIT_REVISION"),
+      build_date: optional(env, "BUILD_DATE"),
+      deployed_from: optional(env, "DEPLOYED_FROM"),
+      deployed_by: optional(env, "DEPLOYED_BY"),
+      deployed_on: optional(env, "DEPLOYED_ON"),
+    )
 
   case errors {
     [] ->
@@ -87,12 +168,21 @@ pub fn parse(
             <> version
             <> " (https://github.com/sourcloud/yaml2cv)",
         ),
+        version:,
+        admin: Admin(bind_address: admin_bind_address, port: admin_port),
+        phone_home: PhoneHome(
+          target:,
+          interval:,
+          mia_interval:,
+          requires:,
+          metadata:,
+        ),
       ))
     _ -> Error(list.reverse(errors))
   }
 }
 
-fn port(
+fn port_number(
   env: Dict(String, String),
   name: String,
   default: Int,
@@ -155,6 +245,35 @@ fn read(
     Error(Nil) -> #(default, errors)
     Ok(Ok(value)) -> #(value, errors)
     Ok(Error(error)) -> #(default, [error, ..errors])
+  }
+}
+
+/// Parses `host:port` or `[ipv6]:port`.
+fn target(value: String) -> Result(Target, Nil) {
+  let value = string.trim(value)
+  use #(host, port) <- result.try(case value {
+    "[" <> rest -> {
+      use #(host, rest) <- result.try(string.split_once(rest, "]:"))
+      Ok(#(host, rest))
+    }
+    _ ->
+      case string.split(value, ":") {
+        [host, port] -> Ok(#(host, port))
+        _ -> Error(Nil)
+      }
+  })
+  case host, int.parse(port) {
+    "", _ -> Error(Nil)
+    _, Ok(port) if port >= 1 && port <= 65_535 -> Ok(Target(host:, port:))
+    _, _ -> Error(Nil)
+  }
+}
+
+/// An optional free-text variable; unset and blank both mean `None`.
+fn optional(env: Dict(String, String), name: String) -> Option(String) {
+  case dict.get(env, name) |> result.map(string.trim) {
+    Ok("") | Error(Nil) -> None
+    Ok(value) -> Some(value)
   }
 }
 
