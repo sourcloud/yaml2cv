@@ -3,6 +3,7 @@
     "editor.formatOnSave": true
   },
   "tinymist.exportPdf": "never",
+  "erlang.includePaths": ["build/packages"],
   "files.watcherExclude": {
     "**/build/**": true,
     "**/.direnv/**": true
