@@ -6,7 +6,8 @@
 #let cv = json("cv.json")
 
 #let accents = (
-  black: rgb(0%, 0%, 0%),
+  // A single-ink black, so small text stays crisp in print (ADR 0017).
+  black: luma(0%),
   blue: rgb(22%, 45%, 70%),
   burgundy: rgb(60%, 0%, 0%),
   green: rgb(35%, 70%, 30%),
@@ -15,18 +16,29 @@
   purple: rgb(50%, 33%, 80%),
   red: rgb(95%, 20%, 20%),
 )
+#let papers = (a4: "a4", letter: "us-letter")
 #let accent = accents.at(cv.style.color)
 // Dark enough that small and italic text prints solidly on office printers.
 #let muted = luma(35%)
 // Running text is kept to a comfortable line length (about 75 characters);
 // timespans still sit flush with the right margin.
 #let measure = 13cm
+// The paragraph leading; all vertical gaps are multiples of it (ADR 0017).
+#let unit = 0.6em
 
 #set document(title: cv.person.name, author: cv.person.name)
-#set page(paper: "a4", margin: (x: 2.2cm, y: 2.2cm))
+#set page(
+  paper: papers.at(cv.style.paper),
+  margin: (x: 2.2cm, top: 2.2cm, bottom: 2.7cm),
+)
 #set text(font: "Libertinus Serif", size: 10.5pt, lang: "en")
-#set par(justify: false, leading: 0.6em)
-#set list(indent: 0pt, body-indent: 0.5em, marker: text(fill: muted)[–])
+#set par(justify: false, leading: unit)
+#set list(
+  indent: 0pt,
+  body-indent: 0.5em,
+  spacing: unit,
+  marker: text(fill: muted)[–],
+)
 
 // Header ----------------------------------------------------------------------
 
@@ -41,7 +53,7 @@
   items
 }
 
-#block(below: 1.8em, stack(
+#block(below: 3 * unit, stack(
   spacing: 0.7em,
   text(size: 22pt, cv.person.name),
   ..if cv.person.title != none {
@@ -61,28 +73,36 @@
   left, if right != none { text(fill: muted, right) },
 )
 
-#let section-heading(name) = block(above: 1.5em, below: 0.8em, sticky: true, {
-  text(size: 11pt, fill: accent, tracking: 0.08em, smallcaps(name))
-  v(-0.5em)
-  line(length: 100%, stroke: 0.4pt + accent)
-})
+#let section-heading(name) = block(
+  above: 3 * unit,
+  below: 1.5 * unit,
+  sticky: true,
+  stack(
+    spacing: unit,
+    text(size: 11pt, fill: accent, tracking: 0.08em, smallcaps(name)),
+    line(length: 100%, stroke: 0.4pt + accent),
+  ),
+)
 
-#let entry(e) = block(below: 1em, breakable: false, {
+#let entry(e) = block(below: 2 * unit, breakable: false, {
   split-line(strong(e.title), e.timespan)
   let details = (e.organization, e.location).filter(x => x != none)
   if details.len() > 0 {
-    block(above: 0.4em, width: measure, text(fill: muted, emph(details.join(", "))))
+    block(above: unit, width: measure, text(
+      fill: muted,
+      emph(details.join(", ")),
+    ))
   }
   if e.bullets.len() > 0 {
-    block(above: 0.5em, width: measure, list(spacing: 0.45em, ..e.bullets))
+    block(above: unit, width: measure, list(..e.bullets))
   }
 })
 
 // Skills form one grid per section so levels line up next to their names.
-#let skills(items) = block(below: 1em, grid(
+#let skills(items) = block(below: 2 * unit, grid(
   columns: (auto, 1fr),
   column-gutter: 2em,
-  row-gutter: 0.5em,
+  row-gutter: unit,
   ..items
     .map(s => (s.name, if s.level != none { text(fill: muted, s.level) }))
     .flatten(),

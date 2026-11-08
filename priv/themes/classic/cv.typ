@@ -6,7 +6,8 @@
 #let cv = json("cv.json")
 
 #let accents = (
-  black: rgb(0%, 0%, 0%),
+  // A single-ink black, so small text stays crisp in print (ADR 0017).
+  black: luma(0%),
   blue: rgb(22%, 45%, 70%),
   burgundy: rgb(60%, 0%, 0%),
   green: rgb(35%, 70%, 30%),
@@ -15,16 +16,27 @@
   purple: rgb(50%, 33%, 80%),
   red: rgb(95%, 20%, 20%),
 )
+#let papers = (a4: "a4", letter: "us-letter")
 #let accent = accents.at(cv.style.color)
 // Dark enough that small and italic text prints solidly on office printers.
 #let muted = luma(35%)
 #let date-column = 25%
+// The paragraph leading; all vertical gaps are multiples of it (ADR 0017).
+#let unit = 0.6em
 
 #set document(title: cv.person.name, author: cv.person.name)
-#set page(paper: "a4", margin: (x: 2cm, y: 2cm))
+#set page(
+  paper: papers.at(cv.style.paper),
+  margin: (x: 2cm, top: 2cm, bottom: 2.5cm),
+)
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
-#set par(justify: false, leading: 0.55em)
-#set list(indent: 0pt, body-indent: 0.5em, marker: text(fill: accent)[•])
+#set par(justify: false, leading: unit)
+#set list(
+  indent: 0pt,
+  body-indent: 0.5em,
+  spacing: unit,
+  marker: text(fill: accent)[•],
+)
 
 // Header ----------------------------------------------------------------------
 
@@ -39,7 +51,7 @@
   items
 }
 
-#block(below: 1.6em, stack(
+#block(below: 3 * unit, stack(
   spacing: 0.9em,
   text(size: 28pt, fill: accent, cv.person.name),
   ..if cv.person.title != none {
@@ -58,24 +70,29 @@
   align(right, side), main,
 )
 
-#let section-heading(name) = block(above: 1.4em, below: 0.8em, sticky: true, row(
-  box(width: 100%, height: 0.6em, baseline: -0.2em, fill: accent),
-  text(size: 14pt, fill: accent, name),
-))
+#let section-heading(name) = block(
+  above: 3 * unit,
+  below: 1.5 * unit,
+  sticky: true,
+  row(
+    box(width: 100%, height: 0.6em, baseline: -0.2em, fill: accent),
+    text(size: 14pt, fill: accent, name),
+  ),
+)
 
-#let entry(e) = block(below: 0.9em, breakable: false, row(
+#let entry(e) = block(below: 2 * unit, breakable: false, row(
   text(fill: muted, e.timespan),
   {
     let details = (e.organization, e.location).filter(x => x != none)
     strong(e.title)
     if details.len() > 0 { [, ] + emph(details.join(", ")) }
     if e.bullets.len() > 0 {
-      block(above: 0.5em, list(spacing: 0.45em, ..e.bullets))
+      block(above: unit, list(..e.bullets))
     }
   },
 ))
 
-#let skill(s) = block(below: 0.5em, row(
+#let skill(s) = block(below: unit, row(
   text(fill: muted, s.name),
   if s.level != none { s.level },
 ))

@@ -47,6 +47,18 @@ pub fn renders_example_cv_in_every_theme_test() {
   assert work_directory_is_empty()
 }
 
+pub fn renders_letter_paper_in_every_theme_test() {
+  use #(_, theme) <- list.each(cv.themes)
+  let cv = with_theme(example_cv(), theme)
+  let cv = cv.Cv(..cv, style: Style(..cv.style, paper: cv.Letter))
+  let assert Ok([page]) = typst.render_png_pages(config(), cv)
+  // The PNG header holds the image size; US letter is 8.5 × 11 in.
+  let assert <<_:bytes-size(16), width:size(32), height:size(32), _:bits>> =
+    page
+  assert #(width, height)
+    == #(typst.preview_ppi * 17 / 2, typst.preview_ppi * 11)
+}
+
 pub fn treats_user_content_as_text_not_markup_test() {
   let assert Ok(cv) =
     decode.from_yaml(
