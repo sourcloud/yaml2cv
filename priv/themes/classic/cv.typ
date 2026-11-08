@@ -16,7 +16,8 @@
   red: rgb(95%, 20%, 20%),
 )
 #let accent = accents.at(cv.style.color)
-#let muted = luma(45%)
+// Dark enough that small and italic text prints solidly on office printers.
+#let muted = luma(35%)
 #let date-column = 25%
 
 #set document(title: cv.person.name, author: cv.person.name)
@@ -57,7 +58,7 @@
   align(right, side), main,
 )
 
-#let section-heading(name) = block(above: 1.4em, below: 0.8em, row(
+#let section-heading(name) = block(above: 1.4em, below: 0.8em, sticky: true, row(
   box(width: 100%, height: 0.6em, baseline: -0.2em, fill: accent),
   text(size: 14pt, fill: accent, name),
 ))

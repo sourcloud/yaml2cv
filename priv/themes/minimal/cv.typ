@@ -16,7 +16,11 @@
   red: rgb(95%, 20%, 20%),
 )
 #let accent = accents.at(cv.style.color)
-#let muted = luma(40%)
+// Dark enough that small and italic text prints solidly on office printers.
+#let muted = luma(35%)
+// Running text is kept to a comfortable line length (about 75 characters);
+// timespans still sit flush with the right margin.
+#let measure = 13cm
 
 #set document(title: cv.person.name, author: cv.person.name)
 #set page(paper: "a4", margin: (x: 2.2cm, y: 2.2cm))
@@ -67,22 +71,30 @@
   split-line(strong(e.title), e.timespan)
   let details = (e.organization, e.location).filter(x => x != none)
   if details.len() > 0 {
-    block(above: 0.4em, text(fill: muted, emph(details.join(", "))))
+    block(above: 0.4em, width: measure, text(fill: muted, emph(details.join(", "))))
   }
   if e.bullets.len() > 0 {
-    block(above: 0.5em, list(spacing: 0.45em, ..e.bullets))
+    block(above: 0.5em, width: measure, list(spacing: 0.45em, ..e.bullets))
   }
 })
 
-#let skill(s) = block(below: 0.5em, split-line(s.name, s.level))
+// Skills form one grid per section so levels line up next to their names.
+#let skills(items) = block(below: 1em, grid(
+  columns: (auto, 1fr),
+  column-gutter: 2em,
+  row-gutter: 0.5em,
+  ..items
+    .map(s => (s.name, if s.level != none { text(fill: muted, s.level) }))
+    .flatten(),
+))
 
 #for section in cv.sections {
   section-heading(section.name)
   if section.kind == "entries" {
     for e in section.entries { entry(e) }
   } else if section.kind == "skills" {
-    for s in section.items { skill(s) }
+    skills(section.items)
   } else if section.kind == "text" {
-    par(section.text)
+    block(width: measure, par(section.text))
   }
 }
