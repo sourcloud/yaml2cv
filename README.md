@@ -148,7 +148,7 @@ All settings are environment variables:
 | `RENDER_CONCURRENCY` | CPU schedulers | Parallel compiles |
 | `RENDER_QUEUE_WAIT_MS` | `5000` | Max wait for a free render slot |
 | `MAX_BODY_BYTES` | `262144` | Request body limit |
-| `ADMIN_BIND_ADDRESS` | `127.0.0.1` (`0.0.0.0` in the image) | Interface of the admin listener |
+| `ADMIN_BIND_ADDRESS` | `127.0.0.1` | Interface of the admin listener |
 | `ADMIN_PORT` | `9000` | Port of the admin listener; must differ from `PORT` |
 | `PHONE_HOME_TARGET` | unset | `host:port` of a UDP collector; enables heartbeats |
 | `HEARTBEAT_INTERVAL_MS` | `10000` | Time between heartbeats |
@@ -163,17 +163,21 @@ A second HTTP listener (`ADMIN_PORT`, default 9000) describes the running
 instance: name, version, dependencies, reachable addresses, heartbeat timing,
 build and deployment details, configuration and system load (memory, CPU
 load, I/O pressure, disk). It serves `GET /` (everything), `/config`,
-`/status` and `/healthz`. Keep this port off the internet; it reveals
-internal details.
+`/status` and `/healthz`. It only listens on loopback by default, also in
+the container image; to reach it from outside, set
+`ADMIN_BIND_ADDRESS=0.0.0.0` and publish the port. Keep it off the internet;
+it reveals internal details.
 
 ```sh
+podman run --rm -p 8000:8000 -p 9000:9000 -e ADMIN_BIND_ADDRESS=0.0.0.0 yaml2cv
 curl http://localhost:9000/status
 # {"memory":13,"cpu_load":[1.31,0.54,0.3],"io_load":0.0,"disk":62}
 ```
 
 With `PHONE_HOME_TARGET=collector:5140` the instance also sends a compact
 JSON heartbeat by UDP every `HEARTBEAT_INTERVAL_MS`, with links back to the
-admin endpoint. The format is documented in
+admin endpoint, so also set `ADMIN_BIND_ADDRESS` to an address the collector
+can reach. The format is documented in
 [ADR 0020](docs/adr/0020-phone-home-observability.md).
 
 ## Roadmap

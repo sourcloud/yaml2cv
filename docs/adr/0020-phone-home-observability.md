@@ -40,9 +40,12 @@ custom schema.
 | `GET /status` | the `status` member |
 | `GET /healthz` | `{"status": "ok"}` |
 
-The public listener is unchanged. The container image binds the admin
-listener to `0.0.0.0`; whether it is reachable is decided by which ports are
-published.
+The public listener is unchanged. The container image keeps the loopback
+default: the endpoint is then usable only from inside the container's
+network namespace (`exec`, a sidecar in the same pod). Reaching it from
+elsewhere is an explicit choice: set `ADMIN_BIND_ADDRESS=0.0.0.0` (in a
+container that adds just its own address) and publish the port or allow it
+in a network policy.
 
 **Document.** A custom JSON schema, owner-supplied and extended:
 
@@ -102,12 +105,18 @@ sends a UDP datagram every `HEARTBEAT_INTERVAL_MS` (default 10 000) holding
 `name`, `version`, `address` without `interfaces`, `heartbeat`, `status` and
 `rel` as absolute URLs of the admin listener. A collector should consider
 the instance missing after `HEARTBEAT_MIA_MS` (default three intervals)
-without a packet. Send errors are logged and never stop the service.
+without a packet. Send errors are logged and never stop the service. When
+heartbeats are enabled while the admin listener is bound to loopback, a
+warning is logged at start-up: the links in the heartbeat cannot be
+followed.
 
 ## Consequences
 
 - No new dependencies: sockets, interfaces and timers come from OTP.
-- The admin port must not be published to the internet.
+- Secure by default: the admin endpoint is unreachable from outside until
+  an operator opts in, and it must never be published to the internet.
+- Deployments with a collector have to set `ADMIN_BIND_ADDRESS` as well as
+  `PHONE_HOME_TARGET`.
 - Status values are host- or cgroup-level, not per process.
-- `rel` URLs in the heartbeat point at `host`; a collector outside the
-  network namespace may not reach them.
+- `rel` URLs in the heartbeat use the admin bind address, or `host` for a
+  wildcard bind; behind NAT a collector may still not reach them.

@@ -33,7 +33,8 @@ jobs:
           test "$arch" = "x86_64"
       - name: Smoke test
         run: |
-          docker run -d --name yaml2cv -p 8000:8000 -p 9000:9000 yaml2cv:ci
+          docker run -d --name yaml2cv -p 8000:8000 -p 9000:9000 \
+            -e ADMIN_BIND_ADDRESS=0.0.0.0 yaml2cv:ci
           scripts/smoke-test.sh http://localhost:8000 http://localhost:9000
       - name: Show logs on failure
         if: failure()

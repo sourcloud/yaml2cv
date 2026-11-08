@@ -154,3 +154,23 @@ pub fn reports_invalid_phone_home_variables_test() {
       "HEARTBEAT_MIA_MS must be greater than HEARTBEAT_INTERVAL_MS",
     ])
 }
+
+pub fn warns_when_heartbeat_links_point_at_loopback_test() {
+  let assert Ok(loaded) = parse([#("PHONE_HOME_TARGET", "collector:5140")])
+  assert config.warnings(loaded)
+    == [
+      "ADMIN_BIND_ADDRESS is 127.0.0.1, so collectors cannot follow the "
+      <> "links in heartbeats; set it to an address they can reach",
+    ]
+}
+
+pub fn no_warning_without_heartbeat_or_with_reachable_admin_test() {
+  let assert Ok(loaded) = parse([])
+  assert config.warnings(loaded) == []
+  let assert Ok(loaded) =
+    parse([
+      #("PHONE_HOME_TARGET", "collector:5140"),
+      #("ADMIN_BIND_ADDRESS", "0.0.0.0"),
+    ])
+  assert config.warnings(loaded) == []
+}

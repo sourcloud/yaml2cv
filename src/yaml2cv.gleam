@@ -38,6 +38,7 @@ pub fn main() -> Nil {
         <> ":"
         <> int.to_string(config.admin.port),
       )
+      list.each(config.warnings(config), wisp.log_warning)
       case config.phone_home.target {
         Some(target) ->
           wisp.log_info(

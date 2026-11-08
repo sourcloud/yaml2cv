@@ -77,7 +77,6 @@ COPY --from=build /build/build/erlang-shipment /app
 COPY LICENSE /app/LICENSE
 
 ENV PORT=8000 \
-    ADMIN_BIND_ADDRESS=0.0.0.0 \
     TYPST_PATH=/usr/local/bin/typst \
     WORK_DIR=/tmp/yaml2cv
 

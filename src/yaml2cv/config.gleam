@@ -232,6 +232,22 @@ fn text(
   })
 }
 
+/// Valid but questionable settings, worth logging at start-up.
+pub fn warnings(config: Config) -> List(String) {
+  let bind = config.admin.bind_address
+  let loopback =
+    string.starts_with(bind, "127.") || bind == "::1" || bind == "localhost"
+  case config.phone_home.target, loopback {
+    Some(_), True -> [
+      "ADMIN_BIND_ADDRESS is "
+      <> bind
+      <> ", so collectors cannot follow the links in heartbeats; "
+      <> "set it to an address they can reach",
+    ]
+    _, _ -> []
+  }
+}
+
 /// Reads and parses one variable, falling back to `default` when it is unset
 /// and collecting the error (newest first) when it is invalid.
 fn read(
