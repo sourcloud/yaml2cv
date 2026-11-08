@@ -1,0 +1,51 @@
+name: Release
+
+# The only workflow triggered by version tags. Each stage runs only if the
+# previous one succeeded: version check and CI, then image build, smoke test
+# and publish, then the GitHub Release.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check tag matches gleam.toml version
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"$/\1/p' gleam.toml)"
+          echo "tag: $GITHUB_REF_NAME, gleam.toml: $version"
+          test "$GITHUB_REF_NAME" = "v$version"
+
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  image:
+    needs: [version, ci]
+    uses: ./.github/workflows/image.yml
+    permissions:
+      contents: read
+      packages: write
+
+  release:
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+      - name: Generate release notes
+        run: nix develop --command git-cliff --latest --strip all --output "$RUNNER_TEMP/notes.md"
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag

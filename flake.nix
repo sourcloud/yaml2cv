@@ -21,6 +21,7 @@
             beamPackages.rebar3
             pkgs.gleam
             pkgs.typst
+            pkgs.git-cliff
             pkgs.just
             pkgs.watchexec
           ];

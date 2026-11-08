@@ -29,3 +29,7 @@ image tag="yaml2cv:dev":
     podman build -t {{tag}} \
         --build-arg GIT_REVISION="$(git rev-parse HEAD)" \
         --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
+
+# Print release notes for the latest tag (what the release workflow publishes)
+release-notes:
+    git-cliff --latest --strip all
