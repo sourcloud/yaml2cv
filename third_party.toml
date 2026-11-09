@@ -27,3 +27,9 @@ licenses = [
   "Bitstream-Vera",
 ]
 files = ["third_party/typst-assets/LICENSE", "third_party/typst-assets/NOTICE"]
+
+# NewCM10-Regular is GPL-3.0-or-later: the image must offer its source, the
+# FontForge files from CTAN, mirrored as a release asset (ADR 0032).
+[[component.sources]]
+description = "New Computer Modern 8.1.1, FontForge sources (sfd.txz)"
+url = "https://github.com/sourcloud/yaml2cv/releases/download/third-party-sources/newcomputermodern-8.1.1-sfd.txz"

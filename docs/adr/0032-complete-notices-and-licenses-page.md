@@ -43,6 +43,18 @@ The fonts compiled into the Typst binary come from `typst-assets`, whose
 `NOTICE` Typst's own does not include; its `LICENSE` and `NOTICE` for the
 matching version are committed under `third_party/typst-assets/` and listed
 in `third_party.toml`. A test keeps its minor version in step with Typst.
+
+**Source offers.** One embedded font, NewCM10-Regular, is GPL-3.0-or-later
+with a font exception (PDFs that embed it stay unaffected) and a
+distribution exception (Typst and yaml2cv keep their licenses). Publishing
+the image still distributes the font, so its source must be available. Of
+pointing to CTAN only (keeps just the latest release), a written offer, and
+building Typst without embedded fonts (Rust toolchain, slow multi-arch
+builds, no pinned official binary), the project mirrors the FontForge
+sources of the embedded version (`sfd.txz` from CTAN, checksum in
+`third_party/typst-assets/README.md`) as an asset of the
+`third-party-sources` GitHub release. Components may list such `sources`
+in `third_party.toml`; the notices and the licenses page link them.
 All of them appear in `THIRD_PARTY_NOTICES.md` and `licenses/<slug>/` like
 packages.
 
@@ -70,3 +82,6 @@ This amends ADR 0013.
   generator fails the image build when a listed license file is missing.
 - Every page links to the licenses; the texts are loaded only on demand.
 - The application keeps the license texts in memory (some hundred KB).
+- Every Typst upgrade that changes the New Computer Modern version needs a
+  new asset on the `third-party-sources` release; old assets stay as long
+  as images embedding them are published.

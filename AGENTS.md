@@ -83,6 +83,7 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
 - Upgrading Gleam, Erlang/OTP or Typst: change `flake.nix`/`flake.lock` and
   the versions and checksums in `Containerfile` together (ADR 0013). A
   Typst upgrade also updates `third_party/typst-assets/` and its entry in
-  `third_party.toml` (ADR 0032).
+  `third_party.toml`, including the mirrored New Computer Modern source
+  (see `third_party/typst-assets/README.md`, ADR 0032).
 - Committing third-party files (fonts, scripts) under `priv/`: add them and
   their license files to `third_party.toml` (ADR 0032).
