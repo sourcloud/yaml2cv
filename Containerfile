@@ -11,6 +11,24 @@
 # publish (linux/amd64, linux/arm64); otherwise BuildKit silently falls back
 # to another platform's image (ADR 0014).
 ARG ERLANG_IMAGE=docker.io/library/erlang:29.1.2-alpine@sha256:0ac9b63db11be156be4e2834546e44aa0d7446aaffb05fedd4aea8c5a33ad998
+ARG TYPST_VERSION=0.15.1
+
+# --- Typst ---------------------------------------------------------------------
+FROM ${ERLANG_IMAGE} AS typst
+
+ARG TYPST_VERSION
+RUN set -eu; \
+    apk add --no-cache xz; \
+    case "$(uname -m)" in \
+      x86_64) arch=x86_64; sum=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c ;; \
+      aarch64) arch=aarch64; sum=5aa8d74a3d906e60ea12a66ac2f37f8eef1b14cbad7182a745e393a10c23dcee ;; \
+      *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    wget -qO /tmp/typst.tar.xz \
+      "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-${arch}-unknown-linux-musl.tar.xz"; \
+    echo "${sum}  /tmp/typst.tar.xz" | sha256sum -c -; \
+    mkdir /typst; \
+    tar -xJf /tmp/typst.tar.xz -C /typst --strip-components=1
 
 # --- Build ---------------------------------------------------------------------
 FROM ${ERLANG_IMAGE} AS build
@@ -38,27 +56,19 @@ COPY LICENSE ./
 COPY src src
 COPY priv priv
 COPY dev dev
-RUN gleam export erlang-shipment \
- && gleam run -m notices -- build/erlang-shipment /notices \
- && mkdir -p /notices/licenses/erlang-otp \
- && cp LICENSE /notices/licenses/erlang-otp/LICENSE
-
-# --- Typst ---------------------------------------------------------------------
-FROM ${ERLANG_IMAGE} AS typst
-
-ARG TYPST_VERSION=0.15.1
+COPY third_party.toml ./
+COPY --from=typst /typst/LICENSE /typst/NOTICE /typst-licenses/
+# Third-party notices (ADR 0013, ADR 0032). This stage runs the same
+# Erlang/OTP as the runtime image, so its version is the shipped one.
+ARG TYPST_VERSION
 RUN set -eu; \
-    apk add --no-cache xz; \
-    case "$(uname -m)" in \
-      x86_64) arch=x86_64; sum=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c ;; \
-      aarch64) arch=aarch64; sum=5aa8d74a3d906e60ea12a66ac2f37f8eef1b14cbad7182a745e393a10c23dcee ;; \
-      *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
-    esac; \
-    wget -qO /tmp/typst.tar.xz \
-      "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-${arch}-unknown-linux-musl.tar.xz"; \
-    echo "${sum}  /tmp/typst.tar.xz" | sha256sum -c -; \
-    mkdir /typst; \
-    tar -xJf /tmp/typst.tar.xz -C /typst --strip-components=1
+    gleam export erlang-shipment; \
+    otp="$(erl -noshell -eval '{ok, V} = file:read_file(filename:join([code:root_dir(), "releases", erlang:system_info(otp_release), "OTP_VERSION"])), io:put_chars(string:trim(V)), halt().')"; \
+    gleam run -m notices -- build/erlang-shipment /notices \
+      --components third_party.toml \
+      --component "Erlang/OTP|${otp}|Apache-2.0|LICENSE" \
+      --component "Typst|${TYPST_VERSION}|Apache-2.0|/typst-licenses/LICENSE,/typst-licenses/NOTICE" \
+      --json build/erlang-shipment/yaml2cv/priv/notices.json
 
 # --- Runtime -------------------------------------------------------------------
 FROM ${ERLANG_IMAGE}
@@ -71,7 +81,6 @@ LABEL org.opencontainers.image.title="yaml2cv" \
 RUN addgroup -S yaml2cv && adduser -S -G yaml2cv -H -h /app yaml2cv
 
 COPY --from=typst /typst/typst /usr/local/bin/typst
-COPY --from=typst /typst/LICENSE /typst/NOTICE /app/licenses/typst/
 COPY --from=build /notices /app/
 COPY --from=build /build/build/erlang-shipment /app
 COPY LICENSE /app/LICENSE
