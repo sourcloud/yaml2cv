@@ -1,6 +1,6 @@
 # 0007. CV schema version 1
 
-- Status: Accepted
+- Status: Accepted, language key added by 0036
 - Date: 2026-11-07
 
 ## Context

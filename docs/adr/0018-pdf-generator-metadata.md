@@ -1,6 +1,6 @@
 # 0018. Mark generated PDFs with yaml2cv metadata
 
-- Status: Accepted
+- Status: Accepted, subject and keywords superseded by 0036
 - Date: 2026-11-07
 
 ## Context

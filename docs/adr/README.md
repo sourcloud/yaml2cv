@@ -41,3 +41,4 @@ for the process.
 | [0033](0033-stability-promise-for-1-0.md) | Stability promise for 1.0 | Accepted |
 | [0034](0034-dependabot-for-github-actions.md) | Dependabot for GitHub Actions | Accepted |
 | [0035](0035-machine-readable-pdf-text.md) | Machine-readable PDF text | Accepted |
+| [0036](0036-cv-language-and-candidate-metadata.md) | CV language and PDF metadata about the candidate | Accepted |
