@@ -5,7 +5,7 @@ import gleam/string
 import simplifile
 import yaml2cv/cv.{
   A4, Blue, Circle, Classic, Contact, Cv, Entries, Entry, Letter, Link, Minimal,
-  Person, Photo, Png, Rectangle, Section, Skill, Skills, Style, Text,
+  Person, Photo, Png, Rectangle, Section, Skill, Skills, Studio, Style, Text,
 }
 import yaml2cv/cv/decode.{
   DocumentTooComplex, DocumentTooLarge, InvalidPhoto, SchemaError, SyntaxError,
@@ -55,6 +55,19 @@ sections: []
     )
   assert cv.style
     == Style(theme: Minimal, color: Blue, paper: A4, photo_shape: Rectangle)
+}
+
+pub fn decodes_studio_theme_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { theme: studio }
+person: { name: Jane Roe }
+sections: []
+",
+    )
+  assert cv.style.theme == Studio
 }
 
 pub fn decodes_paper_size_test() {

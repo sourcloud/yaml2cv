@@ -15,6 +15,7 @@ pub type Style {
 pub type Theme {
   Classic
   Minimal
+  Studio
 }
 
 pub type Color {
@@ -106,7 +107,11 @@ pub const default_style =
   Style(theme: Classic, color: Blue, paper: A4, photo_shape: Rectangle)
 
 /// All themes, in the order they are listed to users.
-pub const themes = [#("classic", Classic), #("minimal", Minimal)]
+pub const themes = [
+  #("classic", Classic),
+  #("minimal", Minimal),
+  #("studio", Studio),
+]
 
 /// All colors, in the order they are listed to users.
 pub const colors = [
@@ -135,5 +140,6 @@ pub fn theme_name(theme: Theme) -> String {
   case theme {
     Classic -> "classic"
     Minimal -> "minimal"
+    Studio -> "studio"
   }
 }
