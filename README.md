@@ -150,7 +150,9 @@ see which image a deployment runs.
   ```
 
 - Third-party license notices are in `/app/THIRD_PARTY_NOTICES.md` and
-  `/app/licenses/` inside the image.
+  `/app/licenses/` inside the image. A running instance shows them at
+  `/licenses`, linked from the page footer. Running from source
+  (`gleam run`), the page lists no third-party components.
 
 ## HTTP API
 

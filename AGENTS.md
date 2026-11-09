@@ -82,3 +82,5 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
   they are not part of the shipped application.
 - Upgrading Gleam, Erlang/OTP or Typst: change `flake.nix`/`flake.lock` and
   the versions and checksums in `Containerfile` together (ADR 0013).
+- Committing third-party files (fonts, scripts) under `priv/`: add them and
+  their license files to `third_party.toml` (ADR 0032).
