@@ -15,6 +15,19 @@
     position: sticky;
     top: var(--space-6);
   }
+
+  /* A long CV makes the preview taller than the viewport. Cap the panel at
+   * the viewport and scroll its pages on their own, so the preview never
+   * waits for the CV panel to end and its header stays in view. */
+  .layout-editor__preview > .ui-panel {
+    max-height: calc(100dvh - 2 * var(--space-6));
+  }
+
+  .layout-editor__preview .ui-panel__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 /* Edit modes of the CV panel (ADR 0024); editor.js sets data-mode. */
