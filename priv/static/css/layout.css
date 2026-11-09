@@ -128,3 +128,53 @@
   color: var(--color-danger);
   background: var(--color-danger-surface);
 }
+
+/* Licenses page and footer dialog (ADR 0032). Gleam: yaml2cv/web/licenses */
+.licenses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.licenses__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.licenses__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.licenses__component {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.licenses__component > summary {
+  cursor: pointer;
+}
+
+.licenses__component h3 {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.licenses__text {
+  max-height: 24rem;
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+}

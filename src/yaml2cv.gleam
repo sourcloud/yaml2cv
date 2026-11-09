@@ -14,6 +14,7 @@ import wisp
 import wisp/wisp_mist
 import yaml2cv/build.{Build}
 import yaml2cv/config.{type Config}
+import yaml2cv/notices.{type Component}
 import yaml2cv/observe/admin
 import yaml2cv/observe/document
 import yaml2cv/observe/heartbeat
@@ -72,8 +73,14 @@ fn boot() -> Result(Config, List(String)) {
       ["could not read example CV: " <> simplifile.describe_error(error)]
     }),
   )
+  use notices <- result.try(
+    notices.load(config.notices_path)
+    |> result.map_error(fn(error) {
+      ["could not read third-party notices: " <> error]
+    }),
+  )
   use _ <- result.try(
-    start(config, example)
+    start(config, example, notices)
     |> result.replace_error(["could not start the supervision tree"]),
   )
   Ok(config)
@@ -81,7 +88,7 @@ fn boot() -> Result(Config, List(String)) {
 
 /// Starts the render limiter, the public and admin HTTP servers and, when a
 /// collector is configured, the heartbeat under one supervisor.
-fn start(config: Config, example: String) {
+fn start(config: Config, example: String, notices: List(Component)) {
   let limiter_name = process.new_name("yaml2cv_render_limiter")
   let renderer =
     typst.new(config.typst)
@@ -99,6 +106,7 @@ fn start(config: Config, example: String) {
         revision: build.revision(config.phone_home.metadata.git_revision),
       ),
       example_cv: example,
+      notices:,
     )
   // The app sets no cookies, so the signing key may change on every start.
   let handler =

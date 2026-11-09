@@ -1,16 +1,19 @@
 //// Request routing and cross-cutting middleware.
 
 import gleam/http
+import gleam/http/request
 import gleam/http/response
 import gleam/json
 import gleam/option.{None}
 import wisp.{type Request, type Response}
 import yaml2cv/build.{type Build}
+import yaml2cv/notices.{type Component}
 import yaml2cv/render.{type Renderer}
 import yaml2cv/web/api
 import yaml2cv/web/compress
 import yaml2cv/web/editor
 import yaml2cv/web/i18n
+import yaml2cv/web/licenses
 
 /// Everything a request handler needs, injected so tests can swap parts.
 pub type Context {
@@ -23,6 +26,8 @@ pub type Context {
     build: Build,
     /// YAML preloaded into the editor.
     example_cv: String,
+    /// Third-party components shown at `/licenses` (ADR 0032).
+    notices: List(Component),
   )
 }
 
@@ -99,6 +104,17 @@ pub fn handle_request(request: Request, context: Context) -> Response {
         context.build,
       )
       |> localised
+    }
+    ["licenses"] -> {
+      use <- wisp.require_method(request, http.Get)
+      // htmx asks for the body only, to show it in the footer dialog.
+      case request.get_header(request, "hx-request") {
+        Ok(_) -> licenses.fragment(locale(request), context.notices)
+        Error(Nil) ->
+          licenses.page(locale(request), context.build, context.notices)
+      }
+      |> localised
+      |> response.prepend_header("vary", "hx-request")
     }
     ["healthz"] -> {
       use <- wisp.require_method(request, http.Get)

@@ -18,6 +18,7 @@ fn context(pages: Result(List(BitArray), RenderError)) -> router.Context {
     static_directory: "priv/static",
     build: Build(version: "1.2.3", revision: Clean("37e695e1c0ffee")),
     example_cv: "person:\n  name: <Example>\n",
+    notices: [],
   )
 }
 

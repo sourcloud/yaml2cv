@@ -17,3 +17,6 @@ erl_crash.dump
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Written by the image build (ADR 0032)
+/priv/notices.json

@@ -88,3 +88,18 @@ pub fn german_footer_test() {
   assert string.contains(html, "verändert")
   assert string.contains(footer(De, Unknown), "Revision unbekannt")
 }
+
+pub fn footer_opens_licenses_in_dialog_test() {
+  let html = footer(En, Clean(hash))
+  assert string.contains(html, "href=\"/licenses\"")
+  assert string.contains(html, "hx-get=\"/licenses\"")
+  assert string.contains(html, "hx-target=\"#licenses-dialog-body\"")
+  assert string.contains(html, "data-dialog-open=\"licenses-dialog\"")
+  assert string.contains(html, ">Licenses</a>")
+  assert string.contains(html, "id=\"licenses-dialog\"")
+  assert string.contains(html, "id=\"licenses-dialog-body\"")
+}
+
+pub fn german_licenses_link_test() {
+  assert string.contains(footer(De, Unknown), ">Lizenzen</a>")
+}

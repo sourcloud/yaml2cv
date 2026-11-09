@@ -24,6 +24,8 @@ pub type Config {
     static_directory: String,
     /// CV preloaded into the editor.
     example_path: String,
+    /// Third-party notices written by the image build (ADR 0032).
+    notices_path: String,
     typst: typst.Config,
     /// The yaml2cv release, from the OTP application.
     version: String,
@@ -160,6 +162,7 @@ pub fn parse(
         render_queue_wait:,
         static_directory: priv_directory <> "/static",
         example_path: priv_directory <> "/examples/example.yaml",
+        notices_path: priv_directory <> "/notices.json",
         typst: typst.Config(
           executable:,
           themes_directory: priv_directory <> "/themes",

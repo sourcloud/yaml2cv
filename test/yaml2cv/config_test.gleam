@@ -22,6 +22,7 @@ pub fn uses_defaults_for_empty_environment_test() {
       render_queue_wait: 5000,
       static_directory: "/priv/static",
       example_path: "/priv/examples/example.yaml",
+      notices_path: "/priv/notices.json",
       typst: typst.Config(
         executable: "typst",
         themes_directory: "/priv/themes",

@@ -16,8 +16,10 @@
 //   `data-download-name`. `data-import-choose` opens the file input with
 //   that id, whose `data-import-into` field gets the picked file's text,
 //   undoably; in visual mode the blocks are then asked for again.
-// - Buttons with `data-dialog-open` open the modal `<dialog>` with that id;
-//   a click on its backdrop closes it (ADR 0022).
+// - Buttons and links with `data-dialog-open` open the modal `<dialog>` with
+//   that id; a click on its backdrop closes it (ADR 0022). The footer's
+//   licenses link also fetches its content into the dialog with htmx, which
+//   keeps the link from navigating (ADR 0032).
 // - Edit modes (ADR 0024): `[data-mode]` holds `yaml` or `visual`. The
 //   Visual switch asks the server for blocks via htmx and switches on its
 //   `visual-ready` event. Regenerated YAML arrives in `#yaml-sync` and is

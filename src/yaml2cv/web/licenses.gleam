@@ -24,7 +24,7 @@ pub fn page(
     locale:,
     language_form: None,
     build:,
-    title: "yaml2cv – " <> i18n.texts(locale).licenses.title,
+    title: "yaml2cv",
     actions: [],
     content: [
       html.article([attribute.class("licenses")], [

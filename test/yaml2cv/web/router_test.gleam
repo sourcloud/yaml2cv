@@ -5,6 +5,7 @@ import gleam/list
 import gleam/string
 import wisp/simulate
 import yaml2cv/build.{Build, Clean}
+import yaml2cv/notices.{Component, LicenseFile}
 import yaml2cv/render.{
   type RenderError, CompileFailed, Overloaded, Renderer, RendererUnavailable,
   TimedOut,
@@ -22,6 +23,7 @@ fn context(result: Result(BitArray, RenderError)) -> router.Context {
     static_directory: "priv/static",
     build: Build(version: "1.2.3", revision: Clean("37e695e1c0ffee")),
     example_cv: "",
+    notices: [],
   )
 }
 
@@ -196,4 +198,43 @@ pub fn compresses_editor_page_test() {
     |> simulate.header("accept-encoding", "gzip")
     |> router.handle_request(context(Ok(<<"%PDF-fake">>)))
   assert response.get_header(response, "content-encoding") == Ok("gzip")
+}
+
+fn licenses(headers: List(#(String, String))) {
+  let context =
+    Context(..context(Ok(<<>>)), notices: [
+      Component(name: "Inter", version: "4.1", licenses: ["OFL-1.1"], files: [
+        LicenseFile(name: "OFL.txt", text: "OFL"),
+      ]),
+    ])
+  list.fold(headers, simulate.request(http.Get, "/licenses"), fn(req, header) {
+    simulate.header(req, header.0, header.1)
+  })
+  |> router.handle_request(context)
+}
+
+pub fn licenses_page_test() {
+  let response = licenses([])
+  assert response.status == 200
+  let body = simulate.read_body(response)
+  assert string.contains(body, "<html")
+  assert string.contains(body, "<strong>Inter</strong>")
+}
+
+pub fn licenses_fragment_for_htmx_test() {
+  let response = licenses([#("hx-request", "true"), #("accept-language", "de")])
+  assert response.status == 200
+  let body = simulate.read_body(response)
+  assert !string.contains(body, "<html")
+  assert string.contains(body, "<strong>Inter</strong>")
+  assert string.contains(body, "Lizenz lesen")
+  let assert Ok(vary) = response.get_header(response, "vary")
+  assert string.contains(vary, "hx-request")
+}
+
+pub fn licenses_only_answers_get_test() {
+  let response =
+    simulate.request(http.Post, "/licenses")
+    |> router.handle_request(context(Ok(<<>>)))
+  assert response.status == 405
 }
