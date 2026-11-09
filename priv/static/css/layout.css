@@ -25,7 +25,8 @@
 
 /* The validation status follows the CV panel's content but sticks to the
  * bottom of the viewport, so a long CV or an enlarged field does not push
- * it out of sight. A long error list scrolls within it. */
+ * it out of sight. Its title stays put; the error list shows about three
+ * problems, the next one cut off as a hint, and scrolls for the rest. */
 .editor-status {
   position: sticky;
   inset-block-end: 0;
@@ -39,8 +40,10 @@
   display: none;
 }
 
-.editor-status > .ui-alert {
-  max-height: 33vh;
+.editor-status .ui-error-list {
+  max-height: calc(
+    3.5 * (var(--font-size-sm) * var(--line-height-normal) + var(--space-1))
+  );
   overflow-y: auto;
   overscroll-behavior: contain;
 }
