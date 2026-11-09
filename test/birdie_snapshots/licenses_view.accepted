@@ -1,0 +1,6 @@
+---
+version: 2.0.2
+title: licenses view
+---
+<div><p>yaml2cv is free software under the Apache License, Version 2.0. <a href="https://github.com/sourcloud/yaml2cv/blob/master/LICENSE">Read the license</a></p><p>It includes the following third-party components; click one to show its license texts.</p><div class="licenses__list"><details class="licenses__component"><summary><strong>Inter</strong> 4.1 · OFL-1.1</summary><h3>OFL.txt</h3><pre class="licenses__text">Copyright &lt;Inter&gt;
+</pre></details><details class="licenses__component"><summary><strong>Typst</strong> 0.15.1 · see license file</summary><h3>LICENSE</h3><pre class="licenses__text">Apache</pre><h3>NOTICE</h3><pre class="licenses__text">Notice</pre></details></div></div>

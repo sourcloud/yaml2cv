@@ -9,7 +9,7 @@ import yaml2cv/cv/decode.{
 }
 import yaml2cv/cv/photo
 import yaml2cv/web/i18n/texts.{
-  EditorTexts, SchemaTexts, Texts, UiTexts, VisualTexts,
+  EditorTexts, LicensesTexts, SchemaTexts, Texts, UiTexts, VisualTexts,
 }
 
 /// Every German UI text.
@@ -134,6 +134,14 @@ pub fn texts() -> texts.Texts {
       move_up: fn(item) { item <> " nach oben verschieben" },
       move_down: fn(item) { item <> " nach unten verschieben" },
       remove_item: fn(item) { item <> " entfernen" },
+    ),
+    licenses: LicensesTexts(
+      title: "Lizenzen",
+      own_license: "yaml2cv ist freie Software unter der Apache License, Version 2.0.",
+      read_license: "Lizenz lesen",
+      intro: "Es enthält die folgenden Komponenten Dritter; ein Klick auf eine zeigt ihre Lizenztexte.",
+      unavailable: "Dieser Build enthält keine Hinweise zu Komponenten Dritter. Sie werden beim Bau des Container-Images erzeugt.",
+      see_license_file: "siehe Lizenzdatei",
     ),
     schema: SchemaTexts(
       title: "Lebenslauf-Schema",

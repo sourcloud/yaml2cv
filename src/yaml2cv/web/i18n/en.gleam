@@ -4,7 +4,7 @@ import gleam/int
 import gleam/string
 import yaml2cv/cv/decode
 import yaml2cv/web/i18n/texts.{
-  EditorTexts, SchemaTexts, Texts, UiTexts, VisualTexts,
+  EditorTexts, LicensesTexts, SchemaTexts, Texts, UiTexts, VisualTexts,
 }
 
 /// Every English UI text.
@@ -129,6 +129,14 @@ pub fn texts() -> texts.Texts {
       move_up: fn(item) { "Move " <> string.lowercase(item) <> " up" },
       move_down: fn(item) { "Move " <> string.lowercase(item) <> " down" },
       remove_item: fn(item) { "Remove " <> string.lowercase(item) },
+    ),
+    licenses: LicensesTexts(
+      title: "Licenses",
+      own_license: "yaml2cv is free software under the Apache License, Version 2.0.",
+      read_license: "Read the license",
+      intro: "It includes the following third-party components; click one to show its license texts.",
+      unavailable: "This build carries no third-party notices. They are generated when the container image is built.",
+      see_license_file: "see license file",
     ),
     schema: SchemaTexts(
       title: "CV schema",

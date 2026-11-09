@@ -13,6 +13,7 @@ pub type Texts {
     editor: EditorTexts,
     visual: VisualTexts,
     schema: SchemaTexts,
+    licenses: LicensesTexts,
   )
 }
 
@@ -135,6 +136,21 @@ pub type VisualTexts {
     move_up: fn(String) -> String,
     move_down: fn(String) -> String,
     remove_item: fn(String) -> String,
+  )
+}
+
+/// Texts of the licenses page and dialog (ADR 0032).
+pub type LicensesTexts {
+  LicensesTexts(
+    /// Page and dialog title; also the footer link.
+    title: String,
+    own_license: String,
+    read_license: String,
+    intro: String,
+    /// Shown when the build carries no notices, e.g. `gleam run`.
+    unavailable: String,
+    /// Shown for a component that declares no license identifier.
+    see_license_file: String,
   )
 }
 
