@@ -80,6 +80,17 @@ pub fn describes_collection_after_collection_end_test() {
     ))
 }
 
+pub fn points_a_broken_list_at_its_item_test() {
+  // The second dash starts a nested list at column 5, which the key on
+  // line 6 cannot continue. yamerl reports line 6; the slip is on line 3.
+  assert yaml.parse("a:\n  - b: 1\n  - -\n\n    # note\n    c: 2\n")
+    == Error(SyntaxError(
+      message: "Line 6 does not fit the list item here; check the indentation and the \"-\" marks",
+      line: 3,
+      column: 5,
+    ))
+}
+
 pub fn rejects_alias_expansion_bombs_test() {
   // Seven levels of ten aliases each expand to ten million nodes.
   let level = fn(name, item) {

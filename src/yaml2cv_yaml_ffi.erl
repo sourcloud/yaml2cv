@@ -35,7 +35,7 @@ parse(Source, MaxNodes) ->
         {ok, Nodes}
     catch
         throw:#yamerl_exception{errors = [First | _]} ->
-            {error, syntax_error(First)};
+            {error, syntax_error(First, Source)};
         throw:{unsupported_node, Kind} ->
             {error, {syntax_error, <<"unsupported YAML node: ", Kind/binary>>, 0, 0}};
         throw:budget_exhausted ->
@@ -72,6 +72,48 @@ to_node(#yamerl_map{pairs = Pairs}, Budget) ->
     {{map, Nodes}, Rest};
 to_node(Other, _) ->
     throw({unsupported_node, atom_to_binary(element(1, Other))}).
+
+%% yamerl reports a broken list at the first token that cannot continue it,
+%% often the line after the actual slip (such as a stray second "-"). Point
+%% at the list item instead when it can be found, and name both lines.
+syntax_error(#yamerl_parsing_error{name = not_a_sequence, line = Line, column = Column}, Source)
+        when is_integer(Line), is_integer(Column) ->
+    Lines = string:split(unicode:characters_to_list(Source), "\n", all),
+    Number = integer_to_binary(Line),
+    case list_item(lists:reverse(lists:sublist(Lines, Line - 1)), Line - 1, Column) of
+        {found, Item} ->
+            {syntax_error,
+                <<"Line ", Number/binary,
+                    " does not fit the list item here; check the indentation and the \"-\" marks">>,
+                Item, Column};
+        not_found ->
+            {syntax_error,
+                <<"Line ", Number/binary,
+                    " does not fit the list above it; check the indentation and the \"-\" marks">>,
+                Line, Column}
+    end;
+syntax_error(Error, _Source) ->
+    syntax_error(Error).
+
+%% The nearest line above whose "-" at `Column` starts a list item, looking
+%% past blank lines, comments and deeper content, but not past a line that
+%% starts left of `Column`.
+list_item([], _, _) ->
+    not_found;
+list_item([Text | Above], Number, Column) ->
+    Indent = length(Text) - length(string:trim(Text, leading, " ")),
+    Rest = string:trim(Text, leading, " "),
+    IsItem =
+        length(Text) >= Column andalso
+            lists:nth(Column, Text) =:= $- andalso
+            (length(Text) =:= Column orelse lists:nth(Column + 1, Text) =:= $\s) andalso
+            lists:all(fun(C) -> C =:= $\s orelse C =:= $- end, lists:sublist(Text, Column - 1)),
+    if
+        IsItem -> {found, Number};
+        Rest =:= [] orelse hd(Rest) =:= $# orelse Indent >= Column - 1 ->
+            list_item(Above, Number - 1, Column);
+        true -> not_found
+    end.
 
 syntax_error(#yamerl_parsing_error{
     name = unexpected_token, token = Token, text = Text, line = Line, column = Column
