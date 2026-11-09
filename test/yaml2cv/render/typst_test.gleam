@@ -221,3 +221,22 @@ pub fn extracts_section_titles_as_words_in_every_theme_test() {
   assert #(name, section, string.contains(text, section))
     == #(name, section, True)
 }
+
+pub fn extracts_link_addresses_in_every_theme_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+person: { name: Jane Roe }
+contact:
+  website: https://jane.example.com
+  links: [{ label: GitHub, url: 'https://github.com/janeroe' }]
+sections: [{ name: Profile, kind: text, text: Engineer }]
+",
+    )
+  use #(name, theme) <- list.each(cv.themes)
+  let text = extracted_text(with_theme(cv, theme))
+  assert #(name, string.contains(text, "jane.example.com")) == #(name, True)
+  assert #(name, string.contains(text, "github.com/janeroe")) == #(name, True)
+  assert #(name, string.contains(text, "https://")) == #(name, False)
+}

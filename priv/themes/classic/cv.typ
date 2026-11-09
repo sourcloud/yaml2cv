@@ -49,15 +49,30 @@
 
 // Header ----------------------------------------------------------------------
 
+// Links show their address, so it survives text extraction (ADR 0035).
+#let address(url) = url.replace(regex("^https?://"), "")
+
 #let contact-items = {
   let c = cv.contact
   let items = ()
   if cv.person.address != none { items.push(cv.person.address) }
   if c.phone != none { items.push(c.phone) }
   if c.email != none { items.push(link("mailto:" + c.email, c.email)) }
-  if c.website != none { items.push(link(c.website, c.website)) }
-  for l in c.links { items.push(link(l.url, l.label)) }
+  if c.website != none { items.push(link(c.website, address(c.website))) }
+  for l in c.links {
+    // Kept on one line, so the label never ends a line on its own.
+    items.push(box(link(l.url, l.label + ": " + address(l.url))))
+  }
   items
+}
+
+// Contact items separated by dots. A line may break after a dot, never
+// before one.
+#let contact-line = {
+  let last = contact-items.len() - 1
+  for (i, item) in contact-items.enumerate() {
+    if i < last { box[#item~#h(0.3em)·] + h(0.3em) + [ ] } else { item }
+  }
 }
 
 // Profile photo (ADR 0028): cropped to fill a fixed box. The renderer writes
@@ -97,7 +112,7 @@
       (text(size: 14pt, fill: muted, style: "italic", cv.person.title),)
     },
     ..if contact-items.len() > 0 {
-      (text(size: 9.5pt, fill: muted, contact-items.join[ #h(0.3em)·#h(0.3em) ]),)
+      (text(size: 9.5pt, fill: muted, contact-line),)
     },
   ),
   stroke: 0.75pt + accent,
