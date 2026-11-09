@@ -18,7 +18,9 @@ import gleam/result
 import gleam/string
 import simplifile
 import tom
-import yaml2cv/notices.{type Component, type LicenseFile, Component, LicenseFile}
+import yaml2cv/notices.{
+  type Component, type LicenseFile, type Source, Component, LicenseFile, Source,
+}
 
 /// A dependency as locked in `manifest.toml`.
 pub type Package {
@@ -33,6 +35,7 @@ pub type Declared {
     version: String,
     licenses: List(String),
     files: List(String),
+    sources: List(Source),
   )
 }
 
@@ -178,7 +181,15 @@ fn component_for(
   let licenses = declared_licenses(metadata)
   use files <- result.try(license_files(directory))
   use files <- result.try(license_texts(package.name, licenses, files, apache:))
-  Ok(Component(name: package.name, version: package.version, licenses:, files:))
+  Ok(
+    Component(
+      name: package.name,
+      version: package.version,
+      licenses:,
+      files:,
+      sources: [],
+    ),
+  )
 }
 
 /// Reads the license files of a declared component.
@@ -194,6 +205,7 @@ fn resolve(declared: Declared) -> Result(Component, String) {
     version: declared.version,
     licenses: declared.licenses,
     files:,
+    sources: declared.sources,
   ))
 }
 
@@ -252,7 +264,22 @@ pub fn parse_components(source: String) -> Result(List(Declared), String) {
     use version <- result.try(string("version"))
     use licenses <- result.try(strings("licenses"))
     use files <- result.try(strings("files"))
-    declared(name, version, licenses, files)
+    use sources <- result.try(case tom.get_array(table, ["sources"]) {
+      Error(tom.NotFound(_)) -> Ok([])
+      Error(_) -> Error(invalid("sources must be an array of tables"))
+      Ok(sources) ->
+        list.try_map(sources, fn(source) {
+          let field = fn(key) {
+            tom.as_table(source)
+            |> result.try(tom.get_string(_, [key]))
+            |> result.replace_error(invalid("source without " <> key))
+          }
+          use description <- result.try(field("description"))
+          use url <- result.try(field("url"))
+          Ok(Source(description:, url:))
+        })
+    })
+    declared(name, version, licenses, files, sources)
   })
 }
 
@@ -260,7 +287,7 @@ pub fn parse_components(source: String) -> Result(List(Declared), String) {
 pub fn parse_component(spec: String) -> Result(Declared, String) {
   case string.split(spec, "|") {
     [name, version, licenses, files] ->
-      declared(name, version, split_list(licenses), split_list(files))
+      declared(name, version, split_list(licenses), split_list(files), [])
     _ ->
       Error("--component " <> spec <> ": expected Name|version|License|files")
   }
@@ -277,10 +304,11 @@ fn declared(
   version: String,
   licenses: List(String),
   files: List(String),
+  sources: List(Source),
 ) -> Result(Declared, String) {
   case files {
     [] -> Error(name <> ": no license files declared")
-    _ -> Ok(Declared(name:, version:, licenses:, files:))
+    _ -> Ok(Declared(name:, version:, licenses:, files:, sources:))
   }
 }
 
@@ -396,6 +424,29 @@ pub fn render_overview(components: List(Component)) -> String {
       <> files
       <> " |"
     })
+  let sources =
+    list.flat_map(components, fn(component) {
+      list.map(component.sources, fn(source) {
+        "- "
+        <> component.name
+        <> ": ["
+        <> source.description
+        <> "]("
+        <> source.url
+        <> ")"
+      })
+    })
+  let sources = case sources {
+    [] -> []
+    _ -> [
+      "",
+      "## Source code",
+      "",
+      "Source code for components whose license requires offering it:",
+      "",
+      ..sources
+    ]
+  }
   string.join(
     [
       "# Third-party notices",
@@ -406,7 +457,7 @@ pub fn render_overview(components: List(Component)) -> String {
       "",
       "| Component | Version | License | Files |",
       "| --- | --- | --- | --- |",
-      ..rows
+      ..list.append(rows, sources)
     ],
     "\n",
   )

@@ -142,6 +142,7 @@ pub fn texts() -> texts.Texts {
       intro: "Es enthält die folgenden Komponenten Dritter; ein Klick auf eine zeigt ihre Lizenztexte.",
       unavailable: "Dieser Build enthält keine Hinweise zu Komponenten Dritter. Sie werden beim Bau des Container-Images erzeugt.",
       see_license_file: "siehe Lizenzdatei",
+      source_code: "Quellcode",
     ),
     schema: SchemaTexts(
       title: "Lebenslauf-Schema",

@@ -203,9 +203,15 @@ pub fn compresses_editor_page_test() {
 fn licenses(headers: List(#(String, String))) {
   let context =
     Context(..context(Ok(<<>>)), notices: [
-      Component(name: "Inter", version: "4.1", licenses: ["OFL-1.1"], files: [
-        LicenseFile(name: "OFL.txt", text: "OFL"),
-      ]),
+      Component(
+        name: "Inter",
+        version: "4.1",
+        licenses: ["OFL-1.1"],
+        files: [
+          LicenseFile(name: "OFL.txt", text: "OFL"),
+        ],
+        sources: [],
+      ),
     ])
   list.fold(headers, simulate.request(http.Get, "/licenses"), fn(req, header) {
     simulate.header(req, header.0, header.1)

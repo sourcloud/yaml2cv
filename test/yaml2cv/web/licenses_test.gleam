@@ -2,7 +2,7 @@ import birdie
 import gleam/string
 import lustre/element
 import lustre/element/html
-import yaml2cv/notices.{Component, LicenseFile}
+import yaml2cv/notices.{Component, LicenseFile, Source}
 import yaml2cv/web/i18n.{De, En}
 import yaml2cv/web/licenses
 
@@ -12,6 +12,7 @@ const components = [
     version: "4.1",
     licenses: ["OFL-1.1"],
     files: [LicenseFile(name: "OFL.txt", text: "Copyright <Inter>\n")],
+    sources: [],
   ),
   Component(
     name: "Typst",
@@ -20,6 +21,12 @@ const components = [
     files: [
       LicenseFile(name: "LICENSE", text: "Apache"),
       LicenseFile(name: "NOTICE", text: "Notice"),
+    ],
+    sources: [
+      Source(
+        description: "New Computer Modern 8.1.1",
+        url: "https://example.org/newcm.txz",
+      ),
     ],
   ),
 ]

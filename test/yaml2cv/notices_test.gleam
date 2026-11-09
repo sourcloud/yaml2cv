@@ -1,5 +1,5 @@
 import simplifile
-import yaml2cv/notices.{Component, LicenseFile}
+import yaml2cv/notices.{Component, LicenseFile, Source}
 
 const inter =
   Component(
@@ -7,12 +7,21 @@ const inter =
     version: "4.1",
     licenses: ["OFL-1.1"],
     files: [LicenseFile(name: "OFL.txt", text: "Copyright \"Inter\"\n")],
+    sources: [
+      Source(description: "Inter 4.1", url: "https://example.org/inter"),
+    ],
   )
 
 pub fn round_trips_through_json_test() {
   let components = [
     inter,
-    Component(name: "hpack_erl", version: "0.3.0", licenses: [], files: []),
+    Component(
+      name: "hpack_erl",
+      version: "0.3.0",
+      licenses: [],
+      files: [],
+      sources: [],
+    ),
   ]
   assert notices.from_json(notices.to_json(components)) == Ok(components)
 }
@@ -43,4 +52,13 @@ pub fn slugs_component_names_test() {
   assert notices.slug("hpack_erl") == "hpack_erl"
   assert notices.slug("Inter") == "inter"
   assert notices.slug("gleam.json") == "gleam.json"
+}
+
+pub fn sources_are_optional_in_json_test() {
+  let json =
+    "{\"components\":[{\"name\":\"x\",\"version\":\"1\",\"licenses\":[],\"files\":[]}]}"
+  assert notices.from_json(json)
+    == Ok([
+      Component(name: "x", version: "1", licenses: [], files: [], sources: []),
+    ])
 }

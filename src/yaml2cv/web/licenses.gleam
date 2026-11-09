@@ -12,6 +12,7 @@ import wisp.{type Response}
 import yaml2cv/build.{type Build}
 import yaml2cv/notices.{type Component}
 import yaml2cv/web/i18n.{type Locale}
+import yaml2cv/web/i18n/texts.{type LicensesTexts}
 import yaml2cv/web/ui/shell
 
 /// The licenses as a full HTML page.
@@ -64,15 +65,15 @@ pub fn view(locale: Locale, components: List(Component)) -> List(Element(a)) {
       html.p([], [html.text(texts.intro)]),
       html.div(
         [attribute.class("licenses__list")],
-        list.map(components, component(_, texts.see_license_file)),
+        list.map(components, component(_, texts)),
       ),
     ]
   }
 }
 
-fn component(component: Component, see_license_file: String) -> Element(a) {
+fn component(component: Component, texts: LicensesTexts) -> Element(a) {
   let licenses = case component.licenses {
-    [] -> see_license_file
+    [] -> texts.see_license_file
     licenses -> string.join(licenses, ", ")
   }
   html.details([attribute.class("licenses__component")], [
@@ -80,11 +81,19 @@ fn component(component: Component, see_license_file: String) -> Element(a) {
       html.strong([], [html.text(component.name)]),
       html.text(" " <> component.version <> " · " <> licenses),
     ]),
-    ..list.flat_map(component.files, fn(file) {
-      [
-        html.h3([], [html.text(file.name)]),
-        html.pre([attribute.class("licenses__text")], [html.text(file.text)]),
-      ]
-    })
+    ..list.append(
+      list.map(component.sources, fn(source) {
+        html.p([], [
+          html.text(texts.source_code <> ": "),
+          html.a([attribute.href(source.url)], [html.text(source.description)]),
+        ])
+      }),
+      list.flat_map(component.files, fn(file) {
+        [
+          html.h3([], [html.text(file.name)]),
+          html.pre([attribute.class("licenses__text")], [html.text(file.text)]),
+        ]
+      }),
+    )
   ])
 }

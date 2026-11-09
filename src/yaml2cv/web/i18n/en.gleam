@@ -137,6 +137,7 @@ pub fn texts() -> texts.Texts {
       intro: "It includes the following third-party components; click one to show its license texts.",
       unavailable: "This build carries no third-party notices. They are generated when the container image is built.",
       see_license_file: "see license file",
+      source_code: "Source code",
     ),
     schema: SchemaTexts(
       title: "CV schema",

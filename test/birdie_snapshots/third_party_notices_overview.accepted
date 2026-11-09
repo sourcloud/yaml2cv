@@ -12,5 +12,12 @@ instance shows them at `/licenses`.
 | --- | --- | --- | --- |
 | envoy | 1.0.2 | Apache-2.0 | `licenses/envoy/LICENSE` |
 | Erlang/OTP | 29.1.2 | Apache-2.0 | `licenses/erlang-otp/LICENSE` |
+| typst-assets | 0.15.1 | GPL-3.0-or-later WITH Font-exception-2.0 | `licenses/typst-assets/NOTICE` |
 | hpack_erl | 0.3.0 | see license file | `licenses/hpack_erl/LICENSE` |
+
+## Source code
+
+Source code for components whose license requires offering it:
+
+- typst-assets: [New Computer Modern 8.1.1](https://example.org/newcm.txz)
 

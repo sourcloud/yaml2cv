@@ -4,6 +4,7 @@ import gleam/option.{None, Some}
 import gleam/string
 import notices.{Arguments, Declared, Package}
 import simplifile
+import yaml2cv/notices.{Source} as _
 import yaml2cv/notices.{Component, LicenseFile} as _
 
 const manifest =
@@ -73,15 +74,29 @@ name = \"htmx\"
 version = \"2.0.4\"
 licenses = [\"0BSD\"]
 files = [\"priv/static/vendor/htmx-2.0.4.LICENSE\"]
+
+[[component.sources]]
+description = \"htmx 2.0.4\"
+url = \"https://example.org/htmx.tgz\"
 "
   assert notices.parse_components(source)
     == Ok([
-      Declared(name: "Inter", version: "4.1", licenses: ["OFL-1.1"], files: [
-        "priv/fonts/inter/OFL.txt",
-      ]),
-      Declared(name: "htmx", version: "2.0.4", licenses: ["0BSD"], files: [
-        "priv/static/vendor/htmx-2.0.4.LICENSE",
-      ]),
+      Declared(
+        name: "Inter",
+        version: "4.1",
+        licenses: ["OFL-1.1"],
+        files: ["priv/fonts/inter/OFL.txt"],
+        sources: [],
+      ),
+      Declared(
+        name: "htmx",
+        version: "2.0.4",
+        licenses: ["0BSD"],
+        files: ["priv/static/vendor/htmx-2.0.4.LICENSE"],
+        sources: [
+          Source(description: "htmx 2.0.4", url: "https://example.org/htmx.tgz"),
+        ],
+      ),
     ])
 }
 
@@ -100,6 +115,7 @@ pub fn parses_component_flag_test() {
         version: "0.15.1",
         licenses: ["Apache-2.0"],
         files: ["/typst/LICENSE", "/typst/NOTICE"],
+        sources: [],
       ),
     )
   let assert Error(_) = notices.parse_component("Typst|0.15.1")
@@ -133,9 +149,13 @@ pub fn parses_arguments_test() {
 
 pub fn renders_notices_overview_test() {
   notices.render_overview([
-    Component(name: "envoy", version: "1.0.2", licenses: ["Apache-2.0"], files: [
-      LicenseFile(name: "LICENSE", text: "APACHE"),
-    ]),
+    Component(
+      name: "envoy",
+      version: "1.0.2",
+      licenses: ["Apache-2.0"],
+      files: [LicenseFile(name: "LICENSE", text: "APACHE")],
+      sources: [],
+    ),
     Component(
       name: "Erlang/OTP",
       version: "29.1.2",
@@ -143,10 +163,27 @@ pub fn renders_notices_overview_test() {
       files: [
         LicenseFile(name: "LICENSE", text: "APACHE"),
       ],
+      sources: [],
     ),
-    Component(name: "hpack_erl", version: "0.3.0", licenses: [], files: [
-      LicenseFile(name: "LICENSE", text: "MIT"),
-    ]),
+    Component(
+      name: "typst-assets",
+      version: "0.15.1",
+      licenses: ["GPL-3.0-or-later WITH Font-exception-2.0"],
+      files: [LicenseFile(name: "NOTICE", text: "NOTICE")],
+      sources: [
+        Source(
+          description: "New Computer Modern 8.1.1",
+          url: "https://example.org/newcm.txz",
+        ),
+      ],
+    ),
+    Component(
+      name: "hpack_erl",
+      version: "0.3.0",
+      licenses: [],
+      files: [LicenseFile(name: "LICENSE", text: "MIT")],
+      sources: [],
+    ),
   ])
   |> birdie.snap(title: "third party notices overview")
 }

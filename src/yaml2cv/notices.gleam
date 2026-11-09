@@ -17,7 +17,14 @@ pub type Component {
     /// SPDX identifiers; empty when the component does not declare any.
     licenses: List(String),
     files: List(LicenseFile),
+    /// Where to get the source code, for licenses that require offering it.
+    sources: List(Source),
   )
+}
+
+/// A download of a component's source code.
+pub type Source {
+  Source(description: String, url: String)
 }
 
 /// A license or notice file of a component.
@@ -44,6 +51,15 @@ pub fn to_json(components: List(Component)) -> String {
               ])
             }),
           ),
+          #(
+            "sources",
+            json.array(component.sources, fn(source) {
+              json.object([
+                #("description", json.string(source.description)),
+                #("url", json.string(source.url)),
+              ])
+            }),
+          ),
         ])
       }),
     ),
@@ -58,12 +74,22 @@ pub fn from_json(source: String) -> Result(List(Component), json.DecodeError) {
     use text <- decode.field("text", decode.string)
     decode.success(LicenseFile(name:, text:))
   }
+  let source_decoder = {
+    use description <- decode.field("description", decode.string)
+    use url <- decode.field("url", decode.string)
+    decode.success(Source(description:, url:))
+  }
   let component = {
     use name <- decode.field("name", decode.string)
     use version <- decode.field("version", decode.string)
     use licenses <- decode.field("licenses", decode.list(decode.string))
     use files <- decode.field("files", decode.list(file))
-    decode.success(Component(name:, version:, licenses:, files:))
+    use sources <- decode.optional_field(
+      "sources",
+      [],
+      decode.list(source_decoder),
+    )
+    decode.success(Component(name:, version:, licenses:, files:, sources:))
   }
   json.parse(source, decode.at(["components"], decode.list(component)))
 }

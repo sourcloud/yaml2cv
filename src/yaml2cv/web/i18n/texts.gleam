@@ -151,6 +151,8 @@ pub type LicensesTexts {
     unavailable: String,
     /// Shown for a component that declares no license identifier.
     see_license_file: String,
+    /// Label of a component's source code download.
+    source_code: String,
   )
 }
 
