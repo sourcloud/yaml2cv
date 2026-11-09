@@ -1,86 +1,171 @@
 //// Generates third-party license notices for the packages in an Erlang
-//// shipment (ADR 0013). Dev-only; run from the project root after
-//// `gleam export erlang-shipment`:
+//// shipment and for further components (ADR 0013, ADR 0032). Dev-only; run
+//// from the project root after `gleam export erlang-shipment`:
 ////
-////     gleam run -m notices -- build/erlang-shipment <output directory>
+////     gleam run -m notices -- build/erlang-shipment <output directory> \
+////       [--components third_party.toml]... \
+////       [--component 'Name|version|License|file,file']... \
+////       [--json <path>]
 ////
-//// Writes `<output>/THIRD_PARTY_NOTICES.md` and `<output>/licenses/<package>/`.
+//// Writes `<output>/THIRD_PARTY_NOTICES.md` and `<output>/licenses/<slug>/`,
+//// and with `--json` the components and license texts as JSON.
 
 import argv
 import gleam/io
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import simplifile
 import tom
+import yaml2cv/notices.{type Component, type LicenseFile, Component, LicenseFile}
 
 /// A dependency as locked in `manifest.toml`.
 pub type Package {
   Package(name: String, version: String, otp_app: String)
 }
 
-pub type LicenseFile {
-  LicenseFile(name: String, content: String)
-}
-
-pub type Notice {
-  Notice(
-    package: String,
+/// A component declared in a components file or on the command line; its
+/// license files are paths relative to the working directory.
+pub type Declared {
+  Declared(
+    name: String,
     version: String,
     licenses: List(String),
-    files: List(LicenseFile),
+    files: List(String),
+  )
+}
+
+/// The parsed command line.
+pub type Arguments {
+  Arguments(
+    shipment: String,
+    output: String,
+    /// TOML files declaring components (`--components`).
+    component_files: List(String),
+    /// Inline component declarations (`--component`).
+    components: List(String),
+    json: Option(String),
   )
 }
 
 /// The application itself; it needs no third-party notice.
 const own_app = "yaml2cv"
 
+const usage =
+  "usage: gleam run -m notices -- <shipment> <output> [--components <toml>]... [--component 'Name|version|License|file,file']... [--json <path>]"
+
 pub fn main() -> Nil {
-  case argv.load().arguments {
-    [shipment, output] ->
-      case run(shipment, output) {
-        Ok(count) ->
-          io.println(
-            "Wrote notices for " <> string.inspect(count) <> " packages",
-          )
-        Error(error) -> {
-          io.println_error("error: " <> error)
-          halt(1)
-        }
-      }
-    _ -> {
-      io.println_error("usage: gleam run -m notices -- <shipment> <output>")
+  case parse_arguments(argv.load().arguments) |> result.try(run) {
+    Ok(count) ->
+      io.println("Wrote notices for " <> string.inspect(count) <> " components")
+    Error(error) -> {
+      io.println_error("error: " <> error)
       halt(1)
     }
   }
 }
 
-fn run(shipment: String, output: String) -> Result(Int, String) {
+/// Parses the command line arguments.
+pub fn parse_arguments(arguments: List(String)) -> Result(Arguments, String) {
+  case arguments {
+    [shipment, output, ..options] ->
+      parse_options(
+        options,
+        Arguments(
+          shipment:,
+          output:,
+          component_files: [],
+          components: [],
+          json: None,
+        ),
+      )
+    _ -> Error(usage)
+  }
+}
+
+fn parse_options(
+  options: List(String),
+  arguments: Arguments,
+) -> Result(Arguments, String) {
+  case options {
+    [] ->
+      Ok(
+        Arguments(
+          ..arguments,
+          component_files: list.reverse(arguments.component_files),
+          components: list.reverse(arguments.components),
+        ),
+      )
+    ["--components", path, ..rest] ->
+      parse_options(
+        rest,
+        Arguments(..arguments, component_files: [
+          path,
+          ..arguments.component_files
+        ]),
+      )
+    ["--component", spec, ..rest] ->
+      parse_options(
+        rest,
+        Arguments(..arguments, components: [spec, ..arguments.components]),
+      )
+    ["--json", path, ..rest] ->
+      parse_options(rest, Arguments(..arguments, json: Some(path)))
+    _ -> Error(usage)
+  }
+}
+
+fn run(arguments: Arguments) -> Result(Int, String) {
   use manifest <- result.try(read("manifest.toml"))
   use packages <- result.try(parse_manifest(manifest))
   use apache <- result.try(read("LICENSE"))
   use entries <- result.try(
-    simplifile.read_directory(shipment)
-    |> result.map_error(describe(shipment, _)),
+    simplifile.read_directory(arguments.shipment)
+    |> result.map_error(describe(arguments.shipment, _)),
   )
   let apps =
     entries
     |> list.filter(fn(entry) {
       entry != own_app
-      && simplifile.is_directory(shipment <> "/" <> entry) == Ok(True)
+      && simplifile.is_directory(arguments.shipment <> "/" <> entry) == Ok(True)
     })
-  use notices <- result.try(list.try_map(apps, notice_for(_, packages, apache)))
-  let notices =
-    list.sort(notices, fn(a, b) { string.compare(a.package, b.package) })
-  use _ <- result.try(write_notices(notices, output))
-  Ok(list.length(notices))
+  use from_packages <- result.try(
+    list.try_map(apps, component_for(_, packages, apache)),
+  )
+  use from_files <- result.try(
+    list.try_map(arguments.component_files, fn(path) {
+      read(path) |> result.try(parse_components)
+    }),
+  )
+  use from_flags <- result.try(list.try_map(
+    arguments.components,
+    parse_component,
+  ))
+  use declared <- result.try(
+    list.flatten([list.flatten(from_files), from_flags])
+    |> list.try_map(resolve),
+  )
+  let components =
+    list.append(from_packages, declared)
+    |> list.sort(fn(a, b) {
+      string.compare(string.lowercase(a.name), string.lowercase(b.name))
+    })
+  use _ <- result.try(write_notices(components, arguments.output))
+  use _ <- result.try(case arguments.json {
+    Some(path) ->
+      simplifile.write(to: path, contents: notices.to_json(components))
+      |> result.map_error(describe(path, _))
+    None -> Ok(Nil)
+  })
+  Ok(list.length(components))
 }
 
-fn notice_for(
+fn component_for(
   app: String,
   packages: List(Package),
   apache: String,
-) -> Result(Notice, String) {
+) -> Result(Component, String) {
   use package <- result.try(
     list.find(packages, fn(package) { package.otp_app == app })
     |> result.replace_error(app <> ": not found in manifest.toml"),
@@ -93,7 +178,27 @@ fn notice_for(
   let licenses = declared_licenses(metadata)
   use files <- result.try(license_files(directory))
   use files <- result.try(license_texts(package.name, licenses, files, apache:))
-  Ok(Notice(package: package.name, version: package.version, licenses:, files:))
+  Ok(Component(name: package.name, version: package.version, licenses:, files:))
+}
+
+/// Reads the license files of a declared component.
+fn resolve(declared: Declared) -> Result(Component, String) {
+  use files <- result.try(
+    list.try_map(declared.files, fn(path) {
+      read(path)
+      |> result.map(fn(text) { LicenseFile(name: basename(path), text:) })
+    }),
+  )
+  Ok(Component(
+    name: declared.name,
+    version: declared.version,
+    licenses: declared.licenses,
+    files:,
+  ))
+}
+
+fn basename(path: String) -> String {
+  string.split(path, "/") |> list.last |> result.unwrap(path)
 }
 
 /// Parses the locked packages from the contents of `manifest.toml`.
@@ -117,6 +222,66 @@ pub fn parse_manifest(source: String) -> Result(List(Package), String) {
     let otp_app = field("otp_app") |> result.unwrap(name)
     Ok(Package(name:, version:, otp_app:))
   })
+}
+
+/// Parses the `[[component]]` tables of a components file such as
+/// `third_party.toml`. Every component needs at least one license file.
+pub fn parse_components(source: String) -> Result(List(Declared), String) {
+  let invalid = fn(detail) { "components file: " <> detail }
+  use toml <- result.try(
+    tom.parse(source) |> result.replace_error(invalid("invalid TOML")),
+  )
+  use entries <- result.try(
+    tom.get_array(toml, ["component"])
+    |> result.replace_error(invalid("no [[component]] tables")),
+  )
+  list.try_map(entries, fn(entry) {
+    use table <- result.try(
+      tom.as_table(entry) |> result.replace_error(invalid("not a table")),
+    )
+    let string = fn(key) {
+      tom.get_string(table, [key])
+      |> result.replace_error(invalid("missing " <> key))
+    }
+    let strings = fn(key) {
+      tom.get_array(table, [key])
+      |> result.try(list.try_map(_, tom.as_string))
+      |> result.replace_error(invalid("missing " <> key))
+    }
+    use name <- result.try(string("name"))
+    use version <- result.try(string("version"))
+    use licenses <- result.try(strings("licenses"))
+    use files <- result.try(strings("files"))
+    declared(name, version, licenses, files)
+  })
+}
+
+/// Parses a `--component 'Name|version|License,License|file,file'` value.
+pub fn parse_component(spec: String) -> Result(Declared, String) {
+  case string.split(spec, "|") {
+    [name, version, licenses, files] ->
+      declared(name, version, split_list(licenses), split_list(files))
+    _ ->
+      Error("--component " <> spec <> ": expected Name|version|License|files")
+  }
+}
+
+fn split_list(value: String) -> List(String) {
+  string.split(value, ",")
+  |> list.map(string.trim)
+  |> list.filter(fn(item) { item != "" })
+}
+
+fn declared(
+  name: String,
+  version: String,
+  licenses: List(String),
+  files: List(String),
+) -> Result(Declared, String) {
+  case files {
+    [] -> Error(name <> ": no license files declared")
+    _ -> Ok(Declared(name:, version:, licenses:, files:))
+  }
 }
 
 /// License identifiers declared in package metadata: the `licences` array of
@@ -171,7 +336,7 @@ fn license_files(directory: String) -> Result(List(LicenseFile), String) {
   |> list.sort(string.compare)
   |> list.try_map(fn(name) {
     read(directory <> "/" <> name)
-    |> result.map(fn(content) { LicenseFile(name:, content:) })
+    |> result.map(fn(text) { LicenseFile(name:, text:) })
   })
 }
 
@@ -193,7 +358,7 @@ pub fn license_texts(
 ) -> Result(List(LicenseFile), String) {
   case files, licenses {
     [_, ..], _ -> Ok(files)
-    [], ["Apache-2.0"] -> Ok([LicenseFile(name: "LICENSE", content: apache)])
+    [], ["Apache-2.0"] -> Ok([LicenseFile(name: "LICENSE", text: apache)])
     [], _ ->
       Error(
         package
@@ -203,24 +368,28 @@ pub fn license_texts(
   }
 }
 
-/// The Markdown overview listing every package and its license files.
-pub fn render_overview(notices: List(Notice)) -> String {
+/// The Markdown overview listing every component and its license files.
+pub fn render_overview(components: List(Component)) -> String {
   let rows =
-    list.map(notices, fn(notice) {
-      let licenses = case notice.licenses {
+    list.map(components, fn(component) {
+      let licenses = case component.licenses {
         [] -> "see license file"
         licenses -> string.join(licenses, ", ")
       }
       let files =
-        notice.files
+        component.files
         |> list.map(fn(file) {
-          "`licenses/" <> notice.package <> "/" <> file.name <> "`"
+          "`licenses/"
+          <> notices.slug(component.name)
+          <> "/"
+          <> file.name
+          <> "`"
         })
         |> string.join(", ")
       "| "
-      <> notice.package
+      <> component.name
       <> " | "
-      <> notice.version
+      <> component.version
       <> " | "
       <> licenses
       <> " | "
@@ -231,12 +400,11 @@ pub fn render_overview(notices: List(Notice)) -> String {
     [
       "# Third-party notices",
       "",
-      "yaml2cv includes the following third-party packages. Their license texts",
-      "are in the `licenses/` directory next to this file. The container image",
-      "also contains Erlang/OTP and Typst; see `licenses/erlang-otp/` and",
-      "`licenses/typst/`.",
+      "yaml2cv includes the following third-party components. Their license",
+      "texts are in the `licenses/` directory next to this file. A running",
+      "instance shows them at `/licenses`.",
       "",
-      "| Package | Version | License | Files |",
+      "| Component | Version | License | Files |",
       "| --- | --- | --- | --- |",
       ..rows
     ],
@@ -245,23 +413,26 @@ pub fn render_overview(notices: List(Notice)) -> String {
   <> "\n"
 }
 
-fn write_notices(notices: List(Notice), output: String) -> Result(Nil, String) {
+fn write_notices(
+  components: List(Component),
+  output: String,
+) -> Result(Nil, String) {
   use _ <- result.try(
-    list.try_each(notices, fn(notice) {
-      let directory = output <> "/licenses/" <> notice.package
+    list.try_each(components, fn(component) {
+      let directory = output <> "/licenses/" <> notices.slug(component.name)
       use _ <- result.try(
         simplifile.create_directory_all(directory)
         |> result.map_error(describe(directory, _)),
       )
-      list.try_each(notice.files, fn(file) {
+      list.try_each(component.files, fn(file) {
         let path = directory <> "/" <> file.name
-        simplifile.write(to: path, contents: file.content)
+        simplifile.write(to: path, contents: file.text)
         |> result.map_error(describe(path, _))
       })
     }),
   )
   let path = output <> "/THIRD_PARTY_NOTICES.md"
-  simplifile.write(to: path, contents: render_overview(notices))
+  simplifile.write(to: path, contents: render_overview(components))
   |> result.map_error(describe(path, _))
 }
 

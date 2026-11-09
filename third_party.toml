@@ -1,0 +1,15 @@
+# Third-party assets committed to this repository (ADR 0032). The notices
+# generator (`dev/notices.gleam`) adds them to THIRD_PARTY_NOTICES.md and the
+# licenses page. Update an entry together with its files.
+
+[[component]]
+name = "Inter"
+version = "4.1"
+licenses = ["OFL-1.1"]
+files = ["priv/fonts/inter/OFL.txt"]
+
+[[component]]
+name = "htmx"
+version = "2.0.4"
+licenses = ["0BSD"]
+files = ["priv/static/vendor/htmx-2.0.4.LICENSE"]

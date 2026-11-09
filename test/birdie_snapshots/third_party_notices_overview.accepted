@@ -4,13 +4,13 @@ title: third party notices overview
 ---
 # Third-party notices
 
-yaml2cv includes the following third-party packages. Their license texts
-are in the `licenses/` directory next to this file. The container image
-also contains Erlang/OTP and Typst; see `licenses/erlang-otp/` and
-`licenses/typst/`.
+yaml2cv includes the following third-party components. Their license
+texts are in the `licenses/` directory next to this file. A running
+instance shows them at `/licenses`.
 
-| Package | Version | License | Files |
+| Component | Version | License | Files |
 | --- | --- | --- | --- |
 | envoy | 1.0.2 | Apache-2.0 | `licenses/envoy/LICENSE` |
+| Erlang/OTP | 29.1.2 | Apache-2.0 | `licenses/erlang-otp/LICENSE` |
 | hpack_erl | 0.3.0 | see license file | `licenses/hpack_erl/LICENSE` |
 
