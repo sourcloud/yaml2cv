@@ -16,6 +16,7 @@ pub type Theme {
   Classic
   Minimal
   Studio
+  Spotlight
 }
 
 pub type Color {
@@ -111,6 +112,7 @@ pub const themes = [
   #("classic", Classic),
   #("minimal", Minimal),
   #("studio", Studio),
+  #("spotlight", Spotlight),
 ]
 
 /// All colors, in the order they are listed to users.
@@ -141,5 +143,6 @@ pub fn theme_name(theme: Theme) -> String {
     Classic -> "classic"
     Minimal -> "minimal"
     Studio -> "studio"
+    Spotlight -> "spotlight"
   }
 }
