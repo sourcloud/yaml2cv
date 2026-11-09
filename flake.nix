@@ -22,6 +22,8 @@
             pkgs.gleam
             pkgs.typst
             pkgs.git-cliff
+            # Text extraction checks of rendered PDFs (ADR 0035).
+            pkgs.poppler-utils
             pkgs.just
             pkgs.watchexec
           ];
