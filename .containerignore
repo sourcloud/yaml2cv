@@ -6,3 +6,4 @@
 !priv/
 !dev/
 !third_party.toml
+!third_party/

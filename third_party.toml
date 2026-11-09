@@ -13,3 +13,17 @@ name = "htmx"
 version = "2.0.4"
 licenses = ["0BSD"]
 files = ["priv/static/vendor/htmx-2.0.4.LICENSE"]
+
+# Fonts and data compiled into the Typst binary; its version is the one in
+# Typst's Cargo.toml. See third_party/typst-assets/README.md.
+[[component]]
+name = "typst-assets"
+version = "0.15.1"
+licenses = [
+  "Apache-2.0",
+  "OFL-1.1",
+  "GUST Font License 1.0",
+  "GPL-3.0-or-later WITH Font-exception-2.0",
+  "Bitstream-Vera",
+]
+files = ["third_party/typst-assets/LICENSE", "third_party/typst-assets/NOTICE"]

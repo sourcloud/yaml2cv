@@ -1,6 +1,9 @@
 import birdie
+import gleam/list
 import gleam/option.{None, Some}
+import gleam/string
 import notices.{Arguments, Declared, Package}
+import simplifile
 import yaml2cv/notices.{Component, LicenseFile} as _
 
 const manifest =
@@ -146,4 +149,33 @@ pub fn renders_notices_overview_test() {
     ]),
   ])
   |> birdie.snap(title: "third party notices overview")
+}
+
+/// Every license file declared in `third_party.toml` exists.
+pub fn declared_license_files_exist_test() {
+  let assert Ok(source) = simplifile.read("third_party.toml")
+  let assert Ok(components) = notices.parse_components(source)
+  list.each(components, fn(component) {
+    list.each(component.files, fn(file) {
+      assert simplifile.is_file(file) == Ok(True)
+    })
+  })
+}
+
+/// typst-assets is released with each Typst minor version; a Typst upgrade
+/// must update its license texts too.
+pub fn typst_assets_follow_typst_version_test() {
+  let assert Ok(source) = simplifile.read("third_party.toml")
+  let assert Ok(components) = notices.parse_components(source)
+  let assert Ok(assets) =
+    list.find(components, fn(c) { c.name == "typst-assets" })
+  let assert Ok(containerfile) = simplifile.read("Containerfile")
+  let assert Ok(#(_, rest)) =
+    string.split_once(containerfile, "ARG TYPST_VERSION=")
+  let assert Ok(#(typst, _)) = string.split_once(rest, "\n")
+  assert minor(assets.version) == minor(typst)
+}
+
+fn minor(version: String) -> List(String) {
+  string.split(version, ".") |> list.take(2)
 }

@@ -39,6 +39,10 @@ generator also accepts components on the command line
 (`--component 'Name|version|License|file,file'`); the Containerfile passes
 Erlang/OTP (version read from the build image, which is the runtime image)
 and Typst (the pinned version, license files copied from the Typst stage).
+The fonts compiled into the Typst binary come from `typst-assets`, whose
+`NOTICE` Typst's own does not include; its `LICENSE` and `NOTICE` for the
+matching version are committed under `third_party/typst-assets/` and listed
+in `third_party.toml`. A test keeps its minor version in step with Typst.
 All of them appear in `THIRD_PARTY_NOTICES.md` and `licenses/<slug>/` like
 packages.
 

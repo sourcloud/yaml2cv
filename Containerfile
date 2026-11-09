@@ -57,6 +57,7 @@ COPY src src
 COPY priv priv
 COPY dev dev
 COPY third_party.toml ./
+COPY third_party third_party
 COPY --from=typst /typst/LICENSE /typst/NOTICE /typst-licenses/
 # Third-party notices (ADR 0013, ADR 0032). This stage runs the same
 # Erlang/OTP as the runtime image, so its version is the shipped one.
