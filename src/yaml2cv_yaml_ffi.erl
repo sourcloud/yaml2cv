@@ -92,8 +92,51 @@ syntax_error(#yamerl_parsing_error{name = not_a_sequence, line = Line, column = 
                     " does not fit the list above it; check the indentation and the \"-\" marks">>,
                 Line, Column}
     end;
+%% A key indented less than the content after its item's "-", as after a
+%% stray extra space in "-  label:", closes the item, and yamerl stumbles
+%% over the key. Point at the item's content instead when it can be found.
+syntax_error(
+    #yamerl_parsing_error{
+        name = unexpected_token, token = Token, text = Text, line = Line, column = Column
+    } = Error,
+    Source
+) when is_tuple(Token), element(1, Token) =:= yamerl_collection_start, is_list(Text),
+       is_integer(Line), is_integer(Column) ->
+    Lines = string:split(unicode:characters_to_list(Source), "\n", all),
+    Closed = string:find(Text, "following a \"yamerl_collection_end\"") =/= nomatch,
+    case Closed andalso item_content(lists:reverse(lists:sublist(Lines, Line - 1)), Line - 1, Column) of
+        {found, Item, Content} ->
+            Number = integer_to_binary(Line),
+            {syntax_error,
+                <<"Line ", Number/binary,
+                    " is indented less than the content after \"-\" here; check the spaces after \"-\"">>,
+                Item, Content};
+        _ ->
+            syntax_error(Error)
+    end;
 syntax_error(Error, _Source) ->
     syntax_error(Error).
+
+%% The nearest line above that starts left of `Column`, past blank lines,
+%% comments and deeper lines, if it is a list item whose content starts
+%% right of `Column`: `{found, LineNumber, ContentColumn}`.
+item_content([], _, _) ->
+    not_found;
+item_content([Text | Above], Number, Column) ->
+    Indent = length(Text) - length(string:trim(Text, leading, " ")),
+    Rest = string:trim(Text, leading, " "),
+    if
+        Rest =:= [] orelse hd(Rest) =:= $# orelse Indent >= Column - 1 ->
+            item_content(Above, Number - 1, Column);
+        true ->
+            AfterDash = string:trim(tl(Rest), leading, " "),
+            Content = length(Text) - length(AfterDash) + 1,
+            IsItem = hd(Rest) =:= $- andalso tl(Rest) =/= [] andalso hd(tl(Rest)) =:= $\s,
+            case IsItem andalso AfterDash =/= [] andalso Content > Column of
+                true -> {found, Number, Content};
+                false -> not_found
+            end
+    end.
 
 %% The nearest line above whose "-" at `Column` starts a list item, looking
 %% past blank lines, comments and deeper content, but not past a line that

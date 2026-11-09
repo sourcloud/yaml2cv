@@ -91,6 +91,26 @@ pub fn points_a_broken_list_at_its_item_test() {
     ))
 }
 
+pub fn points_extra_spaces_after_a_dash_at_the_item_test() {
+  // Three spaces after the dash put the item's keys at column 8; `url` at
+  // column 7 cannot continue it. yamerl reports line 4, the slip is line 2.
+  assert yaml.parse("links:\n    -  label: GitHub\n\n      url: x\n")
+    == Error(SyntaxError(
+      message: "Line 4 is indented less than the content after \"-\" here; check the spaces after \"-\"",
+      line: 2,
+      column: 8,
+    ))
+}
+
+pub fn keeps_a_misplaced_mapping_where_yamerl_found_it_test() {
+  assert yaml.parse("m:\n  k:\n    - x\n   j: 1\n")
+    == Error(SyntaxError(
+      message: "Unexpected list or mapping after the end of a list or mapping; check the indentation or a missing \":\"",
+      line: 4,
+      column: 4,
+    ))
+}
+
 pub fn rejects_alias_expansion_bombs_test() {
   // Seven levels of ten aliases each expand to ten million nodes.
   let level = fn(name, item) {
