@@ -1,6 +1,6 @@
 # 0013. Container image, third-party notices and releases
 
-- Status: Accepted, base image amended by [0014](0014-upgrade-to-erlang-otp-29.md)
+- Status: Accepted, base image amended by [0014](0014-upgrade-to-erlang-otp-29.md), notices amended by [0032](0032-complete-notices-and-licenses-page.md)
 - Date: 2026-11-07
 
 ## Context

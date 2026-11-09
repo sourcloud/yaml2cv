@@ -37,3 +37,4 @@ for the process.
 | [0029](0029-yaml-file-menu.md) | Copy, download and import the YAML from one menu | Accepted |
 | [0030](0030-photo-centred-creative-themes.md) | Photo-centred themes for creative jobs | Accepted |
 | [0031](0031-build-provenance-and-source-link.md) | Build provenance and a link to the source | Accepted |
+| [0032](0032-complete-notices-and-licenses-page.md) | Complete third-party notices and a licenses page | Accepted |
