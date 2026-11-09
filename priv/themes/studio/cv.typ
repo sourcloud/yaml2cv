@@ -47,6 +47,9 @@
 )
 #set text(font: "Inter", size: 9.5pt, fill: ink, lang: "en")
 #set par(justify: false, leading: unit)
+// The name and section titles are headings, so the PDF tags them H1 and H2
+// and lists the sections as bookmarks (ADR 0035). Themes style them.
+#show heading: it => text(weight: "regular", it.body)
 #set list(
   indent: 0pt,
   body-indent: 0.6em,
@@ -59,7 +62,8 @@
 #let label(body) = text(
   size: 7.5pt,
   weight: "semibold",
-  tracking: 0.14em,
+  // Wider spacing makes text extraction split the words (ADR 0035).
+  tracking: 0.05em,
   fill: accent,
   upper(body),
 )
@@ -152,7 +156,7 @@
       stack(spacing: 1.6 * unit, ..contact-items)
     }
     for s in cv.sections.filter(s => s.kind == "skills") {
-      block(above: 3.5 * unit, below: 1.5 * unit, label(s.name))
+      block(above: 3.5 * unit, below: 1.5 * unit, heading(level: 2, label(s.name)))
       skills(s.items)
     }
   })
@@ -164,13 +168,13 @@
 
 #block(below: 3.5 * unit, stack(
   spacing: 1em,
-  text(
+  heading(level: 1, text(
     font: "Inter Display",
     size: 32pt,
     weight: "bold",
     tracking: -0.01em,
     cv.person.name,
-  ),
+  )),
   ..if cv.person.title != none {
     (text(size: 13pt, weight: "medium", fill: accent, cv.person.title),)
   },
@@ -184,7 +188,8 @@
     columns: (auto, 1fr),
     column-gutter: 0.8em,
     align: horizon,
-    label(name), line(length: 100%, stroke: 0.5pt + accent.lighten(50%)),
+    heading(level: 2, label(name)),
+    line(length: 100%, stroke: 0.5pt + accent.lighten(50%)),
   ),
 )
 

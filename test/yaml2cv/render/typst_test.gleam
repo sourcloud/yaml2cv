@@ -6,6 +6,7 @@ import gleam/string
 import simplifile
 import yaml2cv/cv.{Style}
 import yaml2cv/cv/decode
+import yaml2cv/process
 import yaml2cv/render.{CompileFailed, RendererUnavailable, TimedOut}
 import yaml2cv/render/typst.{type Config, Config}
 
@@ -170,4 +171,53 @@ pub fn renders_photo_in_every_theme_and_shape_test() {
 pub fn renders_no_image_without_photo_test() {
   let assert Ok([page, ..]) = typst.render_svg_pages(config(), example_cv())
   assert !contains(page, <<"<image">>)
+}
+
+// Machine-readable text (ADR 0035) ------------------------------------------
+
+/// Renders `cv` and returns the text pdftotext extracts from the PDF.
+fn extracted_text(cv: cv.Cv) -> String {
+  let assert Ok(pdf) = typst.render_pdf(config(), cv)
+  let directory = "build/test-extract"
+  let assert Ok(_) = simplifile.create_directory_all(directory)
+  let file = directory <> "/cv.pdf"
+  let assert Ok(_) = simplifile.write_bits(file, pdf)
+  let assert Ok(process.Exit(status: 0, output: text)) =
+    process.run(
+      "pdftotext",
+      ["-enc", "UTF-8", file, "-"],
+      in: ".",
+      timeout: 10_000,
+    )
+  text
+}
+
+fn section_names(cv: cv.Cv) -> List(String) {
+  list.map(cv.sections, fn(section) { section.name })
+}
+
+pub fn tags_name_and_section_titles_as_headings_in_every_theme_test() {
+  use #(name, theme) <- list.each(cv.themes)
+  let cv = with_theme(example_cv(), theme)
+  let assert Ok(pdf) = typst.render_pdf(config(), cv)
+  assert #(name, list.length(binary_matches(pdf, <<"/S/H1">>))) == #(name, 1)
+  assert #(name, list.length(binary_matches(pdf, <<"/S/H2">>)))
+    == #(name, list.length(cv.sections))
+}
+
+pub fn lists_sections_as_bookmarks_in_every_theme_test() {
+  use #(name, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) =
+    typst.render_pdf(config(), with_theme(example_cv(), theme))
+  assert #(name, contains(pdf, <<"/Outlines">>)) == #(name, True)
+}
+
+pub fn extracts_section_titles_as_words_in_every_theme_test() {
+  use #(name, theme) <- list.each(cv.themes)
+  let cv = with_theme(example_cv(), theme)
+  let text = string.lowercase(extracted_text(cv))
+  use section <- list.each(section_names(cv))
+  let section = string.lowercase(section)
+  assert #(name, section, string.contains(text, section))
+    == #(name, section, True)
 }

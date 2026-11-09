@@ -37,6 +37,9 @@
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: false, leading: unit)
+// The name and section titles are headings, so the PDF tags them H1 and H2
+// and lists the sections as bookmarks (ADR 0035). Themes style them.
+#show heading: it => text(weight: "regular", it.body)
 #set list(
   indent: 0pt,
   body-indent: 0.5em,
@@ -89,7 +92,7 @@
 #block(below: 3 * unit, with-photo(
   stack(
     spacing: 0.9em,
-    text(size: 28pt, fill: accent, cv.person.name),
+    heading(level: 1, text(size: 28pt, fill: accent, cv.person.name)),
     ..if cv.person.title != none {
       (text(size: 14pt, fill: muted, style: "italic", cv.person.title),)
     },
@@ -114,7 +117,7 @@
   sticky: true,
   row(
     box(width: 100%, height: 0.6em, baseline: -0.2em, fill: accent),
-    text(size: 14pt, fill: accent, name),
+    heading(level: 2, text(size: 14pt, fill: accent, name)),
   ),
 )
 

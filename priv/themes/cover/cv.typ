@@ -36,6 +36,9 @@
 #set page(paper: papers.at(cv.style.paper), margin: 0pt)
 #set text(font: "Inter", size: 9.5pt, fill: ink, lang: "en")
 #set par(justify: false, leading: unit)
+// The name and section titles are headings, so the PDF tags them H1 and H2
+// and lists the sections as bookmarks (ADR 0035). Themes style them.
+#show heading: it => text(weight: "regular", it.body)
 #set list(
   indent: 0pt,
   body-indent: 0.6em,
@@ -48,7 +51,8 @@
 #let label(body) = text(
   size: 7.5pt,
   weight: "semibold",
-  tracking: 0.14em,
+  // Wider spacing makes text extraction split the words (ADR 0035).
+  tracking: 0.05em,
   fill: accent,
   upper(body),
 )
@@ -135,7 +139,7 @@
         set text(fill: white)
         stack(
           spacing: 1.4em,
-          text(
+          heading(level: 1, text(
             font: "Inter Display",
             size: 36pt,
             weight: "black",
@@ -144,7 +148,7 @@
               set par(leading: 0.2em)
               cv.person.name
             },
-          ),
+          )),
           ..if cv.person.title != none {
             (text(size: 12pt, weight: "medium", cv.person.title),)
           },
@@ -153,7 +157,7 @@
     }),
     pad(x: cover-pad, top: 2.4cm, bottom: cover-pad, block(height: 100%, {
       if intro != none {
-        label(intro.name)
+        heading(level: 2, label(intro.name))
         v(1.5 * unit)
         text(size: 12pt, par(leading: 0.7em, intro.text))
       }
@@ -190,7 +194,8 @@
     columns: (auto, 1fr),
     column-gutter: 0.8em,
     align: horizon,
-    label(name), line(length: 100%, stroke: 0.5pt + accent.lighten(50%)),
+    heading(level: 2, label(name)),
+    line(length: 100%, stroke: 0.5pt + accent.lighten(50%)),
   ),
 )
 
