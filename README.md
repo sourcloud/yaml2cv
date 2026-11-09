@@ -253,8 +253,12 @@ Only the latest release gets fixes. Details are in
   (ADR 0030)
 - [x] M13 — Signed build provenance and a footer linking to the source
   (ADR 0031)
-- [ ] M14 — 1.0: stability promise (ADR 0033), security policy, major-version
+- [x] M14 — 1.0: stability promise (ADR 0033), security policy, major-version
   image tag
+
+## Security
+
+Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 ## Contributing
 
