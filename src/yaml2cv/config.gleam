@@ -162,6 +162,7 @@ pub fn parse(
         typst: typst.Config(
           executable:,
           themes_directory: priv_directory <> "/themes",
+          fonts_directory: priv_directory <> "/fonts",
           work_directory:,
           timeout:,
           generator: "Generated with yaml2cv "

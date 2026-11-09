@@ -21,6 +21,10 @@ pub type Config {
     executable: String,
     /// Directory holding one sub-directory per theme.
     themes_directory: String,
+    /// Directory searched for font files besides those embedded in Typst
+    /// (ADR 0030). Typst runs inside the job directory, so it must be
+    /// absolute.
+    fonts_directory: String,
     /// Directory in which a temporary directory per render is created.
     work_directory: String,
     /// Maximum compile time in milliseconds.
@@ -141,6 +145,8 @@ fn compile(
     "--root",
     ".",
     "--ignore-system-fonts",
+    "--font-path",
+    config.fonts_directory,
     "--input",
     "generator=" <> config.generator,
     "cv.typ",

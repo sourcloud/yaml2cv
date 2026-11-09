@@ -12,9 +12,12 @@ import yaml2cv/render/typst.{type Config, Config}
 const work_directory = "build/test-render"
 
 fn config() -> Config {
+  // Typst runs inside the job directory, so the font path must be absolute.
+  let assert Ok(cwd) = simplifile.current_directory()
   Config(
     executable: "typst",
     themes_directory: "priv/themes",
+    fonts_directory: cwd <> "/priv/fonts",
     work_directory:,
     timeout: 10_000,
     generator: "Generated with yaml2cv test",
@@ -85,6 +88,12 @@ sections:
     )
   use #(_, theme) <- list.each(cv.themes)
   let assert Ok(_) = typst.render_pdf(config(), with_theme(cv, theme))
+}
+
+pub fn renders_with_shipped_fonts_test() {
+  let config = Config(..config(), themes_directory: "test/fixtures/font_themes")
+  let assert Ok(pdf) = typst.render_pdf(config, example_cv())
+  assert contains(pdf, <<"Inter-Regular">>)
 }
 
 pub fn reports_compile_errors_test() {
