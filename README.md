@@ -105,6 +105,25 @@ podman run --rm -p 8000:8000 yaml2cv
 Released images are published to `ghcr.io/sourcloud/yaml2cv` for
 `linux/amd64` and `linux/arm64`.
 
+### Verifying an image
+
+Release images carry signed SLSA build provenance (ADR 0031). It proves that
+an image was built by this repository's release workflow and names the
+commit it came from. Check the digest of the image you run:
+
+```sh
+podman image inspect --format '{{index .RepoDigests 0}}' ghcr.io/sourcloud/yaml2cv:<version>
+gh attestation verify oci://ghcr.io/sourcloud/yaml2cv@sha256:<digest> \
+  --repo sourcloud/yaml2cv
+```
+
+Every page of the editor shows the version and the commit the build claims
+to come from, with a link to the source on GitHub. Builds from a working
+tree with uncommitted changes (`just image`) are marked "modified". This is
+self-reported and not a security check: a modified build can claim any
+commit. Only the attestation is tamper-evident, and only the operator can
+see which image a deployment runs.
+
 ### Deployment notes
 
 - The service is stateless; run as many replicas as needed behind a load
@@ -220,6 +239,8 @@ can reach. The format is documented in
 - [x] M11 — Optional profile photo, kept inside the CV document (ADR 0028)
 - [x] M12 — Photo-centred themes for creative jobs: studio, spotlight, cover
   (ADR 0030)
+- [x] M13 — Signed build provenance and a footer linking to the source
+  (ADR 0031)
 
 ## Contributing
 

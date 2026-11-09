@@ -36,3 +36,4 @@ for the process.
 | [0028](0028-profile-photo.md) | Profile photo inside the CV document | Accepted |
 | [0029](0029-yaml-file-menu.md) | Copy, download and import the YAML from one menu | Accepted |
 | [0030](0030-photo-centred-creative-themes.md) | Photo-centred themes for creative jobs | Accepted |
+| [0031](0031-build-provenance-and-source-link.md) | Build provenance and a link to the source | Accepted |
