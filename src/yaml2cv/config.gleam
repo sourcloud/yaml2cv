@@ -8,7 +8,6 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-import yaml2cv/build
 import yaml2cv/render/typst
 
 pub type Config {
@@ -169,11 +168,8 @@ pub fn parse(
           fonts_directory: priv_directory <> "/fonts",
           work_directory:,
           timeout:,
-          generator: "Generated with yaml2cv "
-            <> version
-            <> " ("
-            <> build.repository
-            <> ")",
+          // The credit in the PDF keywords (ADR 0036).
+          generator: "yaml2cv " <> version,
         ),
         version:,
         admin: Admin(bind_address: admin_bind_address, port: admin_port),

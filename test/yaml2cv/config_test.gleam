@@ -29,7 +29,7 @@ pub fn uses_defaults_for_empty_environment_test() {
         fonts_directory: "/priv/fonts",
         work_directory: "/tmp/yaml2cv",
         timeout: 10_000,
-        generator: "Generated with yaml2cv 1.2.3 (https://github.com/sourcloud/yaml2cv)",
+        generator: "yaml2cv 1.2.3",
       ),
       version: "1.2.3",
       admin: Admin(bind_address: "127.0.0.1", port: 9000),
@@ -74,7 +74,7 @@ pub fn reads_all_variables_test() {
       fonts_directory: "/priv/fonts",
       work_directory: "/var/yaml2cv",
       timeout: 3000,
-      generator: "Generated with yaml2cv 1.2.3 (https://github.com/sourcloud/yaml2cv)",
+      generator: "yaml2cv 1.2.3",
     )
 }
 

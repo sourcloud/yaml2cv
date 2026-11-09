@@ -32,18 +32,29 @@
 #let photo-height = photo-width / 3.5 * 4.5
 #let band-pad = 1.2cm
 
-// The generator text is set by the service, not the CV (ADR 0018).
+// Metadata describes the candidate for screening software: the title as
+// subject, the skills as keywords, then the generator credit set by the
+// service, not the CV (ADR 0018, ADR 0036).
+#let skill-names = (
+  cv
+    .sections
+    .filter(s => s.kind == "skills")
+    .map(s => s.items.map(i => i.name))
+    .flatten()
+    .dedup()
+)
+#let generator = sys.inputs.at("generator", default: none)
 #set document(
   title: cv.person.name,
   author: cv.person.name,
-  description: sys.inputs.at("generator", default: none),
-  keywords: ("yaml2cv",),
+  description: cv.person.title,
+  keywords: skill-names + if generator != none { (generator,) } else { () },
 )
 #set page(
   paper: papers.at(cv.style.paper),
   margin: (x: margin, top: margin, bottom: margin + 0.5cm),
 )
-#set text(font: "Inter", size: 9.5pt, fill: ink, lang: "en")
+#set text(font: "Inter", size: 9.5pt, fill: ink, lang: cv.language)
 #set par(justify: false, leading: unit)
 // The name and section titles are headings, so the PDF tags them H1 and H2
 // and lists the sections as bookmarks (ADR 0035). Themes style them.

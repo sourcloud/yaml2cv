@@ -21,7 +21,7 @@ fn config() -> Config {
     fonts_directory: cwd <> "/priv/fonts",
     work_directory:,
     timeout: 10_000,
-    generator: "Generated with yaml2cv test",
+    generator: "yaml2cv test",
   )
 }
 
@@ -63,12 +63,50 @@ pub fn renders_letter_paper_in_every_theme_test() {
   assert contains(page, <<"viewBox=\"0 0 612 792\"">>)
 }
 
-pub fn marks_pdf_as_generated_by_yaml2cv_in_every_theme_test() {
-  use #(_, theme) <- list.each(cv.themes)
+// PDF metadata describes the candidate (ADR 0036).
+pub fn describes_candidate_in_pdf_metadata_in_every_theme_test() {
+  use #(name, theme) <- list.each(cv.themes)
   let assert Ok(pdf) =
     typst.render_pdf(config(), with_theme(example_cv(), theme))
-  assert contains(pdf, <<"/Subject(Generated with yaml2cv test)">>)
-  assert contains(pdf, <<"/Keywords(yaml2cv)">>)
+  assert #(name, contains(pdf, <<"/Title(John Doe)">>)) == #(name, True)
+  assert #(name, contains(pdf, <<"/Author(John Doe)">>)) == #(name, True)
+  assert #(name, contains(pdf, <<"/Subject(My personal CV)">>)) == #(name, True)
+  assert #(name, contains(pdf, <<"/Keywords(English, Spanish, yaml2cv test)">>))
+    == #(name, True)
+}
+
+pub fn leaves_out_subject_without_title_and_repeated_skills_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+person: { name: Jane Roe }
+sections:
+  - { name: Languages, kind: skills, items: [{ name: English }] }
+  - { name: Tools, kind: skills, items: [{ name: Git }, { name: English }] }
+",
+    )
+  use #(name, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
+  assert #(name, contains(pdf, <<"/Subject">>)) == #(name, False)
+  assert #(name, contains(pdf, <<"/Keywords(English, Git, yaml2cv test)">>))
+    == #(name, True)
+}
+
+pub fn sets_document_language_in_every_theme_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+language: de
+person: { name: Jane Roe }
+sections: [{ name: Profil, kind: text, text: Entwicklerin }]
+",
+    )
+  use #(name, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
+  assert #(name, contains(pdf, <<"/Lang(de)">>)) == #(name, True)
+  assert #(name, contains(pdf, <<"/Lang(en)">>)) == #(name, False)
 }
 
 fn contains(haystack: BitArray, needle: BitArray) -> Bool {
@@ -239,4 +277,19 @@ sections: [{ name: Profile, kind: text, text: Engineer }]
   assert #(name, string.contains(text, "jane.example.com")) == #(name, True)
   assert #(name, string.contains(text, "github.com/janeroe")) == #(name, True)
   assert #(name, string.contains(text, "https://")) == #(name, False)
+}
+
+pub fn renders_languages_typst_does_not_know_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+language: xx
+person: { name: Jane Roe }
+sections: [{ name: Profile, kind: text, text: Engineer }]
+",
+    )
+  use #(_, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
+  assert contains(pdf, <<"/Lang(xx)">>)
 }
