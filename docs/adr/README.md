@@ -40,3 +40,4 @@ for the process.
 | [0032](0032-complete-notices-and-licenses-page.md) | Complete third-party notices and a licenses page | Accepted |
 | [0033](0033-stability-promise-for-1-0.md) | Stability promise for 1.0 | Accepted |
 | [0034](0034-dependabot-for-github-actions.md) | Dependabot for GitHub Actions | Accepted |
+| [0035](0035-machine-readable-pdf-text.md) | Machine-readable PDF text | Accepted |
