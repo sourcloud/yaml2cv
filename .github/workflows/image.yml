@@ -52,6 +52,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # Signing the build provenance (ADR 0031).
+      id-token: write
+      attestations: write
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
@@ -91,3 +94,13 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
+      # SLSA build provenance for the multi-arch index, pushed next to the
+      # image; verify with `gh attestation verify` (ADR 0031). Storage
+      # records need an organisation-owned repository.
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false

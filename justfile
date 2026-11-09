@@ -38,10 +38,11 @@ run:
 watch:
     watchexec --exts gleam,typ,yaml --clear -- gleam test
 
-# Build the production container image
+# Build the production container image; uncommitted changes mark the
+# revision as -dirty (ADR 0031)
 image tag="yaml2cv:dev":
     podman build -t {{tag}} \
-        --build-arg GIT_REVISION="$(git rev-parse HEAD)" \
+        --build-arg GIT_REVISION="$(git rev-parse HEAD)$(test -z "$(git status --porcelain)" || echo -dirty)" \
         --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
 
 # Print release notes for the latest tag (what the release workflow publishes)

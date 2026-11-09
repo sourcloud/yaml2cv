@@ -28,6 +28,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
   release:
     needs: image
@@ -57,6 +59,13 @@ jobs:
 
           Platforms: \`linux/amd64\`, \`linux/arm64\`. Pinned by digest:
           \`${image}@${DIGEST}\`
+
+          Verify that the image was built by this repository's release
+          workflow:
+
+          \`\`\`sh
+          gh attestation verify oci://${image}@${DIGEST} --repo ${GITHUB_REPOSITORY}
+          \`\`\`
           EOF
       - name: Create GitHub release
         env:
