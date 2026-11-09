@@ -63,6 +63,7 @@ pub fn groups(t: SchemaTexts) -> List(Group(message)) {
       intro: rich(t.document_intro),
       fields: [
         required("schema_version", t.schema_version),
+        optional("language", t.language),
         optional("style", t.style_key),
         required("person", t.person_key),
         optional("contact", t.contact_key),

@@ -3,9 +3,9 @@
 import gleam/int
 import gleam/string
 import yaml2cv/cv/decode.{
-  ExpectedInteger, ExpectedList, ExpectedMapping, ExpectedOneDocument,
-  ExpectedOneOf, ExpectedText, InvalidPhoto, MustNotBeEmpty, Required,
-  UnknownKey, UnsupportedVersion,
+  ExpectedInteger, ExpectedLanguageCode, ExpectedList, ExpectedMapping,
+  ExpectedOneDocument, ExpectedOneOf, ExpectedText, InvalidPhoto, MustNotBeEmpty,
+  Required, UnknownKey, UnsupportedVersion,
 }
 import yaml2cv/cv/photo
 import yaml2cv/web/i18n/texts.{
@@ -158,6 +158,9 @@ pub fn texts() -> texts.Texts {
       document_title: "Dokument",
       document_intro: "Die oberste Ebene des Dokuments.",
       schema_version: "Schemaversion. Muss `1` sein.",
+      language: "Sprache des Lebenslaufs als Code aus zwei Buchstaben, etwa `en` "
+        <> "oder `de`; Standard `en`. Bestimmt die Sprache des PDFs für "
+        <> "Auswertungssoftware, Silbentrennung und Anführungszeichen.",
       style_key: "Design; siehe `style`.",
       person_key: "Persönliche Angaben; siehe `person`.",
       contact_key: "Kontaktdaten; siehe `contact`.",
@@ -216,6 +219,8 @@ fn schema_problem(problem: decode.SchemaProblem) -> String {
     ExpectedList -> "muss eine Liste sein"
     ExpectedOneOf(names:) ->
       "muss einer dieser Werte sein: " <> string.join(names, ", ")
+    ExpectedLanguageCode ->
+      "muss ein Sprachcode aus zwei Buchstaben sein, etwa en oder de"
     InvalidPhoto(photo.NotAPhotoDataUri) ->
       "muss ein JPEG- oder PNG-Bild als data:image/jpeg;base64,… "
       <> "oder data:image/png;base64,… sein"

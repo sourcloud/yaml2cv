@@ -47,6 +47,8 @@ pub type SchemaProblem {
   ExpectedOneOf(names: List(String))
   /// The value is not an acceptable profile photo (ADR 0028).
   InvalidPhoto(PhotoError)
+  /// The value is not a two-letter lowercase language code (ADR 0036).
+  ExpectedLanguageCode
 }
 
 /// The English description of a schema problem, as used by the HTTP API.
@@ -66,6 +68,8 @@ pub fn describe(problem: SchemaProblem) -> String {
     ExpectedText -> "expected text"
     ExpectedList -> "expected a list"
     ExpectedOneOf(names:) -> "expected one of: " <> string.join(names, ", ")
+    ExpectedLanguageCode ->
+      "expected a two-letter language code such as en or de"
     InvalidPhoto(photo.NotAPhotoDataUri) ->
       "expected a JPEG or PNG image as data:image/jpeg;base64,… "
       <> "or data:image/png;base64,… URI"
@@ -87,7 +91,7 @@ const supported_version = 1
 /// The keys of the document root, in documentation order. The schema
 /// reference (`web/schema_help`) is tested against these lists.
 pub const root_keys = [
-  "schema_version", "style", "person", "contact", "sections",
+  "schema_version", "language", "style", "person", "contact", "sections",
 ]
 
 /// The keys of `style`.
@@ -154,6 +158,7 @@ pub fn parse_document(source: String) -> Result(Node, List(DecodeError)) {
 fn cv() -> Decoder(Cv) {
   let zero =
     Cv(
+      language: cv.default_language,
       style: style().zero,
       person: person().zero,
       contact: contact().zero,
@@ -162,12 +167,26 @@ fn cv() -> Decoder(Cv) {
   use node, path <- Decoder(zero:)
   use fields <- object(node, path, zero)
   use _ <- then(required(fields, "schema_version", schema_version()))
+  use language <- then(optional_or(fields, "language", language()))
   use style <- then(optional_or(fields, "style", style()))
   use person <- then(required(fields, "person", person()))
   use contact <- then(optional_or(fields, "contact", contact()))
   use sections <- then(required(fields, "sections", list_of(section())))
   use _ <- then(no_unknown_keys(fields, root_keys))
-  succeed(Cv(style:, person:, contact:, sections:))
+  succeed(Cv(language:, style:, person:, contact:, sections:))
+}
+
+fn language() -> Decoder(cv.Language) {
+  let zero = cv.default_language
+  use node, path <- Decoder(zero:)
+  let code = case node {
+    yaml.String(value) -> cv.language(value)
+    _ -> Error(Nil)
+  }
+  case code {
+    Ok(language) -> succeed(language)
+    Error(Nil) -> fail(zero, path, ExpectedLanguageCode)
+  }
 }
 
 fn schema_version() -> Decoder(Int) {

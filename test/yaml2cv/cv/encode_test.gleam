@@ -28,7 +28,7 @@ sections:
     )
 
   assert json.to_string(encode.to_json(cv))
-    == "{\"style\":{\"theme\":\"classic\",\"color\":\"blue\",\"paper\":\"a4\",\"photo_shape\":\"rectangle\"},"
+    == "{\"language\":\"en\",\"style\":{\"theme\":\"classic\",\"color\":\"blue\",\"paper\":\"a4\",\"photo_shape\":\"rectangle\"},"
     <> "\"person\":{\"name\":\"Jane Roe\",\"title\":null,\"address\":null,\"photo\":null},"
     <> "\"contact\":{\"email\":null,\"phone\":null,\"website\":null,\"links\":[]},"
     <> "\"sections\":[{\"name\":\"About\",\"kind\":\"text\",\"text\":\"Hi.\"}]}"

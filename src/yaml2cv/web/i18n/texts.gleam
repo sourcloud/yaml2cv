@@ -173,6 +173,7 @@ pub type SchemaTexts {
     document_title: String,
     document_intro: String,
     schema_version: String,
+    language: String,
     style_key: String,
     person_key: String,
     contact_key: String,

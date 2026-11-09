@@ -26,6 +26,7 @@ pub fn decodes_minimal_document_with_defaults_test() {
   assert decode.from_yaml(minimal)
     == Ok(
       Cv(
+        language: cv.default_language,
         style: Style(
           theme: Classic,
           color: Blue,
@@ -391,6 +392,7 @@ pub fn describe_problem_in_english_test() {
         decode.ExpectedText,
         decode.ExpectedList,
         decode.ExpectedOneOf(["a", "b"]),
+        decode.ExpectedLanguageCode,
       ],
       decode.describe,
     )
@@ -405,5 +407,39 @@ pub fn describe_problem_in_english_test() {
       "expected text",
       "expected a list",
       "expected one of: a, b",
+      "expected a two-letter language code such as en or de",
     ]
+}
+
+pub fn decodes_language_test() {
+  let assert Ok(document) =
+    decode.from_yaml(
+      "
+schema_version: 1
+language: de
+person: { name: Jane Roe }
+sections: []
+",
+    )
+  assert cv.language_code(document.language) == "de"
+}
+
+pub fn defaults_language_to_english_test() {
+  let assert Ok(document) = decode.from_yaml(minimal)
+  assert cv.language_code(document.language) == "en"
+}
+
+pub fn rejects_malformed_language_test() {
+  use value <- list.each(["German", "DE", "d", "de-DE", "deu", "1", "''"])
+  let source =
+    "schema_version: 1\nlanguage: "
+    <> value
+    <> "\nperson: { name: Jane Roe }\nsections: []\n"
+  assert #(value, decode.from_yaml(source))
+    == #(
+      value,
+      Error([
+        SchemaError(path: "language", problem: decode.ExpectedLanguageCode),
+      ]),
+    )
 }

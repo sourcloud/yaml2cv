@@ -12,6 +12,7 @@ import yaml2cv/cv/photo
 /// Encodes a CV as a JSON value.
 pub fn to_json(cv: Cv) -> Json {
   json.object([
+    #("language", json.string(cv.language_code(cv.language))),
     #("style", style(cv.style)),
     #("person", person(cv.person)),
     #("contact", contact(cv.contact)),

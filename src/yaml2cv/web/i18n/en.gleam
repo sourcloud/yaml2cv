@@ -153,6 +153,9 @@ pub fn texts() -> texts.Texts {
       document_title: "Document",
       document_intro: "The top level of the document.",
       schema_version: "Schema version. Must be `1`.",
+      language: "Language of the CV as a two-letter code such as `en` or `de`; "
+        <> "default `en`. Sets the language of the PDF for screening software, "
+        <> "hyphenation and quotes.",
       style_key: "Visual settings; see `style`.",
       person_key: "Who the CV is about; see `person`.",
       contact_key: "Contact details; see `contact`.",

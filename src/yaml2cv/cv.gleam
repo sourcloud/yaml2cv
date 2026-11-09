@@ -1,10 +1,41 @@
 //// The CV domain model (schema version 1, see ADR 0007).
 
+import gleam/list
 import gleam/option.{type Option}
+import gleam/string
 
 /// A validated CV.
 pub type Cv {
-  Cv(style: Style, person: Person, contact: Contact, sections: List(Section))
+  Cv(
+    language: Language,
+    style: Style,
+    person: Person,
+    contact: Contact,
+    sections: List(Section),
+  )
+}
+
+/// The language of the CV's content: a two-letter lowercase ISO 639-1 code
+/// such as `en` or `de` (ADR 0036).
+pub opaque type Language {
+  Language(code: String)
+}
+
+/// The language of a document that does not state one.
+pub const default_language = Language("en")
+
+/// Accepts two lowercase ASCII letters, e.g. `de`. The code is checked for
+/// its form only, not against a list of languages.
+pub fn language(code: String) -> Result(Language, Nil) {
+  case string.to_utf_codepoints(code) |> list.map(string.utf_codepoint_to_int) {
+    [a, b] if a >= 97 && a <= 122 && b >= 97 && b <= 122 -> Ok(Language(code))
+    _ -> Error(Nil)
+  }
+}
+
+/// The ISO 639-1 code of a language.
+pub fn language_code(language: Language) -> String {
+  language.code
 }
 
 /// Visual settings passed to the renderer.
