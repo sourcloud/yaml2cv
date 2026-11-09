@@ -12,6 +12,7 @@ import mist
 import simplifile
 import wisp
 import wisp/wisp_mist
+import yaml2cv/build.{Build}
 import yaml2cv/config.{type Config}
 import yaml2cv/observe/admin
 import yaml2cv/observe/document
@@ -93,6 +94,10 @@ fn start(config: Config, example: String) {
       renderer:,
       max_body_bytes: config.max_body_bytes,
       static_directory: config.static_directory,
+      build: Build(
+        version: config.version,
+        revision: build.revision(config.phone_home.metadata.git_revision),
+      ),
       example_cv: example,
     )
   // The app sets no cookies, so the signing key may change on every start.

@@ -31,3 +31,14 @@
   flex: 1;
   padding: var(--space-6);
 }
+
+.ui-shell__footer {
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.ui-shell__footer a {
+  color: inherit;
+}

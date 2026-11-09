@@ -25,6 +25,9 @@ pub fn texts() -> texts.Texts {
       change_photo: "Change…",
       remove_photo: "Remove",
       photo_failed: "The photo could not be read. Choose a JPEG or PNG image.",
+      source_code: "Source code on GitHub",
+      modified_build: "modified",
+      revision_unknown: "revision unknown",
     ),
     editor: EditorTexts(
       cv_panel: "CV",

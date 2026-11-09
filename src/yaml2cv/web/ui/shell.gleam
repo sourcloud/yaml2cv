@@ -2,22 +2,27 @@
 //// (`priv/static/css/components/shell.css`).
 
 import gleam/json
+import gleam/list
 import gleam/option.{type Option}
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
+import yaml2cv/build.{type Build, Clean, Modified, Unknown}
 import yaml2cv/web/i18n.{type Locale}
+import yaml2cv/web/i18n/texts.{type UiTexts}
 import yaml2cv/web/ui/language_switch
 import yaml2cv/web/ui/theme_switch
 
 /// Path of the vendored htmx build.
 pub const htmx_path = "/static/vendor/htmx-2.0.4.min.js"
 
-/// A full HTML document in `locale` with header and main content area.
+/// A full HTML document in `locale` with header, main content area and a
+/// footer naming the `build` and linking to the source (ADR 0031).
 /// The language switch submits `language_form` when given (ADR 0025).
 pub fn view(
   locale locale: Locale,
   language_form language_form: Option(String),
+  build release: Build,
   title title: String,
   actions actions: List(Element(message)),
   content content: List(Element(message)),
@@ -87,7 +92,35 @@ pub fn view(
           ]),
         ]),
         html.main([attribute.class("ui-shell__main")], content),
+        footer(release, texts),
       ],
     ),
+  ])
+}
+
+/// `yaml2cv <version> · <revision> · <source link>`.
+fn footer(release: Build, texts: UiTexts) -> Element(message) {
+  let revision = case release.revision {
+    Clean(hash:) -> [commit_link(hash)]
+    Modified(hash:) -> [
+      commit_link(hash),
+      html.text(" (" <> texts.modified_build <> ")"),
+    ]
+    Unknown -> [html.text(texts.revision_unknown)]
+  }
+  html.footer([attribute.class("ui-shell__footer")], [
+    html.text("yaml2cv " <> release.version <> " · "),
+    ..list.append(revision, [
+      html.text(" · "),
+      html.a([attribute.href(build.repository)], [
+        html.text(texts.source_code),
+      ]),
+    ])
+  ])
+}
+
+fn commit_link(hash: String) -> Element(message) {
+  html.a([attribute.href(build.commit_url(hash))], [
+    html.text(build.short(hash)),
   ])
 }

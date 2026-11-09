@@ -5,6 +5,7 @@ import gleam/http/response
 import gleam/json
 import gleam/option.{None}
 import wisp.{type Request, type Response}
+import yaml2cv/build.{type Build}
 import yaml2cv/render.{type Renderer}
 import yaml2cv/web/api
 import yaml2cv/web/compress
@@ -18,6 +19,8 @@ pub type Context {
     max_body_bytes: Int,
     /// Directory served under `/static`.
     static_directory: String,
+    /// Shown in the page footer (ADR 0031).
+    build: Build,
     /// YAML preloaded into the editor.
     example_cv: String,
   )
@@ -49,12 +52,14 @@ pub fn handle_request(request: Request, context: Context) -> Response {
             locale(request),
             context.example_cv,
             context.max_body_bytes,
+            context.build,
           )
         http.Post ->
           editor.switch_language(
             request,
             context.max_body_bytes,
             context.example_cv,
+            context.build,
           )
         _ -> wisp.method_not_allowed([http.Get, http.Post])
       }
@@ -91,6 +96,7 @@ pub fn handle_request(request: Request, context: Context) -> Response {
         locale(request),
         context.renderer,
         context.max_body_bytes,
+        context.build,
       )
       |> localised
     }

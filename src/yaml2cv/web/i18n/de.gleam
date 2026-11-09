@@ -30,6 +30,9 @@ pub fn texts() -> texts.Texts {
       change_photo: "Ändern…",
       remove_photo: "Entfernen",
       photo_failed: "Das Foto konnte nicht gelesen werden. Bitte ein JPEG- oder PNG-Bild wählen.",
+      source_code: "Quellcode auf GitHub",
+      modified_build: "verändert",
+      revision_unknown: "Revision unbekannt",
     ),
     editor: EditorTexts(
       cv_panel: "Lebenslauf",

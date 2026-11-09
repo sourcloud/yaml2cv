@@ -2,6 +2,7 @@ import gleam/http
 import gleam/http/response
 import gleam/string
 import wisp/simulate
+import yaml2cv/build.{Build, Clean}
 import yaml2cv/render.{type RenderError, Overloaded, Renderer}
 import yaml2cv/web/router.{Context}
 
@@ -15,6 +16,7 @@ fn context(pages: Result(List(BitArray), RenderError)) -> router.Context {
     ),
     max_body_bytes: 1024,
     static_directory: "priv/static",
+    build: Build(version: "1.2.3", revision: Clean("37e695e1c0ffee")),
     example_cv: "person:\n  name: <Example>\n",
   )
 }
@@ -417,4 +419,24 @@ pub fn api_messages_stay_english_test() {
     |> router.handle_request(context(Ok([])))
     |> simulate.read_body
   assert string.contains(body, "is required")
+}
+
+pub fn editor_page_names_build_test() {
+  let body = simulate.read_body(get("/"))
+  assert string.contains(body, "yaml2cv 1.2.3")
+  assert string.contains(body, "/commit/37e695e1c0ffee\">37e695e</a>")
+}
+
+pub fn language_switch_keeps_footer_test() {
+  let body =
+    simulate.request(http.Post, "/")
+    |> simulate.form_body([#("lang", "de"), #("yaml", valid_cv)])
+    |> router.handle_request(context(Ok([])))
+    |> simulate.read_body
+  assert string.contains(body, "Quellcode auf GitHub")
+}
+
+pub fn download_error_page_has_footer_test() {
+  let body = simulate.read_body(post_form("/editor/download", "nope: ["))
+  assert string.contains(body, "Source code on GitHub")
 }

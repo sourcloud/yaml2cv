@@ -35,6 +35,10 @@ pub type UiTexts {
     change_photo: String,
     remove_photo: String,
     photo_failed: String,
+    /// Footer (ADR 0031).
+    source_code: String,
+    modified_build: String,
+    revision_unknown: String,
   )
 }
 

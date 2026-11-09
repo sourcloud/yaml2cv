@@ -8,6 +8,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import yaml2cv/build
 import yaml2cv/render/typst
 
 pub type Config {
@@ -167,7 +168,9 @@ pub fn parse(
           timeout:,
           generator: "Generated with yaml2cv "
             <> version
-            <> " (https://github.com/sourcloud/yaml2cv)",
+            <> " ("
+            <> build.repository
+            <> ")",
         ),
         version:,
         admin: Admin(bind_address: admin_bind_address, port: admin_port),

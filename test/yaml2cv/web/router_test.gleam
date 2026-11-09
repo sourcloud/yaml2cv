@@ -4,6 +4,7 @@ import gleam/http/response
 import gleam/list
 import gleam/string
 import wisp/simulate
+import yaml2cv/build.{Build, Clean}
 import yaml2cv/render.{
   type RenderError, CompileFailed, Overloaded, Renderer, RendererUnavailable,
   TimedOut,
@@ -19,6 +20,7 @@ fn context(result: Result(BitArray, RenderError)) -> router.Context {
     }),
     max_body_bytes: 1024,
     static_directory: "priv/static",
+    build: Build(version: "1.2.3", revision: Clean("37e695e1c0ffee")),
     example_cv: "",
   )
 }

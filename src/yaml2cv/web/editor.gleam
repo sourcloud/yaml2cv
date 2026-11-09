@@ -11,6 +11,7 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import wisp.{type Request, type Response}
+import yaml2cv/build.{type Build}
 import yaml2cv/cv.{type Cv}
 import yaml2cv/cv/decode.{
   type DecodeError, DocumentTooComplex, DocumentTooLarge, SchemaError,
@@ -44,8 +45,13 @@ const source_field = "cv"
 const form_id = "editor-form"
 
 /// `GET /` — the editor in `locale`, preloaded with `source`.
-pub fn page(locale: Locale, source: String, max_body_bytes: Int) -> Response {
-  editor_page(locale, source, max_body_bytes, None)
+pub fn page(
+  locale: Locale,
+  source: String,
+  max_body_bytes: Int,
+  build: Build,
+) -> Response {
+  editor_page(locale, source, max_body_bytes, None, build)
 }
 
 /// The editor page, in visual mode with the blocks of `blocks` if given.
@@ -54,6 +60,7 @@ fn editor_page(
   source: String,
   max_body_bytes: Int,
   blocks: Option(draft.Draft),
+  build: Build,
 ) -> Response {
   let texts = i18n.texts(locale)
   let t = texts.editor
@@ -64,6 +71,7 @@ fn editor_page(
   shell.view(
     locale:,
     language_form: Some(form_id),
+    build:,
     title:,
     actions: [],
     content: [
@@ -242,6 +250,7 @@ pub fn switch_language(
   request: Request,
   max_body_bytes: Int,
   example: String,
+  build: Build,
 ) -> Response {
   use fields <- require_form_within(request, max_body_bytes)
   let lang = option.from_result(list.key_find(fields, "lang"))
@@ -251,7 +260,13 @@ pub fn switch_language(
       option.from_result(result.replace_error(draft.from_yaml(source), Nil))
     _ -> None
   }
-  editor_page(i18n.from_request(request, lang), source, max_body_bytes, blocks)
+  editor_page(
+    i18n.from_request(request, lang),
+    source,
+    max_body_bytes,
+    blocks,
+    build,
+  )
 }
 
 /// `POST /editor/validate` — validation status fragment.
@@ -302,16 +317,22 @@ pub fn download(
   locale: Locale,
   renderer: Renderer,
   max_body_bytes: Int,
+  build: Build,
 ) -> Response {
   use source <- require_yaml_field(request, max_body_bytes)
   case decode.from_yaml(source) {
     Error(errors) ->
-      error_page(locale, errors_view(i18n.texts(locale), errors), 422)
-    Ok(cv) -> download_pdf(locale, renderer, cv)
+      error_page(locale, build, errors_view(i18n.texts(locale), errors), 422)
+    Ok(cv) -> download_pdf(locale, build, renderer, cv)
   }
 }
 
-fn download_pdf(locale: Locale, renderer: Renderer, cv: Cv) -> Response {
+fn download_pdf(
+  locale: Locale,
+  build: Build,
+  renderer: Renderer,
+  cv: Cv,
+) -> Response {
   case renderer.render_pdf(cv) {
     Ok(pdf) ->
       wisp.response(200)
@@ -330,7 +351,7 @@ fn download_pdf(locale: Locale, renderer: Renderer, cv: Cv) -> Response {
       alert.view(alert.Danger, texts.editor.download_failed, [
         html.text(render_error_message(texts, error)),
       ])
-      |> error_page(locale, _, status)
+      |> error_page(locale, build, _, status)
     }
   }
 }
@@ -507,15 +528,27 @@ fn fragment(view: Element(a), status: Int) -> Response {
 }
 
 /// A full page showing `message` with a way back to the editor.
-fn error_page(locale: Locale, message: Element(a), status: Int) -> Response {
+fn error_page(
+  locale: Locale,
+  build: Build,
+  message: Element(a),
+  status: Int,
+) -> Response {
   let t = i18n.texts(locale).editor
-  shell.view(locale:, language_form: None, title:, actions: [], content: [
-    panel.view(
-      title: t.cannot_create_pdf,
-      actions: [html.a([attribute.href("/")], [html.text(t.back_to_editor)])],
-      body: [message],
-    ),
-  ])
+  shell.view(
+    locale:,
+    language_form: None,
+    build:,
+    title:,
+    actions: [],
+    content: [
+      panel.view(
+        title: t.cannot_create_pdf,
+        actions: [html.a([attribute.href("/")], [html.text(t.back_to_editor)])],
+        body: [message],
+      ),
+    ],
+  )
   |> element.to_document_string
   |> wisp.html_response(status)
 }
