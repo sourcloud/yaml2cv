@@ -1,6 +1,6 @@
 # 0010. HTTP API, configuration, limits and logging
 
-- Status: Accepted
+- Status: Accepted, body limit amended by 0028
 - Date: 2026-11-07
 
 ## Context
