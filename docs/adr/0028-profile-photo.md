@@ -1,6 +1,6 @@
 # 0028. Profile photo inside the CV document
 
-- Status: Accepted
+- Status: Accepted, photo size amended by 0030
 - Date: 2026-11-08
 
 ## Context

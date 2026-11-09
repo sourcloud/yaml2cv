@@ -1,6 +1,6 @@
 # 0009. Typst renderer: execution, limits and themes
 
-- Status: Accepted
+- Status: Accepted, fonts amended by 0030
 - Date: 2026-11-07
 
 ## Context
