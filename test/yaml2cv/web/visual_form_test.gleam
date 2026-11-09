@@ -16,6 +16,7 @@ fn example() -> draft.Draft {
 fn sample() -> draft.Draft {
   Draft(
     ..draft.empty,
+    language: "de",
     contact: Contact(..draft.empty.contact, links: [
       Link("A", "a"),
       Link("B", "b"),
@@ -48,6 +49,7 @@ pub fn names_fields_by_path_test() {
   let assert Ok("text") = key_find(fields, "sections.2.kind")
   let assert Ok("Hi") = key_find(fields, "sections.2.text")
   let assert Ok("b") = key_find(fields, "contact.links.1.url")
+  let assert Ok("de") = key_find(fields, "language")
 }
 
 fn key_find(fields, key) {

@@ -93,6 +93,7 @@ pub type VisualTexts {
     colour: String,
     paper: String,
     photo_shape: String,
+    language: String,
     default_option: fn(String) -> String,
     person: String,
     name: String,

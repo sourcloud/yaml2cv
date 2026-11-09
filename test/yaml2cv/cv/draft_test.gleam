@@ -34,6 +34,7 @@ sections:
   assert draft.from_yaml(yaml)
     == Ok(
       Draft(
+        language: "",
         style: Style(theme: "minimal", color: "red", paper: "", photo_shape: ""),
         person: Person(
           name: "Jane Roe",
@@ -94,6 +95,7 @@ sections:
   assert draft.from_yaml(yaml)
     == Ok(
       Draft(
+        language: "",
         style: draft.empty.style,
         person: draft.empty.person,
         contact: draft.empty.contact,
@@ -177,4 +179,12 @@ pub fn rejects_syntax_errors_test() {
 pub fn rejects_non_mapping_root_test() {
   assert draft.from_yaml("- a list")
     == Error([SchemaError(path: "", problem: decode.ExpectedMapping)])
+}
+
+pub fn reads_language_test() {
+  let assert Ok(read) =
+    draft.from_yaml(
+      "schema_version: 1\nlanguage: de\nperson: { name: X }\nsections: []\n",
+    )
+  assert read.language == "de"
 }

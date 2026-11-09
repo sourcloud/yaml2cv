@@ -88,6 +88,7 @@ pub fn op_value(op: Op) -> String {
 pub fn fields(draft: Draft) -> List(#(String, String)) {
   list.flatten([
     [
+      #("language", draft.language),
       #("style.theme", draft.style.theme),
       #("style.color", draft.style.color),
       #("style.paper", draft.style.paper),
@@ -169,6 +170,7 @@ pub fn parse(values: List(#(String, String))) -> Draft {
       )
     })
   Draft(
+    language: get(form, "language"),
     style: Style(
       theme: get(form, "style.theme"),
       color: get(form, "style.color"),

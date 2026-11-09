@@ -89,6 +89,7 @@ pub fn texts() -> texts.Texts {
       colour: "Akzentfarbe",
       paper: "Papierformat",
       photo_shape: "Fotozuschnitt",
+      language: "Sprache (Code wie en oder de)",
       default_option: fn(name) { "Default (" <> name <> ")" },
       person: "Person",
       name: "Name",

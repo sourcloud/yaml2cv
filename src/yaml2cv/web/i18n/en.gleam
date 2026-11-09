@@ -84,6 +84,7 @@ pub fn texts() -> texts.Texts {
       colour: "Colour",
       paper: "Paper",
       photo_shape: "Photo shape",
+      language: "Language (code such as en or de)",
       default_option: fn(name) { "Default (" <> name <> ")" },
       person: "Person",
       name: "Name",

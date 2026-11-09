@@ -20,7 +20,13 @@ import yaml2cv/yaml.{type Node}
 
 /// A CV document as edited in the visual editor.
 pub type Draft {
-  Draft(style: Style, person: Person, contact: Contact, sections: List(Section))
+  Draft(
+    language: String,
+    style: Style,
+    person: Person,
+    contact: Contact,
+    sections: List(Section),
+  )
 }
 
 /// Style names as written in YAML; `""` means the default.
@@ -70,6 +76,7 @@ pub type Skill {
 /// The draft with nothing filled in.
 pub const empty =
   Draft(
+    language: "",
     style: Style(theme: "", color: "", paper: "", photo_shape: ""),
     person: Person(name: "", title: "", address: "", photo: ""),
     contact: Contact(email: "", phone: "", website: "", links: []),
@@ -135,12 +142,13 @@ type Fields {
 fn root_draft(node: Node) -> Read(Draft) {
   use fields <- object(node, "", empty)
   use _ <- then(version(fields))
+  use language <- then(text(fields, "language"))
   use style <- then(child(fields, "style", empty.style, style))
   use person <- then(child(fields, "person", empty.person, person))
   use contact <- then(child(fields, "contact", empty.contact, contact))
   use sections <- then(list_at(fields, "sections", section))
   use _ <- then(no_unknown_keys(fields, decode.root_keys))
-  #(Draft(style:, person:, contact:, sections:), [])
+  #(Draft(language:, style:, person:, contact:, sections:), [])
 }
 
 fn version(fields: Fields) -> Read(Nil) {

@@ -14,6 +14,7 @@ const en = i18n.En
 
 fn sample() -> draft.Draft {
   Draft(
+    language: "de",
     style: draft.Style(theme: "minimal", color: "", paper: "", photo_shape: ""),
     person: draft.Person(name: "Jane <Roe>", title: "", address: "", photo: ""),
     contact: Contact(..draft.empty.contact, links: [Link("GitHub", "https://x")]),

@@ -24,7 +24,7 @@ type Presence {
 /// The draft as a YAML document.
 pub fn to_yaml(draft: Draft) -> String {
   [
-    ["schema_version: 1"],
+    ["schema_version: 1", ..field(0, "language", draft.language, Optional)],
     style(draft.style),
     person(draft.person),
     contact(draft.contact),

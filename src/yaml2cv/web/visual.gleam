@@ -61,7 +61,7 @@ pub fn view(draft: Draft, texts: Texts) -> Element(message) {
     ],
     [
       alert.view(alert.Info, t.v.rewrite_title, [html.text(t.v.rewrite_body)]),
-      style_block(t, draft.style),
+      style_block(t, draft.style, draft.language),
       person_block(t, draft.person, draft.style.photo_shape),
       contact_block(t, draft.contact),
       list_of(
@@ -110,12 +110,19 @@ type Labels {
   Labels(v: VisualTexts, required: field.Requirement, photo: field.PhotoLabels)
 }
 
-fn style_block(t: Labels, style: draft.Style) -> Element(message) {
+fn style_block(
+  t: Labels,
+  style: draft.Style,
+  language: String,
+) -> Element(message) {
   let default = cv.default_style
   block.view(title: t.v.style, actions: [], body: [
     choice(t, "style.theme", t.v.theme, cv.themes, default.theme, style.theme),
     choice(t, "style.color", t.v.colour, cv.colors, default.color, style.color),
     choice(t, "style.paper", t.v.paper, cv.papers, default.paper, style.paper),
+    // The language sits with the style for lack of a document block, though
+    // it is a top-level key (ADR 0036).
+    text("language", t.v.language, language, Optional),
   ])
 }
 

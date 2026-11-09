@@ -131,3 +131,8 @@ pub fn round_trips_photo_and_photo_shape_test() {
   let assert Ok(decoded) = decode.from_yaml(yaml)
   assert decoded.person.photo != option.None
 }
+
+pub fn emits_language_after_schema_version_test() {
+  assert emit.to_yaml(Draft(..draft.empty, language: "de"))
+    == "schema_version: 1\nlanguage: de\n\nperson:\n  name: \"\"\n\nsections: []\n"
+}
