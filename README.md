@@ -225,6 +225,16 @@ admin endpoint, so also set `ADMIN_BIND_ADDRESS` to an address the collector
 can reach. The format is documented in
 [ADR 0020](docs/adr/0020-phone-home-observability.md).
 
+## Versioning
+
+yaml2cv follows [Semantic Versioning](https://semver.org). From 1.0.0 on,
+these interfaces change incompatibly only in a new major version: CV schema
+version 1, the HTTP API under `/api/v1` with its problem types, and the
+environment variables above. How a CV looks within a theme, error message
+wording, the editor and the admin listener may change in any release.
+Only the latest release gets fixes. Details are in
+[ADR 0033](docs/adr/0033-stability-promise-for-1-0.md).
+
 ## Roadmap
 
 - [x] M0 — Repository hygiene: license, docs, workflow, ADRs
@@ -243,6 +253,8 @@ can reach. The format is documented in
   (ADR 0030)
 - [x] M13 — Signed build provenance and a footer linking to the source
   (ADR 0031)
+- [ ] M14 — 1.0: stability promise (ADR 0033), security policy, major-version
+  image tag
 
 ## Contributing
 
