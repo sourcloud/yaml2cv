@@ -2,8 +2,8 @@
 // from page two (ADR 0030).
 //
 // All CV content comes from cv.json as data; nothing in it is evaluated as
-// Typst markup. The theme adds no words of its own, so a CV reads the same
-// in any language.
+// Typst markup. The only word the theme adds is the "Website" label, which
+// reads the same in English and German.
 
 #let cv = json("cv.json")
 
@@ -85,20 +85,23 @@
 // Strips the scheme so web addresses read as they are typed.
 #let address(url) = url.replace(regex("^https?://"), "")
 
+// A web address with a small label above it.
+#let labelled-link(label, url) = stack(
+  spacing: 0.45em,
+  text(size: 7pt, fill: muted, label),
+  link(url, address(url)),
+)
+
+// Short items first, the postal address next to them, then the web
+// addresses, each with its label.
 #let contact-items = {
   let c = cv.contact
   let items = ()
-  if c.email != none { items.push(link("mailto:" + c.email, c.email)) }
   if c.phone != none { items.push(c.phone) }
-  if c.website != none { items.push(link(c.website, address(c.website))) }
-  for l in c.links {
-    items.push(stack(
-      spacing: 0.45em,
-      text(size: 7pt, fill: muted, l.label),
-      link(l.url, address(l.url)),
-    ))
-  }
+  if c.email != none { items.push(link("mailto:" + c.email, c.email)) }
   if cv.person.address != none { items.push(cv.person.address) }
+  if c.website != none { items.push(labelled-link("Website", c.website)) }
+  for l in c.links { items.push(labelled-link(l.label, l.url)) }
   items
 }
 

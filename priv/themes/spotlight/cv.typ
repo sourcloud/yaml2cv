@@ -2,8 +2,8 @@
 // the portrait at its left end (ADR 0030).
 //
 // All CV content comes from cv.json as data; nothing in it is evaluated as
-// Typst markup. The theme adds no words of its own, so a CV reads the same
-// in any language.
+// Typst markup. The only word the theme adds is the "Website" label, which
+// reads the same in English and German.
 
 #let cv = json("cv.json")
 
@@ -94,22 +94,31 @@
 // Strips the scheme so web addresses read as they are typed.
 #let address(url) = url.replace(regex("^https?://"), "")
 
-#let contact-items = {
+// A web address with a small label above it.
+#let labelled-link(label, url) = stack(
+  spacing: 0.45em,
+  text(size: 6.5pt, fill: white.transparentize(30%), upper(label)),
+  link(url, address(url)),
+)
+
+// Two columns: phone, email and postal address, then the web addresses,
+// each with its label.
+#let direct-items = {
   let c = cv.contact
   let items = ()
-  if c.email != none { items.push(link("mailto:" + c.email, c.email)) }
   if c.phone != none { items.push(c.phone) }
-  if c.website != none { items.push(link(c.website, address(c.website))) }
-  for l in c.links {
-    items.push(stack(
-      spacing: 0.45em,
-      text(size: 6.5pt, fill: white.transparentize(30%), upper(l.label)),
-      link(l.url, address(l.url)),
-    ))
-  }
+  if c.email != none { items.push(link("mailto:" + c.email, c.email)) }
   if cv.person.address != none { items.push(cv.person.address) }
   items
 }
+#let web-items = {
+  let c = cv.contact
+  let items = ()
+  if c.website != none { items.push(labelled-link("Website", c.website)) }
+  for l in c.links { items.push(labelled-link(l.label, l.url)) }
+  items
+}
+#let contact-columns = (direct-items, web-items).filter(c => c.len() > 0)
 
 // Header band (page one) --------------------------------------------------------
 
@@ -130,18 +139,16 @@
     ..if cv.person.title != none {
       (text(size: 12pt, weight: "medium", cv.person.title),)
     },
-    ..if contact-items.len() > 0 {
+    ..if contact-columns.len() > 0 {
       (
         {
           set text(size: 8pt)
-          block(above: 0pt, grid(
+          grid(
             columns: (1fr, 1fr),
             column-gutter: 1em,
-            row-gutter: 1em,
-            // Values line up when only some carry a label above them.
-            align: bottom,
-            ..contact-items,
-          ))
+            align: top,
+            ..contact-columns.map(items => stack(spacing: 1em, ..items)),
+          )
         },
       )
     },
