@@ -1,0 +1,18 @@
+# Automated dependency updates (ADR 0034). Only GitHub Actions: Gleam/Hex
+# packages, the Nix flake and the Containerfile toolchain are updated by
+# hand, because Dependabot cannot update them or cannot keep them in step
+# (ADR 0013, ADR 0027).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Actions are pinned by commit SHA with a version comment; Dependabot
+    # updates both. One pull request per week for all actions.
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+      include: scope
