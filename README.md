@@ -16,7 +16,7 @@ documented as [architecture decision records](docs/adr/).
 schema_version: 1
 
 style:
-  theme: classic   # or: minimal
+  theme: classic   # or: minimal, studio, spotlight, cover
   color: blue
   paper: a4        # or: letter
   photo_shape: rectangle   # or: rounded, circle
@@ -218,6 +218,8 @@ can reach. The format is documented in
 - [x] M9 — Visual block editor next to the YAML source
 - [x] M10 — UI localisation (English, German)
 - [x] M11 — Optional profile photo, kept inside the CV document (ADR 0028)
+- [x] M12 — Photo-centred themes for creative jobs: studio, spotlight, cover
+  (ADR 0030)
 
 ## Contributing
 
