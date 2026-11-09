@@ -30,9 +30,10 @@
 //   to it, and it is briefly highlighted.
 // - Photos (ADR 0028): `[data-photo-choose]` opens the file input
 //   `[data-photo-input]` next to it. The picked JPEG or PNG is cropped to
-//   3.5 : 4.5, scaled to at most 600 × 771 pixels and re-encoded as JPEG,
-//   which drops EXIF data such as the GPS location. The result goes into the
-//   hidden input of its `[data-photo-field]`. The file is not uploaded.
+//   3.5 : 4.5, scaled to at most 900 × 1157 pixels (ADR 0030) and
+//   re-encoded as JPEG, which drops EXIF data such as the GPS location. The
+//   result goes into the hidden input of its `[data-photo-field]`. The file
+//   is not uploaded.
 //   The choose button reads "change" and the remove button shows once
 //   there is a photo.
 (() => {
@@ -446,8 +447,8 @@
   };
 
   document.addEventListener("htmx:afterSettle", restoreAnchor);
-  const photoWidth = 600;
-  const photoHeight = 771;
+  const photoWidth = 900;
+  const photoHeight = 1157;
 
   // Decodes, crops to cover the photo box and re-encodes as JPEG.
   const preparePhoto = async (file) => {
