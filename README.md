@@ -14,6 +14,7 @@ documented as [architecture decision records](docs/adr/).
 
 ```yaml
 schema_version: 1
+language: en       # two-letter code, e.g. de; default en
 
 style:
   theme: classic   # or: minimal, studio, spotlight, cover
