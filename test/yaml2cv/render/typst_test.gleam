@@ -56,7 +56,8 @@ pub fn renders_letter_paper_in_every_theme_test() {
   use #(_, theme) <- list.each(cv.themes)
   let cv = with_theme(example_cv(), theme)
   let cv = cv.Cv(..cv, style: Style(..cv.style, paper: cv.Letter))
-  let assert Ok([page]) = typst.render_svg_pages(config(), cv)
+  // Some themes always start with a cover page; the first page is enough.
+  let assert Ok([page, ..]) = typst.render_svg_pages(config(), cv)
   // US letter is 8.5 × 11 in, i.e. 612 × 792 pt.
   assert contains(page, <<"viewBox=\"0 0 612 792\"">>)
 }

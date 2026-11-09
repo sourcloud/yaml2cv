@@ -4,9 +4,9 @@ import gleam/option.{None, Some}
 import gleam/string
 import simplifile
 import yaml2cv/cv.{
-  A4, Blue, Circle, Classic, Contact, Cv, Entries, Entry, Letter, Link, Minimal,
-  Person, Photo, Png, Rectangle, Section, Skill, Skills, Spotlight, Studio,
-  Style, Text,
+  A4, Blue, Circle, Classic, Contact, Cover, Cv, Entries, Entry, Letter, Link,
+  Minimal, Person, Photo, Png, Rectangle, Section, Skill, Skills, Spotlight,
+  Studio, Style, Text,
 }
 import yaml2cv/cv/decode.{
   DocumentTooComplex, DocumentTooLarge, InvalidPhoto, SchemaError, SyntaxError,
@@ -82,6 +82,19 @@ sections: []
 ",
     )
   assert cv.style.theme == Spotlight
+}
+
+pub fn decodes_cover_theme_test() {
+  let assert Ok(cv) =
+    decode.from_yaml(
+      "
+schema_version: 1
+style: { theme: cover }
+person: { name: Jane Roe }
+sections: []
+",
+    )
+  assert cv.style.theme == Cover
 }
 
 pub fn decodes_paper_size_test() {
