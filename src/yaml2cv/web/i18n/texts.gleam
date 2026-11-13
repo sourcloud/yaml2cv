@@ -98,6 +98,9 @@ pub type VisualTexts {
     language_info: String,
     /// Accessible name of an info button, from the field label.
     about: fn(String) -> String,
+    /// Label of a style option (theme, colour, paper, photo shape) from its
+    /// YAML name; unknown names are returned unchanged.
+    option: fn(String) -> String,
     person: String,
     name: String,
     title: String,

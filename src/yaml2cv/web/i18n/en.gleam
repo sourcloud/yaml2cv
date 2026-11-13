@@ -87,6 +87,29 @@ pub fn texts() -> texts.Texts {
       language: "Language",
       language_info: "The language of the CV as a two-letter code such as en or de; en if empty. It sets the language of the PDF for screening software, hyphenation and quotes.",
       about: fn(label) { "About " <> string.lowercase(label) },
+      option: fn(name) {
+        case name {
+          "classic" -> "Classic"
+          "minimal" -> "Minimal"
+          "studio" -> "Studio"
+          "spotlight" -> "Spotlight"
+          "cover" -> "Cover"
+          "black" -> "Black"
+          "blue" -> "Blue"
+          "burgundy" -> "Burgundy"
+          "green" -> "Green"
+          "grey" -> "Grey"
+          "orange" -> "Orange"
+          "purple" -> "Purple"
+          "red" -> "Red"
+          "a4" -> "A4"
+          "letter" -> "US Letter"
+          "rectangle" -> "Rectangle"
+          "rounded" -> "Rounded"
+          "circle" -> "Circle"
+          _ -> name
+        }
+      },
       person: "Person",
       name: "Name",
       title: "Title",

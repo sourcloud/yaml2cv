@@ -112,7 +112,7 @@ pub fn always_shows_both_arrows_test() {
 pub fn selects_name_the_default_without_a_prefix_test() {
   let html = element.to_string(visual.view(sample(), i18n.texts(en)))
   assert !string.contains(html, "Default (")
-  assert string.contains(html, "<option selected value>blue</option>")
+  assert string.contains(html, "<option selected value>Blue</option>")
   // The default appears once: as the empty value that omits the key.
   assert !string.contains(html, "<option value=\"blue\">")
 }
@@ -121,7 +121,7 @@ pub fn select_shows_an_explicit_default_as_the_default_test() {
   let style = draft.Style(..sample().style, color: "blue")
   let html =
     element.to_string(visual.view(Draft(..sample(), style:), i18n.texts(en)))
-  assert string.contains(html, "<option selected value>blue</option>")
+  assert string.contains(html, "<option selected value>Blue</option>")
 }
 
 pub fn explains_the_language_in_an_info_overlay_test() {
@@ -130,4 +130,14 @@ pub fn explains_the_language_in_an_info_overlay_test() {
   assert string.contains(html, ">Language</label>")
   assert string.contains(html, "popovertarget=\"field-language-info\"")
   assert string.contains(html, "two-letter code")
+}
+
+pub fn names_style_options_in_the_ui_language_test() {
+  let html = element.to_string(visual.view(sample(), i18n.texts(i18n.De)))
+  assert string.contains(html, "<option selected value>Blau</option>")
+  assert string.contains(html, "<option value=\"red\">Rot</option>")
+  assert string.contains(html, "<option value=\"circle\">Kreis</option>")
+  let html = element.to_string(visual.view(sample(), i18n.texts(en)))
+  assert string.contains(html, "<option selected value>Blue</option>")
+  assert string.contains(html, "<option value=\"letter\">US Letter</option>")
 }

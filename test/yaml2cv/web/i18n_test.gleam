@@ -1,7 +1,9 @@
 import gleam/http
 import gleam/http/request
+import gleam/list
 import gleam/option.{None, Some}
 import wisp/simulate
+import yaml2cv/cv
 import yaml2cv/cv/decode
 import yaml2cv/web/i18n.{De, En}
 
@@ -78,4 +80,21 @@ pub fn english_schema_problems_match_the_api_test() {
     == decode.describe(problem)
   assert i18n.texts(De).editor.schema_problem(problem)
     != decode.describe(problem)
+}
+
+pub fn every_style_option_has_a_label_test() {
+  let names =
+    list.flatten([
+      list.map(cv.themes, fn(option) { option.0 }),
+      list.map(cv.colors, fn(option) { option.0 }),
+      list.map(cv.papers, fn(option) { option.0 }),
+      list.map(cv.photo_shapes, fn(option) { option.0 }),
+    ])
+  list.each(i18n.all, fn(locale) {
+    let texts = i18n.texts(locale)
+    list.each(names, fn(name) {
+      // The fallback returns the YAML name unchanged.
+      assert texts.visual.option(name) != name as name
+    })
+  })
 }

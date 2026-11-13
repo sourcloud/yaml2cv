@@ -92,6 +92,29 @@ pub fn texts() -> texts.Texts {
       language: "Sprache",
       language_info: "Die Sprache des Lebenslaufs als Code aus zwei Buchstaben, etwa en oder de; en, wenn leer. Sie legt die Sprache des PDFs für Bewerbermanagement-Software, Silbentrennung und Anführungszeichen fest.",
       about: fn(label) { "Erläuterung zu „" <> label <> "“" },
+      option: fn(name) {
+        case name {
+          "classic" -> "Classic"
+          "minimal" -> "Minimal"
+          "studio" -> "Studio"
+          "spotlight" -> "Spotlight"
+          "cover" -> "Cover"
+          "black" -> "Schwarz"
+          "blue" -> "Blau"
+          "burgundy" -> "Bordeaux"
+          "green" -> "Grün"
+          "grey" -> "Grau"
+          "orange" -> "Orange"
+          "purple" -> "Lila"
+          "red" -> "Rot"
+          "a4" -> "A4"
+          "letter" -> "US Letter"
+          "rectangle" -> "Rechteck"
+          "rounded" -> "Abgerundet"
+          "circle" -> "Kreis"
+          _ -> name
+        }
+      },
       person: "Person",
       name: "Name",
       title: "Tätigkeit",
