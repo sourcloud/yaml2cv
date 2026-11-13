@@ -11,6 +11,63 @@
   color: var(--color-text-muted);
 }
 
+/* Label with an info button. The button is one line high, so the field
+ * lines up with label-only neighbours in the block grid. */
+.ui-field__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.ui-field__info {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1lh;
+  block-size: 1lh;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: inherit;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: var(--border-width) solid currentColor;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ui-field__info:hover {
+  color: var(--color-text);
+}
+
+/* Explanation overlay: a native popover, centred by the browser. */
+.ui-field__popover {
+  inline-size: min(28rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-field__popover:popover-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.ui-field__popover p {
+  align-self: stretch;
+}
+
+.ui-field__popover::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
 .ui-field__required {
   font-size: 0.85em;
 }

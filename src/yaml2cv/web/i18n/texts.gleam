@@ -94,7 +94,10 @@ pub type VisualTexts {
     paper: String,
     photo_shape: String,
     language: String,
-    default_option: fn(String) -> String,
+    /// Explanation behind the language field's info button.
+    language_info: String,
+    /// Accessible name of an info button, from the field label.
+    about: fn(String) -> String,
     person: String,
     name: String,
     title: String,

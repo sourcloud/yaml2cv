@@ -31,6 +31,73 @@ pub fn text(
   ])
 }
 
+/// An explanation of a field, shown in an overlay (a native popover) that
+/// an info button next to the label opens. `button` is the button's
+/// accessible name, `close` the label of the overlay's close button.
+pub type Info {
+  Info(button: String, close: String, body: String)
+}
+
+/// A single-line text input with an info button that explains it. The
+/// label is linked to the input by id (`field-<name>`) rather than by
+/// nesting, because a button inside the `<label>` would become its control.
+/// The overlay is a `popover`, so it opens and closes without script.
+pub fn text_with_info(
+  name name: String,
+  label label: String,
+  value value: String,
+  requirement requirement: Requirement,
+  info info: Info,
+) -> Element(message) {
+  let id = "field-" <> name
+  let info_id = id <> "-info"
+  html.div([attribute.class("ui-field")], [
+    html.div([attribute.class("ui-field__head")], [
+      html.label([attribute.class("ui-field__label"), attribute.for(id)], [
+        html.text(label),
+        marker(requirement),
+      ]),
+      html.button(
+        [
+          attribute.class("ui-field__info"),
+          attribute.type_("button"),
+          attribute.attribute("popovertarget", info_id),
+          attribute.aria_label(info.button),
+          attribute.title(info.button),
+        ],
+        [html.text("i")],
+      ),
+    ]),
+    html.input([
+      attribute.class("ui-field__input"),
+      attribute.type_("text"),
+      attribute.id(id),
+      attribute.name(name),
+      attribute.value(value),
+      ..required(requirement)
+    ]),
+    html.div(
+      [
+        attribute.id(info_id),
+        attribute.attribute("popover", ""),
+        attribute.class("ui-field__popover"),
+      ],
+      [
+        html.p([], [html.text(info.body)]),
+        html.button(
+          [
+            attribute.class("ui-button ui-button--secondary"),
+            attribute.type_("button"),
+            attribute.attribute("popovertarget", info_id),
+            attribute.attribute("popovertargetaction", "hide"),
+          ],
+          [html.text(info.close)],
+        ),
+      ],
+    ),
+  ])
+}
+
 /// A multi-line text input.
 pub fn textarea(
   name name: String,
@@ -159,15 +226,21 @@ fn wrap(
   requirement: Requirement,
   control: List(Element(message)),
 ) -> Element(message) {
-  let marker = case requirement {
+  html.label([attribute.class("ui-field")], [
+    html.span([attribute.class("ui-field__label")], [
+      html.text(label),
+      marker(requirement),
+    ]),
+    ..control
+  ])
+}
+
+fn marker(requirement: Requirement) -> Element(message) {
+  case requirement {
     Required(marker:) ->
       html.span([attribute.class("ui-field__required")], [html.text(marker)])
     Optional -> element.none()
   }
-  html.label([attribute.class("ui-field")], [
-    html.span([attribute.class("ui-field__label")], [html.text(label), marker]),
-    ..control
-  ])
 }
 
 /// Browser validation is left to the server-side validation, so required

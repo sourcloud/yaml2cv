@@ -29,11 +29,47 @@ pub fn select_field_test() {
   field.select(
     name: "style.theme",
     label: "Theme",
-    options: [#("", "Default (classic)"), #("minimal", "minimal")],
+    options: [#("", "classic"), #("minimal", "minimal")],
     value: "minimal",
   )
   |> element.to_string
   |> birdie.snap(title: "ui field select")
+}
+
+pub fn text_field_with_info_test() {
+  field.text_with_info(
+    name: "language",
+    label: "Language",
+    value: "de",
+    requirement: field.Optional,
+    info: field.Info(
+      button: "About language",
+      close: "Close",
+      body: "A two-letter code such as en or de.",
+    ),
+  )
+  |> element.to_string
+  |> birdie.snap(title: "ui field text with info")
+}
+
+pub fn info_button_sits_outside_the_label_test() {
+  // A button inside the <label> would become its control and steal clicks
+  // on the label text from the input.
+  let html =
+    field.text_with_info(
+      name: "language",
+      label: "Language",
+      value: "",
+      requirement: field.Optional,
+      info: field.Info(button: "About", close: "Close", body: "Text"),
+    )
+    |> element.to_string
+  let assert [label, _] = string.split(html, "</label>")
+  assert !string.contains(label, "<button")
+  assert string.contains(html, "for=\"field-language\"")
+  assert string.contains(html, "id=\"field-language\"")
+  assert string.contains(html, "popovertarget=\"field-language-info\"")
+  assert string.contains(html, "id=\"field-language-info\" popover")
 }
 
 fn photo(value: String) -> String {

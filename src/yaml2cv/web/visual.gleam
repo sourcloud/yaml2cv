@@ -48,6 +48,7 @@ pub fn view(draft: Draft, texts: Texts) -> Element(message) {
         remove: texts.ui.remove_photo,
         failed: texts.ui.photo_failed,
       ),
+      texts.ui.close,
     )
   html.form(
     [
@@ -107,7 +108,12 @@ pub fn sync(yaml: String) -> Element(message) {
 
 /// The texts the blocks use, with the marker for required fields.
 type Labels {
-  Labels(v: VisualTexts, required: field.Requirement, photo: field.PhotoLabels)
+  Labels(
+    v: VisualTexts,
+    required: field.Requirement,
+    photo: field.PhotoLabels,
+    close: String,
+  )
 }
 
 fn style_block(
@@ -117,18 +123,29 @@ fn style_block(
 ) -> Element(message) {
   let default = cv.default_style
   block.view(title: t.v.style, actions: [], body: [
-    choice(t, "style.theme", t.v.theme, cv.themes, default.theme, style.theme),
-    choice(t, "style.color", t.v.colour, cv.colors, default.color, style.color),
-    choice(t, "style.paper", t.v.paper, cv.papers, default.paper, style.paper),
+    choice("style.theme", t.v.theme, cv.themes, default.theme, style.theme),
+    choice("style.color", t.v.colour, cv.colors, default.color, style.color),
+    choice("style.paper", t.v.paper, cv.papers, default.paper, style.paper),
     // The language sits with the style for lack of a document block, though
     // it is a top-level key (ADR 0036).
-    text("language", t.v.language, language, Optional),
+    field.text_with_info(
+      name: "language",
+      label: t.v.language,
+      value: language,
+      requirement: Optional,
+      info: field.Info(
+        button: t.v.about(t.v.language),
+        close: t.close,
+        body: t.v.language_info,
+      ),
+    ),
   ])
 }
 
-/// A select of the YAML names in `options`; `""` stands for the default.
+/// A select of the YAML names in `options`. The default is offered under
+/// its own name with the value `""`, which leaves the key out of the YAML;
+/// an explicit default selects it too.
 fn choice(
-  t: Labels,
   name: String,
   label: String,
   options: List(#(String, a)),
@@ -141,13 +158,19 @@ fn choice(
     Ok(option) -> option.0
     Error(Nil) -> ""
   }
+  let value = case value == default_name {
+    True -> ""
+    False -> value
+  }
   field.select(
     name:,
     label:,
-    options: [
-      #("", t.v.default_option(default_name)),
-      ..list.map(options, fn(option) { #(option.0, option.0) })
-    ],
+    options: list.map(options, fn(option) {
+      case option.0 == default_name {
+        True -> #("", option.0)
+        False -> #(option.0, option.0)
+      }
+    }),
     value:,
   )
 }
@@ -170,7 +193,6 @@ fn person_block(
       labels: t.photo,
     ),
     choice(
-      t,
       "style.photo_shape",
       t.v.photo_shape,
       cv.photo_shapes,

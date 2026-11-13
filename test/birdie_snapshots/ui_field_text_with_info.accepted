@@ -1,0 +1,5 @@
+---
+version: 2.0.2
+title: ui field text with info
+---
+<div class="ui-field"><div class="ui-field__head"><label class="ui-field__label" for="field-language">Language</label><button aria-label="About language" class="ui-field__info" popovertarget="field-language-info" title="About language" type="button">i</button></div><input class="ui-field__input" id="field-language" name="language" type="text" value="de"><div class="ui-field__popover" id="field-language-info" popover><p>A two-letter code such as en or de.</p><button class="ui-button ui-button--secondary" popovertarget="field-language-info" popovertargetaction="hide" type="button">Close</button></div></div>

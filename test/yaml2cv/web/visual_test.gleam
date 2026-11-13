@@ -108,3 +108,26 @@ pub fn always_shows_both_arrows_test() {
     "aria-hidden=\"true\" class=\"ui-button ui-button--quiet\" disabled",
   )
 }
+
+pub fn selects_name_the_default_without_a_prefix_test() {
+  let html = element.to_string(visual.view(sample(), i18n.texts(en)))
+  assert !string.contains(html, "Default (")
+  assert string.contains(html, "<option selected value>blue</option>")
+  // The default appears once: as the empty value that omits the key.
+  assert !string.contains(html, "<option value=\"blue\">")
+}
+
+pub fn select_shows_an_explicit_default_as_the_default_test() {
+  let style = draft.Style(..sample().style, color: "blue")
+  let html =
+    element.to_string(visual.view(Draft(..sample(), style:), i18n.texts(en)))
+  assert string.contains(html, "<option selected value>blue</option>")
+}
+
+pub fn explains_the_language_in_an_info_overlay_test() {
+  let html = element.to_string(visual.view(sample(), i18n.texts(en)))
+  assert !string.contains(html, "Language (")
+  assert string.contains(html, ">Language</label>")
+  assert string.contains(html, "popovertarget=\"field-language-info\"")
+  assert string.contains(html, "two-letter code")
+}
