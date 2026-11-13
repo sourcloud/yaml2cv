@@ -24,6 +24,8 @@
             pkgs.git-cliff
             # Text extraction checks of rendered PDFs (ADR 0035).
             pkgs.poppler-utils
+            # A second text extractor for the reading-order tests (ADR 0037).
+            (pkgs.python3.withPackages (p: [ p.pdfminer-six ]))
             pkgs.just
             pkgs.watchexec
           ];

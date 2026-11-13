@@ -5,8 +5,8 @@ Thanks for your interest in yaml2cv.
 ## Setup
 
 All tools (Erlang/OTP, Gleam, rebar3, Typst, just, watchexec, git-cliff,
-poppler-utils) come from the Nix flake; nothing else needs to be installed
-globally.
+poppler-utils, Python with pdfminer.six) come from the Nix flake; nothing
+else needs to be installed globally.
 
 1. Install [Nix](https://nixos.org/download) and enable flakes, e.g. in
    `~/.config/nix/nix.conf` or `/etc/nix/nix.conf`:
