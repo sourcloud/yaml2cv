@@ -159,10 +159,12 @@
   },
 ))
 
-#let skill(s) = block(below: unit, row(
-  text(fill: muted, s.name),
-  if s.level != none { s.level },
-))
+// One skill per line in the text column, the level right after its name,
+// so text extraction keeps them together (ADR 0037).
+#let skill(s) = block(below: unit, row([], {
+  s.name
+  if s.level != none { text(fill: muted, " – " + s.level) }
+}))
 
 #for section in cv.sections {
   section-heading(section.name)

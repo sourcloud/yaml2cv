@@ -133,13 +133,6 @@
 
 // Sections --------------------------------------------------------------------
 
-// A line with content on the left and, optionally, muted text flush right.
-#let split-line(left, right) = grid(
-  columns: (1fr, auto),
-  column-gutter: 1em,
-  left, if right != none { text(fill: muted, right) },
-)
-
 #let section-heading(name) = block(
   above: 3 * unit,
   below: 1.5 * unit,
@@ -154,8 +147,11 @@
   ),
 )
 
+// The timespan is a line above the title, in the same column, so text
+// extraction keeps it with its entry (ADR 0037).
 #let entry(e) = block(below: 2 * unit, breakable: false, {
-  split-line(strong(e.title), e.timespan)
+  block(below: unit, text(size: 9.5pt, fill: muted, e.timespan))
+  strong(e.title)
   let details = (e.organization, e.location).filter(x => x != none)
   if details.len() > 0 {
     block(above: unit, width: measure, text(
@@ -168,14 +164,13 @@
   }
 })
 
-// Skills form one grid per section so levels line up next to their names.
-#let skills(items) = block(below: 2 * unit, grid(
-  columns: (auto, 1fr),
-  column-gutter: 2em,
-  row-gutter: unit,
-  ..items
-    .map(s => (s.name, if s.level != none { text(fill: muted, s.level) }))
-    .flatten(),
+// One skill per line, the level right after its name (ADR 0037).
+#let skills(items) = block(below: 2 * unit, stack(
+  spacing: unit,
+  ..items.map(s => {
+    s.name
+    if s.level != none { text(fill: muted, " – " + s.level) }
+  }),
 ))
 
 #for section in cv.sections {

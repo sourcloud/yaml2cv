@@ -293,3 +293,128 @@ sections: [{ name: Profile, kind: text, text: Engineer }]
   let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
   assert contains(pdf, <<"/Lang(xx)">>)
 }
+
+// Reading order (ADR 0037) ----------------------------------------------------
+
+/// The example CV with a second skills section, so side-by-side skills
+/// sections would show up.
+fn reading_order_cv() -> cv.Cv {
+  let assert Ok(yaml) = simplifile.read("priv/examples/example.yaml")
+  let assert Ok(cv) = decode.from_yaml(yaml <> "
+  - name: Tools
+    kind: skills
+    items:
+      - name: Git
+        level: Advanced
+")
+  cv
+}
+
+/// The non-blank lines an extractor reads from `pdf`, whitespace collapsed.
+fn extracted_lines(pdf: BitArray, extractor: String) -> List(String) {
+  let directory = "build/test-extract"
+  let assert Ok(_) = simplifile.create_directory_all(directory)
+  let file = directory <> "/order.pdf"
+  let assert Ok(_) = simplifile.write_bits(file, pdf)
+  let #(executable, arguments) = case extractor {
+    "pdfminer" -> #("pdf2txt", [file])
+    _ -> #("pdftotext", ["-enc", "UTF-8", file, "-"])
+  }
+  let assert Ok(process.Exit(status: 0, output: text)) =
+    process.run(executable, arguments, in: ".", timeout: 30_000)
+  text
+  |> string.split("\n")
+  |> list.map(fn(line) {
+    line
+    |> string.split(" ")
+    |> list.filter(fn(word) { word != "" })
+    |> string.join(" ")
+  })
+  |> list.filter(fn(line) { line != "" })
+}
+
+/// The markers that `lines` does not contain in this order; each marker is
+/// searched for after the line of the previous one.
+fn out_of_order(lines: List(String), markers: List(String)) -> List(String) {
+  case markers {
+    [] -> []
+    [marker, ..rest] ->
+      case list.drop_while(lines, fn(line) { !contains_text(line, marker) }) {
+        [] -> markers
+        [_, ..after] -> out_of_order(after, rest)
+      }
+  }
+}
+
+fn contains_text(line: String, text: String) -> Bool {
+  string.contains(string.lowercase(line), string.lowercase(text))
+}
+
+/// Whether `title`'s line, or the line right before it, holds `timespan`.
+fn timespan_next_to_title(
+  lines: List(String),
+  timespan: String,
+  title: String,
+) -> Bool {
+  list.window_by_2(["", ..lines])
+  |> list.any(fn(pair) {
+    contains_text(pair.1, title)
+    && { contains_text(pair.1, timespan) || contains_text(pair.0, timespan) }
+  })
+}
+
+pub fn extracts_text_in_reading_order_in_every_theme_test() {
+  let cv = reading_order_cv()
+  use #(name, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
+  use extractor <- list.each(["pdftotext", "pdfminer"])
+  let lines = extracted_lines(pdf, extractor)
+  let markers = [
+    "John Doe", "My personal CV", "john.doe@example.com",
+    "Professional Experience", "Example Job", "Another Job", "Personal Projects",
+    "Super Cool Project", "Academic Career", "M.Sc. Computer Science",
+    "B.Sc. Computer Science", "Languages", "English", "Spanish", "Tools", "Git",
+  ]
+  assert #(name, extractor, out_of_order(lines, markers))
+    == #(name, extractor, [])
+}
+
+pub fn extracts_timespans_next_to_their_titles_in_every_theme_test() {
+  let cv = reading_order_cv()
+  use #(name, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
+  use extractor <- list.each(["pdftotext", "pdfminer"])
+  let lines = extracted_lines(pdf, extractor)
+  use #(timespan, title) <- list.each([
+    #("since 2020", "Example Job"),
+    #("2018 - 2020", "Another Job"),
+    #("2021", "Super Cool Project"),
+    #("since 2020", "M.Sc. Computer Science"),
+    #("2017-2020", "B.Sc. Computer Science"),
+  ])
+  assert #(
+      name,
+      extractor,
+      title,
+      timespan_next_to_title(lines, timespan, title),
+    )
+    == #(name, extractor, title, True)
+}
+
+pub fn extracts_skills_with_their_levels_in_every_theme_test() {
+  let cv = reading_order_cv()
+  use #(name, theme) <- list.each(cv.themes)
+  let assert Ok(pdf) = typst.render_pdf(config(), with_theme(cv, theme))
+  use extractor <- list.each(["pdftotext", "pdfminer"])
+  let lines = extracted_lines(pdf, extractor)
+  use #(skill, level) <- list.each([
+    #("English", "Proficient"),
+    #("Spanish", "Beginner"),
+    #("Git", "Advanced"),
+  ])
+  let together =
+    list.any(lines, fn(line) {
+      contains_text(line, skill) && contains_text(line, level)
+    })
+  assert #(name, extractor, skill, together) == #(name, extractor, skill, True)
+}

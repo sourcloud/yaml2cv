@@ -1,5 +1,5 @@
 // yaml2cv "studio" theme: a tinted sidebar led by a large portrait
-// (ADR 0030).
+// (ADR 0030); all text sits in the main column (ADR 0037).
 //
 // All CV content comes from cv.json as data; nothing in it is evaluated as
 // Typst markup. The only word the theme adds is the "Website" label, which
@@ -111,12 +111,11 @@
 // Strips the scheme so web addresses read as they are typed.
 #let address(url) = url.replace(regex("^https?://"), "")
 
-// A web address with a small label above it.
-#let labelled-link(label, url) = stack(
-  spacing: 0.45em,
-  text(size: 7pt, fill: muted, label),
-  link(url, address(url)),
-)
+// A web address after a small muted label.
+#let labelled-link(label, url) = {
+  text(fill: muted, label + ": ")
+  link(url, address(url))
+}
 
 // Short items first, the postal address next to them, then the web
 // addresses, each with its label.
@@ -131,19 +130,28 @@
   items
 }
 
-#let skills(items) = grid(
-  columns: (1fr, auto),
-  column-gutter: 1em,
-  row-gutter: unit,
-  ..items
-    .map(s => (
-      s.name,
-      if s.level != none { text(size: 0.9em, fill: muted, s.level) },
-    ))
-    .flatten(),
-)
+// Contact items on one line under the name, separated by dots. A line may
+// break after a dot, never inside an item.
+#let contact-line = {
+  let last = contact-items.len() - 1
+  for (i, item) in contact-items.enumerate() {
+    if i < last {
+      box[#item~#h(0.4em)#text(fill: accent)[·]] + h(0.4em) + [ ]
+    } else { box(item) }
+  }
+}
 
-// Sidebar (page one): photo, contact details, skills sections -------------------
+// One skill per line, the level right after its name (ADR 0037).
+#let skills(items) = block(below: 2 * unit, stack(
+  spacing: unit,
+  ..items.map(s => {
+    s.name
+    if s.level != none { text(fill: muted, " – " + s.level) }
+  }),
+))
+
+// Sidebar (page one): only the photo or initials, so no text sits beside
+// the main column where extraction would interleave it (ADR 0037) ----------
 
 #let sidebar = block(width: side, {
   let shape = cv.style.photo_shape
@@ -159,18 +167,6 @@
       radius: if shape == "circle" { size / 2 } else { 0.4cm },
     ))
   }
-  pad(x: side-pad, top: 3 * unit, {
-    set text(size: 8.5pt)
-    if contact-items.len() > 0 {
-      line(length: 1.2cm, stroke: 1.5pt + accent)
-      v(1.5 * unit)
-      stack(spacing: 1.6 * unit, ..contact-items)
-    }
-    for s in cv.sections.filter(s => s.kind == "skills") {
-      block(above: 3.5 * unit, below: 1.5 * unit, heading(level: 2, label(s.name)))
-      skills(s.items)
-    }
-  })
 })
 
 #place(top + left, dx: -(side + gutter), dy: -top-margin, sidebar)
@@ -188,6 +184,9 @@
   )),
   ..if cv.person.title != none {
     (text(size: 13pt, weight: "medium", fill: accent, cv.person.title),)
+  },
+  ..if contact-items.len() > 0 {
+    (block(above: 0.6em, text(size: 8.5pt, contact-line)),)
   },
 ))
 
@@ -215,10 +214,12 @@
   ..if e.bullets.len() > 0 { (list(..e.bullets),) },
 ))
 
-#for section in cv.sections.filter(s => s.kind != "skills") {
+#for section in cv.sections {
   section-heading(section.name)
   if section.kind == "entries" {
     for e in section.entries { entry(e) }
+  } else if section.kind == "skills" {
+    skills(section.items)
   } else if section.kind == "text" {
     block(below: 2 * unit, par(section.text))
   }

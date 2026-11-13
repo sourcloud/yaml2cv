@@ -220,52 +220,36 @@
   ),
 )
 
-// Entries: the timespan in a narrow left column, the rest beside it.
-#let entry(e) = block(below: 2.5 * unit, breakable: false, grid(
-  columns: (3.2cm, 1fr),
-  column-gutter: 0.6cm,
+// Entries: the timespan in a small line above the title, in the same
+// column, so text extraction keeps it with its entry (ADR 0037).
+#let entry(e) = block(below: 2.5 * unit, breakable: false, stack(
+  spacing: unit,
   text(size: 8.5pt, weight: "medium", fill: accent, e.timespan),
-  stack(
-    spacing: unit,
-    text(size: 10.5pt, weight: "semibold", e.title),
-    ..{
-      let details = (e.organization, e.location).filter(x => x != none)
-      if details.len() > 0 { (text(fill: muted, details.join("  ·  ")),) }
-    },
-    ..if e.bullets.len() > 0 { (list(..e.bullets),) },
-  ),
+  text(size: 10.5pt, weight: "semibold", e.title),
+  ..{
+    let details = (e.organization, e.location).filter(x => x != none)
+    if details.len() > 0 { (text(fill: muted, details.join("  ·  ")),) }
+  },
+  ..if e.bullets.len() > 0 { (list(..e.bullets),) },
 ))
 
-#let skills(items) = grid(
-  columns: (1fr, auto),
-  column-gutter: 1em,
-  row-gutter: unit,
-  ..items
-    .map(s => (
-      s.name,
-      if s.level != none { text(size: 0.9em, fill: muted, s.level) },
-    ))
-    .flatten(),
-)
+// One skill per line, the level right after its name (ADR 0037).
+#let skills(items) = block(below: 2 * unit, stack(
+  spacing: unit,
+  ..items.map(s => {
+    s.name
+    if s.level != none { text(fill: muted, " – " + s.level) }
+  }),
+))
 
-#for section in cv.sections.filter(s => s.kind != "skills") {
+// Sections in document order, one after another (ADR 0037).
+#for section in cv.sections {
   section-heading(section.name)
   if section.kind == "entries" {
     for e in section.entries { entry(e) }
+  } else if section.kind == "skills" {
+    skills(section.items)
   } else if section.kind == "text" {
     block(below: 2 * unit, par(section.text))
   }
-}
-
-// Skills sections sit side by side, up to three in a row.
-#let skill-sections = cv.sections.filter(s => s.kind == "skills")
-#if skill-sections.len() > 0 {
-  grid(
-    columns: (1fr,) * calc.min(skill-sections.len(), 3),
-    column-gutter: 1.2cm,
-    ..skill-sections.map(s => {
-      section-heading(s.name)
-      skills(s.items)
-    }),
-  )
 }
