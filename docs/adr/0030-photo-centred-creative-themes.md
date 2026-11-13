@@ -1,6 +1,6 @@
 # 0030. Photo-centred themes for creative jobs
 
-- Status: Accepted
+- Status: Accepted, timespans, skills and the studio sidebar amended by 0037
 - Date: 2026-11-08
 
 ## Context

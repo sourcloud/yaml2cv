@@ -42,3 +42,4 @@ for the process.
 | [0034](0034-dependabot-for-github-actions.md) | Dependabot for GitHub Actions | Accepted |
 | [0035](0035-machine-readable-pdf-text.md) | Machine-readable PDF text | Accepted |
 | [0036](0036-cv-language-and-candidate-metadata.md) | CV language and PDF metadata about the candidate | Accepted |
+| [0037](0037-single-reading-order-in-every-theme.md) | One reading order in every theme | Accepted |

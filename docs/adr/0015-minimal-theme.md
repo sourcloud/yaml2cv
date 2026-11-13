@@ -1,6 +1,6 @@
 # 0015. Minimal single-column theme
 
-- Status: Accepted, skills layout amended by 0016
+- Status: Accepted, skills layout amended by 0016, timespans and skills superseded by 0037
 - Date: 2026-11-07
 
 ## Context

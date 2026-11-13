@@ -1,6 +1,6 @@
 # 0016. Print typography refinements for both themes
 
-- Status: Accepted
+- Status: Accepted, minimal skills superseded by 0037
 - Date: 2026-11-07
 
 ## Context
