@@ -39,7 +39,7 @@ Timespans in `minimal`, `spotlight` and `cover`:
 3. Keep contact details beside the name, move only skills sections.
 
 Skills: **name and level on one line**, or keep the grid with a narrower
-gap.
+gap. For `classic`: **the same**, or keep its name and level columns.
 
 Tests: **pdftotext and pdfminer**, or pdftotext only.
 
@@ -56,12 +56,14 @@ extractors cannot split it.
   ordinary sections in document order. This amends the `studio` layout of
   ADR 0030.
 - **Skills** read `name – level` on one line, the level in muted text, in
-  every theme that used a grid; one skill per line. Skills sections are
-  laid out one after another, not side by side. This replaces the skills
-  grids of ADR 0015, ADR 0016 and ADR 0030.
-- `classic` keeps its timespan column: its timespans share the baseline and
-  size of the title, close enough that extractors read one line. The tests
-  hold it to that.
+  every theme; one skill per line. In `classic` they move from the
+  timespan column into the text column, because pdftotext split short
+  names from their level. Skills sections are laid out one after another,
+  not side by side. This replaces the skills grids of ADR 0015, ADR 0016
+  and ADR 0030.
+- `classic` keeps its timespan column for entries: its timespans share the
+  baseline and size of the title, close enough that extractors read one
+  line. The tests hold it to that.
 - Python with **pdfminer.six** joins the dev shell next to poppler-utils
   (ADR 0035), for dev and CI only. Tests render every theme and check with
   both extractors that each timespan is next to its title, each skill
