@@ -76,7 +76,9 @@
   // level more after a line opening a block (`key:`, `key: |`, `key: >-`).
   const newlineIndent = (before, unit) => {
     const content = before.replace(/ +#.*$/, "").trimEnd();
-    const lead = /^( *(?:- +)*)/.exec(before)[1].length;
+    // A bare dash at the end starts an item whose keys follow below.
+    const item = /^ *(?:- +)*-$/.test(before) ? `${before} ` : before;
+    const lead = /^( *(?:- +)*)/.exec(item)[1].length;
     const opens = /(^|[^:]):$/.test(content) || /: *[|>][-+0-9]*$/.test(content);
     return " ".repeat(lead + (opens ? unit : 0));
   };
@@ -158,11 +160,11 @@
   // columns: "  - name: x" -> dash at 2, key `name` at 4 with value "x".
   // Blank and comment lines have none.
   const lineNodes = (line) => {
-    const match = /^( *)((?:- +)*)(.*)$/.exec(line);
+    const match = /^( *)((?:-(?: +|$))*)(.*)$/.exec(line);
     if (!match || /^\s*(#.*)?$/.test(match[3]) && !match[2]) return [];
     const nodes = [];
     let col = match[1].length;
-    for (const dash of match[2].match(/- +/g) || []) {
+    for (const dash of match[2].match(/- */g) || []) {
       nodes.push({ col, dash: true });
       col += dash.length;
     }
@@ -171,14 +173,43 @@
     return nodes;
   };
 
+  // Whether a key at column `col` lines up with the other keys of the
+  // mapping held by `parent`: the dash or key found above it, on line
+  // `parent.line` of `above` (null for the cursor's own line). The first
+  // key of a mapping sets its column; until there is one, any deeper
+  // column will do.
+  const fitsIndent = (above, below, parent, col) => {
+    if (!parent) return col === 0;
+    if (parent.line === null) return true;
+    const { node, line, nodes } = parent;
+    // A key on the item's dash line sets the column of its mapping.
+    const next = nodes[nodes.indexOf(node) + 1];
+    if (node.dash && next) return next.col === col;
+    const firstChild = (lines) => {
+      for (const text of lines) {
+        const children = lineNodes(text);
+        if (children.length) return children[0].col > node.col ? children[0].col : null;
+      }
+      return null;
+    };
+    const between = above.slice(line + 1);
+    const child = between.some((text) => lineNodes(text).length)
+      ? firstChild(between)
+      : firstChild(below);
+    return child === null || child === col;
+  };
+
   // The path of the mapping that holds a key at column `col`, as written in
   // the completion data ("sections[].entries[]", "" for the root), or null
-  // when the cursor is not inside a block mapping. `own` are the nodes left
-  // of the cursor on its line; `above` the lines above it.
-  const mappingPath = (above, own, col) => {
+  // when the cursor is not inside a block mapping or not at its column.
+  // `own` are the nodes left of the cursor on its line; `above` and `below`
+  // the lines above and below it.
+  const mappingPath = (above, below, own, col) => {
+    const start = col;
     const path = [];
     let afterDash = false;
-    const visit = (node) => {
+    let parent = null;
+    const visit = (node, line, nodes) => {
       if (node.dash) {
         if (node.col >= col) return true;
         path.unshift("[]");
@@ -191,13 +222,16 @@
         path.unshift(node.key);
         afterDash = false;
       }
+      parent ??= { node, line, nodes };
       col = node.col;
       return true;
     };
-    for (const node of [...own].reverse()) if (!visit(node)) return null;
+    for (const node of [...own].reverse()) if (!visit(node, null, own)) return null;
     for (let i = above.length - 1; i >= 0 && (col > 0 || afterDash); i--) {
-      for (const node of lineNodes(above[i]).reverse()) if (!visit(node)) return null;
+      const nodes = lineNodes(above[i]);
+      for (const node of [...nodes].reverse()) if (!visit(node, i, nodes)) return null;
     }
+    if (!fitsIndent(above, below, parent, start)) return null;
     return path.join(".").replaceAll(".[]", "[]");
   };
 
@@ -237,14 +271,14 @@
     const value = /^( *(?:- +)*)([A-Za-z_]\w*): +([\w-]*)$/.exec(before);
     if (value) {
       const own = lineNodes(value[1]);
-      const path = mappingPath(above, own, value[1].length);
+      const path = mappingPath(above, below, own, value[1].length);
       return path === null ? null : { kind: "value", path, key: value[2], prefix: value[3], line, col: before.length - value[3].length };
     }
     const key = /^( *(?:- +)*)([A-Za-z_]\w*)?$/.exec(before);
     if (!key) return null;
     const own = lineNodes(key[1]);
     const col = key[1].length;
-    const path = mappingPath(above, own, col);
+    const path = mappingPath(above, below, own, col);
     if (path === null) return null;
     return { kind: "key", path, prefix: key[2] || "", used: usedKeys(above, below, own, col), line, col };
   };

@@ -39,7 +39,9 @@ inserting skeletons of nested content.
   - at the start of a key, it offers the keys of that mapping not yet used
     in it;
   - after `key:` with a fixed set of values (`theme`, `color`, `paper`,
-    `photo_shape`, `kind`), it offers those values.
+    `photo_shape`, `kind`), it offers those values;
+  - only at the column of the mapping's keys, which its first key sets
+    (column 0 at the root): a line indented differently offers nothing.
 - The list opens while typing a key or value and with Ctrl+Space. Arrow
   keys move, Enter or Tab insert, Escape closes; a click on an option
   inserts it. The highlighted option's requirement and explanation, or for a
