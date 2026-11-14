@@ -1,6 +1,6 @@
 # 0046. Show select lists and the file picker in the README demo
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-13
 
 ## Context
