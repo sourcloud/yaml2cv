@@ -1,5 +1,6 @@
 import birdie
 import gleam/list
+import gleam/option
 import lustre/element
 import lustre/element/html
 import yaml2cv/cv/decode
@@ -48,4 +49,35 @@ pub fn rich_text_marks_code_test() {
     html.p([], schema_help.rich("see `a.b` or `c`."))
     |> element.to_string
   assert html == "<p>see <code>a.b</code> or <code>c</code>.</p>"
+}
+
+pub fn mappings_carry_their_yaml_path_test() {
+  let paths =
+    schema_help.mappings(i18n.texts(En).schema)
+    |> list.map(fn(mapping) { mapping.path })
+  assert paths
+    == [
+      "",
+      "style",
+      "person",
+      "contact",
+      "contact.links[]",
+      "sections[]",
+      "sections[].entries[]",
+      "sections[].items[]",
+    ]
+}
+
+pub fn fields_with_a_fixed_set_list_their_values_and_default_test() {
+  let t = i18n.texts(En).schema
+  let assert [_, style, _, _, _, section, ..] = schema_help.mappings(t)
+  let assert [theme, ..] = style.fields
+  assert theme.key == "theme"
+  assert theme.values == ["classic", "minimal", "studio", "spotlight", "cover"]
+  assert theme.default == option.Some("classic")
+  let assert [name, kind, ..] = section.fields
+  assert name.values == []
+  assert name.default == option.None
+  assert kind.values == ["entries", "skills", "text"]
+  assert kind.default == option.Some("entries")
 }
