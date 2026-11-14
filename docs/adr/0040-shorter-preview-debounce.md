@@ -1,6 +1,6 @@
 # 0040. Render the preview 300 ms after typing stops
 
-- Status: Accepted
+- Status: Accepted, validation delay superseded by 0041
 - Date: 2026-11-13
 
 ## Context

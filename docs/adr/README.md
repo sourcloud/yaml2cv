@@ -46,3 +46,4 @@ for the process.
 | [0038](0038-field-explanations-and-default-options.md) | Explain fields in an overlay and name defaults plainly | Accepted |
 | [0039](0039-lean-preview-requests.md) | Keep the photo in the browser for previews and send SVG as text | Accepted |
 | [0040](0040-shorter-preview-debounce.md) | Render the preview 300 ms after typing stops | Accepted |
+| [0041](0041-one-request-for-status-and-preview.md) | One request for the validation status and the preview | Accepted |
