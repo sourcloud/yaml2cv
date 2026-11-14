@@ -54,7 +54,7 @@ pub fn view(locale: Locale, components: List(Component)) -> List(Element(a)) {
   let own =
     html.p([], [
       html.text(texts.own_license <> " "),
-      html.a([attribute.href(build.repository <> "/blob/master/LICENSE")], [
+      html.a([attribute.href(build.repository <> "/blob/main/LICENSE")], [
         html.text(texts.read_license),
       ]),
     ])

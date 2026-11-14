@@ -2,7 +2,7 @@ name: Image
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
   # Tags publish through release.yml, after CI and the version check pass.
   workflow_call:

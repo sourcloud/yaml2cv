@@ -64,7 +64,7 @@ More detail in [AGENTS.md](AGENTS.md).
 
 1. Bump `version` in `gleam.toml` and commit it as `chore(release): X.Y.Z`.
 2. Preview the notes: `git tag vX.Y.Z && just release-notes`.
-3. `git push origin master vX.Y.Z`.
+3. `git push origin main vX.Y.Z`.
 
 The tag triggers `release.yml`: it checks that the tag matches the
 `gleam.toml` version and runs CI, then builds, smoke-tests and publishes the

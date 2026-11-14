@@ -50,7 +50,7 @@ The project is developed iteratively in a question–answer loop with the owner.
   gleam test
   ```
 
-- Work on `master` unless asked to use a branch. Never force-push or rewrite
+- Work on `main` unless asked to use a branch. Never force-push or rewrite
   published history.
 
 ## Commands
