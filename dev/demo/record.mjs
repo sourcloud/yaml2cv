@@ -6,7 +6,7 @@
 // The video is converted to docs/demo.gif by `just demo-gif`.
 
 import { chromium } from "playwright";
-import { mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const baseUrl = process.argv[2] ?? "http://localhost:8000";
@@ -132,6 +132,110 @@ async function selectInYaml(page, text) {
   await pause(page, 500);
 }
 
+// Native select lists are drawn outside the page and missing from headless
+// recordings (ADR 0046): show the select's options as a list box right
+// below it, point at `value`, pick it, then set the real select.
+async function chooseOption(page, select, value) {
+  await pointAt(page, select);
+  // A real click would open the invisible native list; only show the press.
+  await page.evaluate(() => {
+    dispatchEvent(new MouseEvent("mousedown"));
+    setTimeout(() => dispatchEvent(new MouseEvent("mouseup")), 120);
+  });
+  await select.evaluate((original) => {
+    const box = original.getBoundingClientRect();
+    const list = document.createElement("select");
+    list.id = "demo-option-list";
+    list.size = original.options.length;
+    for (const option of original.options) {
+      const item = new Option(option.text, option.value);
+      item.style.padding = "4px 8px";
+      list.add(item);
+    }
+    list.value = original.value;
+    Object.assign(list.style, {
+      position: "fixed",
+      left: `${box.left}px`,
+      top: `${box.bottom + 2}px`,
+      width: `${box.width}px`,
+      zIndex: "2147483646",
+      font: getComputedStyle(original).font,
+      padding: "4px",
+      overflow: "hidden",
+      color: "#eceef2",
+      background: "#151a23",
+      border: "1px solid #374151",
+      borderRadius: "6px",
+      boxShadow: "0 6px 20px rgba(0, 0, 0, 0.45)",
+    });
+    document.body.append(list);
+  });
+  await pause(page, 600);
+  const list = page.locator("#demo-option-list");
+  const option = list.locator(`option[value="${value}"]`);
+  await pointAt(page, option);
+  await list.evaluate((element, chosen) => (element.value = chosen), value);
+  await pause(page, 500);
+  await list.evaluate((element) => element.remove());
+  await select.selectOption(value);
+}
+
+// The operating system's file chooser is not recorded either: a small file
+// dialog in the page lists the portrait; the pointer picks it and clicks
+// Open (ADR 0046).
+async function pickFile(page, chooser, path, name, thumbnail) {
+  await page.evaluate(
+    ({ name, thumbnail }) => {
+      // Built with the DOM: the page's CSP drops inline style attributes.
+      const el = (tag, style, ...children) => {
+        const element = document.createElement(tag);
+        Object.assign(element.style, style);
+        element.append(...children);
+        return element;
+      };
+      const button = { padding: "6px 14px", borderRadius: "6px", font: "inherit" };
+      const image = el("img", { width: "42px", height: "54px", objectFit: "cover", borderRadius: "3px" });
+      image.src = thumbnail;
+      image.alt = "";
+      const file = el("button", {
+        display: "flex", gap: "12px", alignItems: "center", width: "calc(100% - 16px)",
+        margin: "0 8px", padding: "8px", border: "0", borderRadius: "6px",
+        background: "transparent", color: "inherit", font: "inherit", textAlign: "left",
+      }, image, name);
+      file.dataset.demoFile = "";
+      const open = el("button", { ...button, border: "0", background: "#7fa8d8", color: "#0d1117", fontWeight: "600" }, "Open");
+      open.dataset.demoOpen = "";
+      const dialog = el("div", {
+        position: "fixed", left: "50%", top: "50%", width: "340px",
+        transform: "translate(-50%, -50%)", zIndex: "2147483646",
+        color: "#eceef2", background: "#1f2633", border: "1px solid #3a4250",
+        borderRadius: "10px", boxShadow: "0 12px 40px rgba(0, 0, 0, 0.6)",
+        font: "14px system-ui, sans-serif",
+      },
+        el("div", { padding: "12px 16px", fontWeight: "600", borderBottom: "1px solid #3a4250" }, "Choose a photo"),
+        el("div", { padding: "12px 16px 6px", color: "#9aa3b2", fontSize: "13px" }, "Pictures"),
+        file,
+        el("div", { display: "flex", justifyContent: "flex-end", gap: "8px", padding: "16px" },
+          el("button", { ...button, border: "1px solid #3a4250", background: "transparent", color: "inherit" }, "Cancel"),
+          open,
+        ),
+      );
+      dialog.id = "demo-file-dialog";
+      for (const part of dialog.querySelectorAll("button")) part.type = "button";
+      document.body.append(dialog);
+    },
+    { name, thumbnail },
+  );
+  await pause(page, 700);
+  const file = page.locator("[data-demo-file]");
+  await click(page, file);
+  await file.evaluate((element) => (element.style.background = "#2f5f95"));
+  await pause(page, 500);
+  await click(page, page.locator("[data-demo-open]"));
+  await page.locator("#demo-file-dialog").evaluate((element) => element.remove());
+  await chooser.setFiles(path);
+}
+
 async function typeSlowly(page, text) {
   await page.keyboard.type(text, { delay: 90 });
 }
@@ -143,6 +247,7 @@ async function main() {
   const browser = await chromium.launch();
   const photo = join(outDir, "photo.jpg");
   await writePortrait(browser, photo);
+  const thumbnail = `data:image/jpeg;base64,${(await readFile(photo)).toString("base64")}`;
   const context = await browser.newContext({
     viewport: size,
     locale: "en-GB",
@@ -205,9 +310,7 @@ async function main() {
   await click(page, page.locator('[data-mode-switch="visual"]'));
   await settle(page);
   await pause(page, 1200);
-  const theme = page.locator('select[name="style.theme"]');
-  await click(page, theme);
-  await theme.selectOption("studio");
+  await chooseOption(page, page.locator('select[name="style.theme"]'), "studio");
   await settle(page);
   await pause(page, 1800);
 
@@ -217,14 +320,13 @@ async function main() {
   await scrollTo(page, choose);
   const chooser = page.waitForEvent("filechooser");
   await click(page, choose);
-  await (await chooser).setFiles(photo);
+  await pickFile(page, await chooser, photo, "portrait.jpg", thumbnail);
   await settle(page);
   await pause(page, 2000);
 
   const color = page.locator('select[name="style.color"]');
   await scrollTo(page, color);
-  await click(page, color);
-  await color.selectOption("burgundy");
+  await chooseOption(page, color, "burgundy");
   await settle(page);
   await pause(page, 1800);
 
