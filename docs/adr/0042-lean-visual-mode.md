@@ -1,6 +1,6 @@
 # 0042. Lean requests and no second wait in visual mode
 
-- Status: Accepted
+- Status: Accepted, removal clears the cache per 0043
 - Date: 2026-11-13
 
 ## Context

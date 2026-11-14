@@ -48,3 +48,4 @@ for the process.
 | [0040](0040-shorter-preview-debounce.md) | Render the preview 300 ms after typing stops | Accepted |
 | [0041](0041-one-request-for-status-and-preview.md) | One request for the validation status and the preview | Accepted |
 | [0042](0042-lean-visual-mode.md) | Lean requests and no second wait in visual mode | Accepted |
+| [0043](0043-forget-removed-photos.md) | Forget a removed photo in the editor script | Accepted |
