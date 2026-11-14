@@ -156,7 +156,7 @@ pub fn preview_shows_pages_test() {
   assert response.status == 200
   assert string.contains(
     simulate.read_body(response),
-    "src=\"data:image/svg+xml;base64,AQID\"",
+    "src=\"data:image/svg+xml,%01%02%03\"",
   )
 }
 
