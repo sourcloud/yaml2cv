@@ -1,6 +1,6 @@
 # 0019. SVG page previews and gzip responses
 
-- Status: Accepted
+- Status: Accepted, page embedding amended by 0039
 - Date: 2026-11-07
 
 ## Context

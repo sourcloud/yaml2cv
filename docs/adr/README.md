@@ -44,3 +44,4 @@ for the process.
 | [0036](0036-cv-language-and-candidate-metadata.md) | CV language and PDF metadata about the candidate | Accepted |
 | [0037](0037-single-reading-order-in-every-theme.md) | One reading order in every theme | Accepted |
 | [0038](0038-field-explanations-and-default-options.md) | Explain fields in an overlay and name defaults plainly | Accepted |
+| [0039](0039-lean-preview-requests.md) | Keep the photo in the browser for previews and send SVG as text | Accepted |
