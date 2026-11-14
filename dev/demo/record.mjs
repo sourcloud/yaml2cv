@@ -164,18 +164,44 @@ async function main() {
   await settle(page);
   await pause(page, 1200);
 
-  // 2. A mistake is reported while typing, then fixed.
+  // 2. A mistake is reported while typing.
   await selectInYaml(page, "blue");
   await typeSlowly(page, "teal");
   await settle(page);
   await pointAt(page, page.locator("#validation"));
   await pause(page, 2200);
+
+  // 3. Autocomplete (ADR 0045) fixes it: Ctrl+Space lists the allowed
+  // colours with an explanation; typing narrows the list, Enter inserts.
   await selectInYaml(page, "teal");
-  await typeSlowly(page, "green");
+  await page.keyboard.press("Backspace");
+  await pause(page, 400);
+  await page.keyboard.press("Control+Space");
+  await pause(page, 1800);
+  await typeSlowly(page, "gr");
+  await pause(page, 1000);
+  await page.keyboard.press("Enter");
+  await settle(page);
+  await pause(page, 1000);
+
+  // A new key: Enter keeps the indentation, typing offers the keys still
+  // missing, and choosing one opens its values.
+  // The cursor is still after the inserted value.
+  await page.keyboard.press("Enter");
+  await typeSlowly(page, "ph");
+  await pause(page, 1600);
+  await page.keyboard.press("Enter");
+  await pause(page, 1200);
+  for (let i = 0; i < 2; i++) {
+    await page.keyboard.press("ArrowDown");
+    await pause(page, 450);
+  }
+  await pause(page, 600);
+  await page.keyboard.press("Enter");
   await settle(page);
   await pause(page, 1500);
 
-  // 3. Visual mode: the same CV as blocks.
+  // 4. Visual mode: the same CV as blocks.
   await click(page, page.locator('[data-mode-switch="visual"]'));
   await settle(page);
   await pause(page, 1200);
@@ -185,7 +211,8 @@ async function main() {
   await settle(page);
   await pause(page, 1800);
 
-  // 4. Add a photo: the studio theme shows it instead of the initials.
+  // 5. Add a photo: the studio theme shows it instead of the initials,
+  // cropped to the circle chosen above.
   const choose = page.locator("[data-photo-choose]");
   await scrollTo(page, choose);
   const chooser = page.waitForEvent("filechooser");
@@ -201,7 +228,7 @@ async function main() {
   await settle(page);
   await pause(page, 1800);
 
-  // 5. Download the PDF.
+  // 6. Download the PDF.
   const download = page.waitForEvent("download");
   await click(page, page.getByRole("button", { name: "Download PDF" }));
   await download;
