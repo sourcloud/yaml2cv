@@ -38,7 +38,7 @@
 //   is not uploaded.
 //   The choose button reads "change" and the remove button shows once
 //   there is a photo.
-// - Lean previews (ADR 0039): validate and preview requests carry a
+// - Lean previews (ADR 0039, 0041): preview requests carry a
 //   single-coloured PNG of the same pixel size instead of the photo, when
 //   the photo is one the server would accept. Before the preview is shown,
 //   the placeholder in it is replaced by the real photo again.
@@ -630,7 +630,7 @@
     return placeholders.get(uri);
   };
 
-  const leanPaths = ["/editor/validate", "/editor/preview"];
+  const leanPaths = ["/editor/preview"];
 
   document.addEventListener("htmx:configRequest", (event) => {
     const data = event.detail.formData;

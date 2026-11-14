@@ -45,6 +45,17 @@ pub fn preview_follows_typing_after_a_short_pause_test() {
   )
 }
 
+pub fn status_and_preview_share_one_request_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "id=\"validation\"")
+  assert string.contains(body, "hx-indicator=\"#preview-indicator\"")
+  assert !string.contains(body, "/editor/validate")
+}
+
+pub fn validate_route_is_gone_test() {
+  assert post_form("/editor/validate", valid_cv).status == 404
+}
+
 pub fn editor_page_preloads_example_test() {
   let response = get("/")
   assert response.status == 200
@@ -121,14 +132,14 @@ pub fn serves_static_assets_test() {
 }
 
 pub fn validate_reports_valid_cv_test() {
-  let response = post_form("/editor/validate", valid_cv)
+  let response = post_form("/editor/preview", valid_cv)
   assert response.status == 200
   assert string.contains(simulate.read_body(response), "ui-alert--success")
 }
 
 pub fn validate_lists_schema_errors_test() {
   let body =
-    post_form("/editor/validate", "schema_version: 1\nsections: []\n")
+    post_form("/editor/preview", "schema_version: 1\nsections: []\n")
     |> simulate.read_body
   assert string.contains(body, "ui-alert--danger")
   assert string.contains(body, "1 problem")
@@ -136,25 +147,25 @@ pub fn validate_lists_schema_errors_test() {
 }
 
 pub fn validate_shows_syntax_error_location_test() {
-  let body = post_form("/editor/validate", "a: [b\n") |> simulate.read_body
+  let body = post_form("/editor/preview", "a: [b\n") |> simulate.read_body
   assert string.contains(body, "line 1, column 6")
 }
 
 pub fn validate_links_syntax_error_to_editor_position_test() {
-  let body = post_form("/editor/validate", "a: [b\n") |> simulate.read_body
+  let body = post_form("/editor/preview", "a: [b\n") |> simulate.read_body
   assert string.contains(body, "data-jump-line=\"1\"")
   assert string.contains(body, "data-jump-column=\"6\"")
   assert string.contains(body, "data-jump-field=\"cv\"")
 }
 
 pub fn validate_explains_that_parsing_stops_at_syntax_errors_test() {
-  let body = post_form("/editor/validate", "a: [b\n") |> simulate.read_body
+  let body = post_form("/editor/preview", "a: [b\n") |> simulate.read_body
   assert string.contains(body, "Parsing stops at the first syntax error")
 }
 
 pub fn validate_omits_parsing_hint_for_schema_errors_test() {
   let body =
-    post_form("/editor/validate", "schema_version: 1\nsections: []\n")
+    post_form("/editor/preview", "schema_version: 1\nsections: []\n")
     |> simulate.read_body
   assert !string.contains(body, "Parsing stops at the first syntax error")
 }
@@ -162,15 +173,21 @@ pub fn validate_omits_parsing_hint_for_schema_errors_test() {
 pub fn preview_shows_pages_test() {
   let response = post_form("/editor/preview", valid_cv)
   assert response.status == 200
+  let body = simulate.read_body(response)
+  assert string.starts_with(body, "<div class=\"ui-alert ui-alert--success\"")
   assert string.contains(
-    simulate.read_body(response),
-    "src=\"data:image/svg+xml,%01%02%03\"",
+    body,
+    "<div hx-swap-oob=\"innerHTML\" id=\"preview\"><div class=\"ui-page-stack\">",
   )
+  assert string.contains(body, "src=\"data:image/svg+xml,%01%02%03\"")
 }
 
 pub fn preview_keeps_last_result_for_invalid_cv_test() {
   let response = post_form("/editor/preview", "schema_version: 1")
-  assert response.status == 204
+  assert response.status == 200
+  let body = simulate.read_body(response)
+  assert string.contains(body, "ui-alert--danger")
+  assert !string.contains(body, "id=\"preview\"")
 }
 
 pub fn preview_explains_render_errors_test() {
@@ -178,8 +195,10 @@ pub fn preview_explains_render_errors_test() {
     post_form_with("/editor/preview", valid_cv, context(Error(Overloaded)))
   assert response.status == 200
   let body = simulate.read_body(response)
-  assert string.contains(body, "ui-alert--danger")
-  assert string.contains(body, "busy")
+  assert string.starts_with(body, "<div class=\"ui-alert ui-alert--success\"")
+  let assert Ok(#(_, preview)) = string.split_once(body, "id=\"preview\"")
+  assert string.contains(preview, "ui-alert--danger")
+  assert string.contains(preview, "busy")
 }
 
 pub fn download_returns_pdf_attachment_test() {
@@ -199,7 +218,7 @@ pub fn download_of_invalid_cv_shows_errors_page_test() {
 }
 
 pub fn rejects_oversized_yaml_test() {
-  let response = post_form("/editor/validate", string.repeat("#", 2000))
+  let response = post_form("/editor/preview", string.repeat("#", 2000))
   assert response.status == 413
 }
 
@@ -207,7 +226,7 @@ pub fn validate_explains_too_deeply_nested_yaml_test() {
   let nested = string.repeat("[", 30_000) <> string.repeat("]", 30_000)
   let body =
     post_form_with(
-      "/editor/validate",
+      "/editor/preview",
       nested,
       Context(..context(Ok([])), max_body_bytes: 100_000),
     )
@@ -406,7 +425,7 @@ pub fn switching_language_with_yaml_unfit_for_blocks_shows_yaml_test() {
 
 pub fn fragments_follow_the_language_header_test() {
   let response =
-    simulate.request(http.Post, "/editor/validate")
+    simulate.request(http.Post, "/editor/preview")
     |> simulate.header("x-yaml2cv-lang", "de")
     |> simulate.header("accept-language", "en")
     |> simulate.form_body([#("yaml", "schema_version: 1\nsections: []\n")])

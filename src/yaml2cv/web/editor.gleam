@@ -139,7 +139,9 @@ fn editor_page(
                     // Sticks to the bottom of the viewport (layout.css).
                     attribute.class("editor-status"),
                     attribute.aria("live", "polite"),
-                    ..live_update("/editor/validate", "400ms")
+                    // One request also updates `#preview` (ADR 0041).
+                    attribute.attribute("hx-indicator", "#preview-indicator"),
+                    ..live_update("/editor/preview", "300ms")
                   ],
                   [],
                 ),
@@ -160,14 +162,7 @@ fn editor_page(
               ),
             ],
             body: [
-              html.div(
-                [
-                  attribute.id("preview"),
-                  attribute.attribute("hx-indicator", "#preview-indicator"),
-                  ..live_update("/editor/preview", "300ms")
-                ],
-                [],
-              ),
+              html.div([attribute.id("preview")], []),
             ],
           ),
         ]),
@@ -269,23 +264,9 @@ pub fn switch_language(
   )
 }
 
-/// `POST /editor/validate` — validation status fragment.
-pub fn validate(
-  request: Request,
-  locale: Locale,
-  max_body_bytes: Int,
-) -> Response {
-  use source <- require_yaml_field(request, max_body_bytes)
-  let texts = i18n.texts(locale)
-  let view = case decode.from_yaml(source) {
-    Ok(_) -> alert.view(alert.Success, texts.editor.valid, [])
-    Error(errors) -> errors_view(texts, errors)
-  }
-  fragment(view, 200)
-}
-
-/// `POST /editor/preview` — preview images fragment. Invalid documents get
-/// `204 No Content` so the last good preview stays visible.
+/// `POST /editor/preview` — validation status for `#validation`, and for a
+/// valid document the rendered pages swapped out of band into `#preview`
+/// (ADR 0041). An invalid document leaves the last good preview in place.
 pub fn preview(
   request: Request,
   locale: Locale,
@@ -295,19 +276,29 @@ pub fn preview(
   use source <- require_yaml_field(request, max_body_bytes)
   let texts = i18n.texts(locale)
   case decode.from_yaml(source) {
-    Error(_) -> wisp.response(204)
-    Ok(cv) ->
-      case renderer.render_svg_pages(cv) {
-        Ok(pages) ->
-          fragment(page_stack.view(pages:, page_label: texts.ui.page), 200)
+    Error(errors) -> fragment(errors_view(texts, errors), 200)
+    Ok(cv) -> {
+      let pages = case renderer.render_svg_pages(cv) {
+        Ok(pages) -> page_stack.view(pages:, page_label: texts.ui.page)
         Error(error) ->
-          fragment(
-            alert.view(alert.Danger, texts.editor.preview_unavailable, [
-              html.text(render_error_message(texts, error)),
-            ]),
-            200,
-          )
+          alert.view(alert.Danger, texts.editor.preview_unavailable, [
+            html.text(render_error_message(texts, error)),
+          ])
       }
+      let status = alert.view(alert.Success, texts.editor.valid, [])
+      let preview =
+        html.div(
+          [
+            attribute.id("preview"),
+            attribute.attribute("hx-swap-oob", "innerHTML"),
+          ],
+          [pages],
+        )
+      wisp.html_response(
+        element.to_string(status) <> element.to_string(preview),
+        200,
+      )
+    }
   }
 }
 

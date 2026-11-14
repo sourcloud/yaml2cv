@@ -69,11 +69,6 @@ pub fn handle_request(request: Request, context: Context) -> Response {
         _ -> wisp.method_not_allowed([http.Get, http.Post])
       }
       |> localised
-    ["editor", "validate"] -> {
-      use <- wisp.require_method(request, http.Post)
-      editor.validate(request, locale(request), context.max_body_bytes)
-      |> localised
-    }
     ["editor", "preview"] -> {
       use <- wisp.require_method(request, http.Post)
       editor.preview(
