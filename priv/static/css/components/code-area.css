@@ -63,3 +63,70 @@
 .ui-code-area__input:focus-visible {
   box-shadow: none;
 }
+
+/* Schema completion list at the cursor (ADR 0045), created by editor.js,
+ * which sets its position. The detail line explains the active option. */
+.ui-code-area__completion {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: min(28rem, 100%);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-code-area__completion[hidden] {
+  display: none;
+}
+
+.ui-code-area__options {
+  max-height: 12rem;
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  list-style: none;
+}
+
+.ui-code-area__option {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.ui-code-area__option[aria-selected="true"] {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+.ui-code-area__option-note {
+  font-family: var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+.ui-code-area__option[aria-selected="true"] .ui-code-area__option-note {
+  color: inherit;
+}
+
+.ui-code-area__detail {
+  margin: 0;
+  padding: var(--space-2);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-muted);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.ui-code-area__detail:empty {
+  display: none;
+}

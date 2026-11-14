@@ -122,6 +122,340 @@
     if (gutter) gutter.scrollTop = field.scrollTop;
   });
 
+  // --- Schema completion (ADR 0045) ---------------------------------------
+
+  // The list dashes and the key of a block-style YAML line, with their
+  // columns: "  - name: x" -> dash at 2, key `name` at 4 with value "x".
+  // Blank and comment lines have none.
+  const lineNodes = (line) => {
+    const match = /^( *)((?:- +)*)(.*)$/.exec(line);
+    if (!match || /^\s*(#.*)?$/.test(match[3]) && !match[2]) return [];
+    const nodes = [];
+    let col = match[1].length;
+    for (const dash of match[2].match(/- +/g) || []) {
+      nodes.push({ col, dash: true });
+      col += dash.length;
+    }
+    const key = /^([A-Za-z_]\w*):(?: +(.*))?$/.exec(match[3]);
+    if (key) nodes.push({ col, key: key[1], value: (key[2] || "").replace(/ #.*$/, "").trim() });
+    return nodes;
+  };
+
+  // The path of the mapping that holds a key at column `col`, as written in
+  // the completion data ("sections[].entries[]", "" for the root), or null
+  // when the cursor is not inside a block mapping. `own` are the nodes left
+  // of the cursor on its line; `above` the lines above it.
+  const mappingPath = (above, own, col) => {
+    const path = [];
+    let afterDash = false;
+    const visit = (node) => {
+      if (node.dash) {
+        if (node.col >= col) return true;
+        path.unshift("[]");
+        afterDash = true;
+      } else {
+        // A list may sit at the same column as the key it belongs to.
+        if (node.col > col || (node.col === col && !afterDash)) return true;
+        // Only a key without a value on its line holds nested content.
+        if (node.value) return false;
+        path.unshift(node.key);
+        afterDash = false;
+      }
+      col = node.col;
+      return true;
+    };
+    for (const node of [...own].reverse()) if (!visit(node)) return null;
+    for (let i = above.length - 1; i >= 0 && (col > 0 || afterDash); i--) {
+      for (const node of lineNodes(above[i]).reverse()) if (!visit(node)) return null;
+    }
+    return path.join(".").replaceAll(".[]", "[]");
+  };
+
+  // Keys already used in the mapping whose keys start at column `col`.
+  const usedKeys = (above, below, own, col) => {
+    const used = new Set();
+    // A dash on the cursor's line starts a new item: nothing above is in it.
+    if (!own.some((node) => node.dash)) {
+      for (let i = above.length - 1; i >= 0; i--) {
+        const nodes = lineNodes(above[i]);
+        if (!nodes.length || nodes[0].col > col) continue;
+        const key = nodes.find((node) => node.key && node.col === col);
+        if (key) used.add(key.key);
+        if (nodes[0].col < col) break;
+      }
+    }
+    for (const line of below) {
+      const nodes = lineNodes(line);
+      if (!nodes.length || nodes[0].col > col) continue;
+      if (nodes[0].col < col) break;
+      if (nodes[0].key) used.add(nodes[0].key);
+    }
+    return used;
+  };
+
+  // What could be completed at `offset` in `text`: a key of the mapping at
+  // `path`, or a value of its `key`, replacing `prefix` before the cursor.
+  const completionContext = (text, offset) => {
+    const lineStart = text.lastIndexOf("\n", offset - 1) + 1;
+    const newline = text.indexOf("\n", offset);
+    const lineEnd = newline < 0 ? text.length : newline;
+    const before = text.slice(lineStart, offset);
+    if (text.slice(offset, lineEnd).trim()) return null;
+    const above = text.slice(0, lineStart).split("\n").slice(0, -1);
+    const below = newline < 0 ? [] : text.slice(newline + 1).split("\n");
+    const line = above.length;
+    const value = /^( *(?:- +)*)([A-Za-z_]\w*): +([\w-]*)$/.exec(before);
+    if (value) {
+      const own = lineNodes(value[1]);
+      const path = mappingPath(above, own, value[1].length);
+      return path === null ? null : { kind: "value", path, key: value[2], prefix: value[3], line, col: before.length - value[3].length };
+    }
+    const key = /^( *(?:- +)*)([A-Za-z_]\w*)?$/.exec(before);
+    if (!key) return null;
+    const own = lineNodes(key[1]);
+    const col = key[1].length;
+    const path = mappingPath(above, own, col);
+    if (path === null) return null;
+    return { kind: "key", path, prefix: key[2] || "", used: usedKeys(above, below, own, col), line, col };
+  };
+
+  // The options for a context: [{ label, insert, note, detail }].
+  const completionOptions = (data, context) => {
+    const fields = data.mappings[context.path] || [];
+    if (context.kind === "key") {
+      return fields
+        .filter((field) => field.key.startsWith(context.prefix) && !context.used.has(field.key))
+        .map((field) => ({
+          label: field.key,
+          insert: field.nested ? `${field.key}:` : `${field.key}: `,
+          note: field.requirement,
+          detail: field.description,
+        }));
+    }
+    const field = fields.find((candidate) => candidate.key === context.key);
+    if (!field) return [];
+    const options = field.values.filter((value) => value.startsWith(context.prefix));
+    if (options.length === 1 && options[0] === context.prefix) return [];
+    const detail = field.default
+      ? `${field.description} ${data.labels.default} \`${field.default}\`.`
+      : field.description;
+    return options.map((value) => ({ label: value, insert: value, note: "", detail }));
+  };
+
+  // Text with the parts between backticks as <code>, built without markup.
+  const richText = (element, text) => {
+    element.replaceChildren(
+      ...text.split("`").map((part, i) => {
+        if (i % 2 === 0) return document.createTextNode(part);
+        const code = document.createElement("code");
+        code.textContent = part;
+        return code;
+      }),
+    );
+  };
+
+  const completion = {
+    field: null,
+    box: null,
+    list: null,
+    detail: null,
+    context: null,
+    options: [],
+    active: 0,
+  };
+
+  const completionData = (field) => {
+    if (!field.dataset.completions) return null;
+    if (!completionData.cache.has(field)) {
+      let data = null;
+      try {
+        data = JSON.parse(field.dataset.completions);
+      } catch {
+        // Without data, the field simply offers no completions.
+      }
+      completionData.cache.set(field, data);
+    }
+    return completionData.cache.get(field);
+  };
+  completionData.cache = new WeakMap();
+
+  const completionBox = (field) => {
+    if (completion.field === field && completion.box?.isConnected) return completion.box;
+    completion.box?.remove();
+    const box = document.createElement("div");
+    box.className = "ui-code-area__completion";
+    box.hidden = true;
+    const list = document.createElement("ul");
+    list.className = "ui-code-area__options";
+    list.id = `${field.id}-completions`;
+    list.setAttribute("role", "listbox");
+    list.setAttribute("aria-label", field.labels?.[0]?.textContent || "");
+    const detail = document.createElement("p");
+    detail.className = "ui-code-area__detail";
+    box.append(list, detail);
+    // Keep the focus in the field when an option is clicked.
+    box.addEventListener("mousedown", (event) => event.preventDefault());
+    box.addEventListener("click", (event) => {
+      const option = event.target.closest("[role=option]");
+      if (option) acceptCompletion(Number(option.dataset.index));
+    });
+    field.parentElement.append(box);
+    field.setAttribute("aria-controls", list.id);
+    Object.assign(completion, { field, box, list, detail });
+    return box;
+  };
+
+  const closeCompletion = () => {
+    if (!completion.box || completion.box.hidden) return;
+    completion.box.hidden = true;
+    completion.field?.removeAttribute("aria-activedescendant");
+  };
+
+  const highlight = (index) => {
+    const { list, detail, options, field } = completion;
+    completion.active = index;
+    for (const option of list.children) {
+      option.setAttribute("aria-selected", String(Number(option.dataset.index) === index));
+    }
+    const option = list.children[index];
+    option.scrollIntoView({ block: "nearest" });
+    field.setAttribute("aria-activedescendant", option.id);
+    richText(detail, options[index].detail);
+  };
+
+  // Places the box below the cursor. Lines do not wrap and the font is
+  // monospaced, so the position follows from the line and column.
+  const placeCompletion = (field, box, context) => {
+    const style = getComputedStyle(field);
+    const canvas = placeCompletion.canvas || (placeCompletion.canvas = document.createElement("canvas"));
+    const measure = canvas.getContext("2d");
+    measure.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const charWidth = measure.measureText("m").width;
+    const lineHeight = parseFloat(style.lineHeight) || 20;
+    const left =
+      field.offsetLeft + parseFloat(style.paddingLeft) + context.col * charWidth - field.scrollLeft;
+    const top =
+      field.offsetTop + parseFloat(style.paddingTop) + (context.line + 1) * lineHeight - field.scrollTop;
+    const container = field.parentElement;
+    box.style.left = `${Math.max(0, Math.min(left, container.clientWidth - box.offsetWidth))}px`;
+    box.style.top = `${top}px`;
+  };
+
+  // Shows the options at the cursor; `force` also opens on an empty key.
+  const updateCompletion = (field, force) => {
+    const data = completionData(field);
+    if (!data || field.selectionStart !== field.selectionEnd) return closeCompletion();
+    const context = completionContext(field.value, field.selectionStart);
+    if (!context || (!force && context.kind === "key" && !context.prefix)) return closeCompletion();
+    const options = completionOptions(data, context);
+    if (!options.length) return closeCompletion();
+    const box = completionBox(field);
+    const previous = completion.options[completion.active]?.label;
+    completion.context = context;
+    completion.options = options;
+    completion.list.replaceChildren(
+      ...options.map((option, index) => {
+        const item = document.createElement("li");
+        item.className = "ui-code-area__option";
+        item.id = `${completion.list.id}-${index}`;
+        item.dataset.index = String(index);
+        item.setAttribute("role", "option");
+        const label = document.createElement("span");
+        label.textContent = option.label;
+        item.append(label);
+        if (option.note) {
+          const note = document.createElement("span");
+          note.className = "ui-code-area__option-note";
+          note.textContent = option.note;
+          item.append(note);
+        }
+        return item;
+      }),
+    );
+    box.hidden = false;
+    placeCompletion(field, box, context);
+    highlight(Math.max(0, options.findIndex((option) => option.label === previous)));
+  };
+
+  const acceptCompletion = (index) => {
+    const { field, context, options } = completion;
+    const option = options[index];
+    if (!field || !option) return;
+    closeCompletion();
+    field.focus();
+    field.setSelectionRange(field.selectionStart - context.prefix.length, field.selectionStart);
+    // execCommand keeps the browser's undo history intact.
+    if (!document.execCommand("insertText", false, option.insert)) {
+      field.setRangeText(option.insert, field.selectionStart, field.selectionEnd, "end");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    // A value follows a completed key: offer it right away.
+    if (option.insert.endsWith(" ")) updateCompletion(field, false);
+  };
+
+  document.addEventListener("input", (event) => {
+    const field = event.target;
+    if (!(field instanceof HTMLTextAreaElement) || !field.dataset.completions) return;
+    const open = completion.field === field && completion.box && !completion.box.hidden;
+    if (event.inputType === "insertText" || open) updateCompletion(field, false);
+    else closeCompletion();
+  });
+
+  // In the capture phase, so Tab and Escape are handled here before the
+  // Tab indentation above sees them.
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      const field = event.target;
+      if (!(field instanceof HTMLTextAreaElement) || !field.dataset.completions) return;
+      if (event.key === " " && event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault();
+        updateCompletion(field, true);
+        return;
+      }
+      const open = completion.field === field && completion.box && !completion.box.hidden;
+      if (!open) return;
+      const count = completion.options.length;
+      const move = {
+        ArrowDown: (completion.active + 1) % count,
+        ArrowUp: (completion.active - 1 + count) % count,
+        PageDown: Math.min(completion.active + 5, count - 1),
+        PageUp: Math.max(completion.active - 5, 0),
+      }[event.key];
+      if (move !== undefined && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        highlight(move);
+      } else if ((event.key === "Enter" || event.key === "Tab") && !event.shiftKey) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        acceptCompletion(completion.active);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeCompletion();
+      } else if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+        closeCompletion();
+      }
+    },
+    true,
+  );
+
+  document.addEventListener("focusout", (event) => {
+    if (event.target === completion.field) closeCompletion();
+  });
+  document.addEventListener("mousedown", (event) => {
+    if (event.target === completion.field) closeCompletion();
+  });
+  // Typing near the field's edge scrolls it; the list follows the cursor.
+  document.addEventListener(
+    "scroll",
+    (event) => {
+      const { field, box, context } = completion;
+      if (event.target === field && box && !box.hidden) placeCompletion(field, box, context);
+    },
+    true,
+  );
+
   // The Clipboard API needs a secure context (HTTPS or localhost); fall back
   // to selecting the text and the legacy copy command elsewhere.
   const copy = async (field) => {

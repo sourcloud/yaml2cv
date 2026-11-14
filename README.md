@@ -53,7 +53,8 @@ sections:
 The full schema is documented in
 [ADR 0007](docs/adr/0007-cv-schema-version-1.md); a complete example is in
 [`priv/examples/example.yaml`](priv/examples/example.yaml). The editor's
-**Schema** button shows a reference of every key and option.
+**Schema** button shows a reference of every key and option, and the YAML
+editor offers keys and values while you type (Ctrl+Space opens the list).
 
 ## Quickstart
 
