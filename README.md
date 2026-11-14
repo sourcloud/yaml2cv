@@ -10,6 +10,9 @@ validation and preview.
 Written in [Gleam](https://gleam.run) on the BEAM. Design decisions are
 documented as [architecture decision records](docs/adr/).
 
+![Editing a CV in yaml2cv: YAML with live preview, a validation error, the
+visual editor, theme and colour, PDF download](docs/demo.gif)
+
 ## Example
 
 ```yaml
