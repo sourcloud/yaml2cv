@@ -25,7 +25,7 @@ by hand would go stale and be tedious to redo.
 ## Decision
 
 Option 2. `dev/demo/record.mjs` drives the editor in headless Chromium at
-1280×720 in English with a light colour scheme and draws a visible pointer,
+1280×720 in English with a dark colour scheme and draws a visible pointer,
 since headless recordings have none. `just demo-gif [url]` records against a
 running server and converts the video with ffmpeg (12 fps, 900 px wide,
 128-colour palette) to `docs/demo.gif`, which the README embeds.
@@ -47,5 +47,5 @@ running server and converts the video with ffmpeg (12 fps, 900 px wide,
   `just run` in another terminal and commit the new GIF.
 - The script selects elements by ids, data attributes and English labels; a
   change to those breaks the recording, not the application.
-- The GIF (about 2–3 MB) lives in the repository; each re-recording adds a
+- The GIF (about 3–3.5 MB) lives in the repository; each re-recording adds a
   new binary to history.

@@ -146,7 +146,7 @@ async function main() {
   const context = await browser.newContext({
     viewport: size,
     locale: "en-GB",
-    colorScheme: "light",
+    colorScheme: "dark",
     acceptDownloads: true,
     recordVideo: { dir: outDir, size },
   });
