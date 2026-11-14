@@ -508,7 +508,11 @@
     }
     const remove = event.target.closest?.("[data-photo-remove]");
     const container = remove?.closest("[data-photo-field]");
-    if (container) showPhoto(container, "");
+    if (!container) return;
+    // A removed photo is not kept in memory for later responses (ADR 0043).
+    placeholders.clear();
+    realPhotos.clear();
+    showPhoto(container, "");
   });
 
   document.addEventListener("change", async (event) => {
