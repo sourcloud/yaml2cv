@@ -1,6 +1,6 @@
 # 0045. Complete schema keys and values in the YAML editor
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-13
 
 ## Context
