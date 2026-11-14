@@ -108,6 +108,14 @@ pub fn editor_page_offers_the_schema_reference_test() {
   assert string.contains(body, "id=\"schema-help\"")
 }
 
+pub fn editor_page_offers_schema_completions_in_its_language_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(body, "data-completions=\"{&quot;labels&quot;")
+  assert string.contains(body, "aria-autocomplete=\"list\"")
+  let body = get_with_header("/", "accept-language", "de") |> simulate.read_body
+  assert string.contains(body, "&quot;requirement&quot;:&quot;benötigt")
+}
+
 pub fn editor_page_offers_download_in_preview_panel_test() {
   let body = get("/") |> simulate.read_body
   let assert Ok(#(_, preview_panel)) = string.split_once(body, ">Preview</h2>")

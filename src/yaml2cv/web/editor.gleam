@@ -22,6 +22,7 @@ import yaml2cv/cv/draft/emit
 import yaml2cv/render.{type RenderError, type Renderer}
 import yaml2cv/web/i18n.{type Locale}
 import yaml2cv/web/i18n/texts.{type Texts}
+import yaml2cv/web/schema_completion
 import yaml2cv/web/schema_help
 import yaml2cv/web/ui/alert
 import yaml2cv/web/ui/button
@@ -117,7 +118,14 @@ fn editor_page(
                       name: "yaml",
                       label: t.source_label,
                       value: source,
-                      attributes: [],
+                      // Schema completion (ADR 0045), run by `editor.js`.
+                      attributes: [
+                        attribute.data(
+                          "completions",
+                          schema_completion.json(texts.schema),
+                        ),
+                        attribute.aria("autocomplete", "list"),
+                      ],
                     ),
                   ],
                 ),
