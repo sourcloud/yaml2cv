@@ -47,3 +47,4 @@ for the process.
 | [0039](0039-lean-preview-requests.md) | Keep the photo in the browser for previews and send SVG as text | Accepted |
 | [0040](0040-shorter-preview-debounce.md) | Render the preview 300 ms after typing stops | Accepted |
 | [0041](0041-one-request-for-status-and-preview.md) | One request for the validation status and the preview | Accepted |
+| [0042](0042-lean-visual-mode.md) | Lean requests and no second wait in visual mode | Accepted |
