@@ -6,7 +6,7 @@
 // The video is converted to docs/demo.gif by `just demo-gif`.
 
 import { chromium } from "playwright";
-import { mkdir, readdir, rename, rm } from "node:fs/promises";
+import { mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const baseUrl = process.argv[2] ?? "http://localhost:8000";
@@ -47,6 +47,56 @@ const pointerScript = () => {
     addEventListener("mouseup", () => place(1), true);
   });
 };
+
+// An illustrated stand-in portrait, so the demo needs no photo of a real
+// person.
+const portrait = `
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dbe4ee"/>
+      <stop offset="1" stop-color="#9fb3c8"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b4a5c"/>
+      <stop offset="1" stop-color="#253140"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#bg)"/>
+  <path d="M60 800 C70 610 170 540 300 540 C430 540 530 610 540 800 Z" fill="url(#coat)"/>
+  <path d="M255 545 L300 640 L345 545 Z" fill="#f4f1ec"/>
+  <rect x="262" y="440" width="76" height="110" rx="30" fill="#d9a77f"/>
+  <ellipse cx="300" cy="340" rx="118" ry="140" fill="#e8b994"/>
+  <path d="M182 330 C175 200 250 170 310 172 C390 175 432 230 418 330
+           C405 270 370 240 300 238 C235 240 195 270 182 330 Z" fill="#4a3426"/>
+  <ellipse cx="258" cy="345" rx="10" ry="12" fill="#3a2a20"/>
+  <ellipse cx="342" cy="345" rx="10" ry="12" fill="#3a2a20"/>
+  <path d="M262 412 Q300 438 338 412" stroke="#9a5b45" stroke-width="7"
+        fill="none" stroke-linecap="round"/>
+</svg>`;
+
+async function writePortrait(browser, path) {
+  const page = await browser.newPage({ viewport: { width: 600, height: 800 } });
+  await page.setContent(
+    `<body style="margin:0">${portrait}</body>`,
+  );
+  await writeFile(path, await page.screenshot({ type: "jpeg", quality: 90 }));
+  await page.close();
+}
+
+// Scrolls the element into view with visible wheel steps. The pointer must
+// already be over the scrolling container.
+async function scrollTo(page, locator) {
+  for (let i = 0; i < 40; i++) {
+    const box = await locator.boundingBox();
+    if (box.y < 160) await page.mouse.wheel(0, -60);
+    else if (box.y + box.height > size.height - 120) {
+      await page.mouse.wheel(0, 60);
+    } else break;
+    await page.waitForTimeout(40);
+  }
+  await page.waitForTimeout(300);
+}
 
 const pause = (page, ms) => page.waitForTimeout(ms);
 
@@ -91,6 +141,8 @@ async function main() {
   await mkdir(outDir, { recursive: true });
 
   const browser = await chromium.launch();
+  const photo = join(outDir, "photo.jpg");
+  await writePortrait(browser, photo);
   const context = await browser.newContext({
     viewport: size,
     locale: "en-GB",
@@ -132,13 +184,24 @@ async function main() {
   await theme.selectOption("studio");
   await settle(page);
   await pause(page, 1800);
+
+  // 4. Add a photo: the studio theme shows it instead of the initials.
+  const choose = page.locator("[data-photo-choose]");
+  await scrollTo(page, choose);
+  const chooser = page.waitForEvent("filechooser");
+  await click(page, choose);
+  await (await chooser).setFiles(photo);
+  await settle(page);
+  await pause(page, 2000);
+
   const color = page.locator('select[name="style.color"]');
+  await scrollTo(page, color);
   await click(page, color);
   await color.selectOption("burgundy");
   await settle(page);
   await pause(page, 1800);
 
-  // 4. Download the PDF.
+  // 5. Download the PDF.
   const download = page.waitForEvent("download");
   await click(page, page.getByRole("button", { name: "Download PDF" }));
   await download;
