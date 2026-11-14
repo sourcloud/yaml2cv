@@ -20,3 +20,6 @@ erl_crash.dump
 
 # Written by the image build (ADR 0032)
 /priv/notices.json
+
+# Demo recording (ADR 0044)
+/dev/demo/node_modules/

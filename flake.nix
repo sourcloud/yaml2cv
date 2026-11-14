@@ -31,6 +31,15 @@
           ];
         };
 
+        # Records the README demo GIF (ADR 0044); not needed otherwise.
+        devShells.demo = pkgs.mkShell {
+          packages = [
+            pkgs.nodejs_22
+            pkgs.ffmpeg
+            pkgs.just
+          ];
+        };
+
         formatter = pkgs.nixfmt-rfc-style;
       }
     );

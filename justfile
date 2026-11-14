@@ -45,6 +45,19 @@ image tag="yaml2cv:dev":
         --build-arg GIT_REVISION="$(git rev-parse HEAD)$(test -z "$(git status --porcelain)" || echo -dirty)" \
         --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
 
+# Record the README demo against a running server and write docs/demo.gif
+# (ADR 0044); run inside `nix develop .#demo`
+demo-gif url="http://localhost:8000":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    npm ci --prefix dev/demo --no-fund --no-audit
+    npx --prefix dev/demo playwright install chromium
+    node dev/demo/record.mjs "{{url}}" build/demo
+    ffmpeg -loglevel error -y -i build/demo/demo.webm -filter_complex \
+        "fps=12,scale=900:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" \
+        docs/demo.gif
+    ls -l docs/demo.gif
+
 # Print release notes for the latest tag (what the release workflow publishes)
 release-notes:
     git-cliff --latest --strip all

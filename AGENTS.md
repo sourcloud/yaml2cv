@@ -68,6 +68,7 @@ The dev shell (`nix develop` or `direnv allow`) provides all tools.
 | Update deps   | `gleam deps update`, then commit `gleam.toml` + `manifest.toml` (ADR 0027) |
 | Build image   | `just image`                     |
 | Smoke test    | `scripts/smoke-test.sh <url>`    |
+| README demo GIF | `nix develop .#demo -c just demo-gif` (server running, ADR 0044) |
 
 ## Code style
 
