@@ -23,8 +23,8 @@
 // - Edit modes (ADR 0024): `[data-mode]` holds `yaml` or `visual`. The
 //   Visual switch asks the server for blocks via htmx and switches on its
 //   `visual-ready` event. Regenerated YAML arrives in `#yaml-sync` and is
-//   copied into the source field, firing `input` so validation, preview
-//   and the gutter follow. Switching back, or switching the language, flushes
+//   copied into the source field, firing `yaml-synced` so the status,
+//   preview and gutter follow at once (ADR 0042). Switching back, or switching the language, flushes
 //   pending block edits first. The editor form's `mode` field follows the
 //   mode, so the language switch comes back in it.
 // - Block buttons (`name="op"`) re-render all blocks. Afterwards the page
@@ -38,10 +38,10 @@
 //   is not uploaded.
 //   The choose button reads "change" and the remove button shows once
 //   there is a photo.
-// - Lean previews (ADR 0039, 0041): preview requests carry a
+// - Lean requests (ADR 0039, 0041, 0042): editor requests carry a
 //   single-coloured PNG of the same pixel size instead of the photo, when
-//   the photo is one the server would accept. Before the preview is shown,
-//   the placeholder in it is replaced by the real photo again.
+//   the photo is one the server would accept. Before a response is
+//   swapped in, the placeholder in it is replaced by the real photo again.
 (() => {
   "use strict";
 
@@ -93,6 +93,7 @@
   };
 
   document.addEventListener("input", sync);
+  document.addEventListener("yaml-synced", sync);
   // Scroll events do not bubble; listen in the capture phase instead.
   document.addEventListener("scroll", sync, true);
 
@@ -382,7 +383,9 @@
     const field = document.getElementById("cv");
     if (field instanceof HTMLTextAreaElement && field.value !== sync.value) {
       field.value = sync.value;
-      field.dispatchEvent(new Event("input", { bubbles: true }));
+      // Not `input`: the edit was debounced already, so the preview is
+      // asked for at once (ADR 0042).
+      field.dispatchEvent(new Event("yaml-synced", { bubbles: true }));
     }
     if (root.dataset.pendingMode) setMode(root, root.dataset.pendingMode);
     const action = afterFlush;
@@ -630,15 +633,23 @@
     return placeholders.get(uri);
   };
 
-  const leanPaths = ["/editor/preview"];
-
+  // Every htmx request of the editor: the YAML, and the photo field of the
+  // visual blocks (ADR 0042). Downloads and the language switch are plain
+  // form submits and keep the real photo.
   document.addEventListener("htmx:configRequest", (event) => {
     const data = event.detail.formData;
-    if (!leanPaths.includes(event.detail.path) || !data) return;
-    const yaml = data.get("yaml");
-    if (typeof yaml !== "string" || !yaml.includes(";base64,")) return;
-    const lean = yaml.replace(photoPattern, (uri) => placeholderFor(uri) ?? uri);
-    if (lean !== yaml) data.set("yaml", lean);
+    if (!data) return;
+    const entries = [...data.entries()];
+    let changed = false;
+    const lean = entries.map(([name, value]) => {
+      if (typeof value !== "string" || !value.includes(";base64,")) return [name, value];
+      const replaced = value.replace(photoPattern, (uri) => placeholderFor(uri) ?? uri);
+      if (replaced !== value) changed = true;
+      return [name, replaced];
+    });
+    if (!changed) return;
+    for (const name of new Set(entries.map(([name]) => name))) data.delete(name);
+    for (const [name, value] of lean) data.append(name, value);
   });
 
   document.addEventListener("htmx:beforeSwap", (event) => {

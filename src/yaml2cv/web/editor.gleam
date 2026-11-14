@@ -232,7 +232,12 @@ fn mode_switch(t: texts.EditorTexts, visual: Bool) -> Element(a) {
 fn live_update(path: String, delay: String) -> List(attribute.Attribute(a)) {
   [
     attribute.attribute("hx-post", path),
-    attribute.attribute("hx-trigger", "load, input from:#cv delay:" <> delay),
+    // `yaml-synced` comes from visual mode, whose edits were already
+    // debounced (ADR 0042).
+    attribute.attribute(
+      "hx-trigger",
+      "load, input from:#cv delay:" <> delay <> ", yaml-synced from:#cv",
+    ),
     attribute.attribute("hx-include", "#cv"),
     attribute.attribute("hx-sync", "this:replace"),
   ]

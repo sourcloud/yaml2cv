@@ -41,7 +41,7 @@ pub fn preview_follows_typing_after_a_short_pause_test() {
   let body = get("/") |> simulate.read_body
   assert string.contains(
     body,
-    "hx-post=\"/editor/preview\" hx-sync=\"this:replace\" hx-trigger=\"load, input from:#cv delay:300ms\"",
+    "hx-post=\"/editor/preview\" hx-sync=\"this:replace\" hx-trigger=\"load, input from:#cv delay:300ms, yaml-synced from:#cv\"",
   )
 }
 
