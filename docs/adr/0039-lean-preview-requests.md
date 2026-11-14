@@ -1,6 +1,6 @@
 # 0039. Keep the photo in the browser for previews and send SVG as text
 
-- Status: Accepted
+- Status: Accepted, extended to all editor requests by 0042
 - Date: 2026-11-13
 
 ## Context
