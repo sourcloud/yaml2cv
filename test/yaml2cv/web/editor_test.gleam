@@ -37,6 +37,14 @@ fn post_form_with(path: String, yaml: String, context: router.Context) {
   |> router.handle_request(context)
 }
 
+pub fn preview_follows_typing_after_a_short_pause_test() {
+  let body = get("/") |> simulate.read_body
+  assert string.contains(
+    body,
+    "hx-post=\"/editor/preview\" hx-sync=\"this:replace\" hx-trigger=\"load, input from:#cv delay:300ms\"",
+  )
+}
+
 pub fn editor_page_preloads_example_test() {
   let response = get("/")
   assert response.status == 200

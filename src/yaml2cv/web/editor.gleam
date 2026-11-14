@@ -164,7 +164,7 @@ fn editor_page(
                 [
                   attribute.id("preview"),
                   attribute.attribute("hx-indicator", "#preview-indicator"),
-                  ..live_update("/editor/preview", "1s")
+                  ..live_update("/editor/preview", "300ms")
                 ],
                 [],
               ),
