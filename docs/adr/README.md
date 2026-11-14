@@ -49,4 +49,4 @@ for the process.
 | [0041](0041-one-request-for-status-and-preview.md) | One request for the validation status and the preview | Accepted |
 | [0042](0042-lean-visual-mode.md) | Lean requests and no second wait in visual mode | Accepted |
 | [0043](0043-forget-removed-photos.md) | Forget a removed photo in the editor script | Accepted |
-| [0044](0044-recorded-readme-demo.md) | Record the README demo with a script | Proposed |
+| [0044](0044-recorded-readme-demo.md) | Record the README demo with a script | Accepted |
