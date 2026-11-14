@@ -31,7 +31,7 @@ curl -sf "$base/" | grep -q '<textarea' || { echo "editor page broken" >&2; exit
 echo "ok   editor"
 
 curl -sf --data-urlencode yaml@"$example" "$base/editor/preview" \
-  | grep -q 'data:image/svg+xml;base64,' || { echo "preview broken" >&2; exit 1; }
+  | grep -q 'data:image/svg+xml,' || { echo "preview broken" >&2; exit 1; }
 echo "ok   preview"
 
 if [ -n "$admin" ]; then
