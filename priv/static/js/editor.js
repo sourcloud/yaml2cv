@@ -38,6 +38,10 @@
 //   is not uploaded.
 //   The choose button reads "change" and the remove button shows once
 //   there is a photo.
+// - Lean previews (ADR 0039): validate and preview requests carry a
+//   single-coloured PNG of the same pixel size instead of the photo, when
+//   the photo is one the server would accept. Before the preview is shown,
+//   the placeholder in it is replaced by the real photo again.
 (() => {
   "use strict";
 
@@ -520,5 +524,129 @@
       return;
     }
     showPhoto(container, uri);
+  });
+  const photoPattern = /data:image\/(jpeg|png);base64,[A-Za-z0-9+/]+={0,2}/g;
+  const maxPhotoBytes = 524288;
+  const maxPhotoSide = 4000;
+  // Real photo URI -> placeholder URI (null when it has to be sent), and back.
+  const placeholders = new Map();
+  const realPhotos = new Map();
+
+  const decodeBase64 = (text) => {
+    if (text.length % 4 !== 0 || (text.length / 4) * 3 > maxPhotoBytes + 2) return null;
+    let binary;
+    try {
+      binary = atob(text);
+    } catch {
+      return null;
+    }
+    if (binary.length > maxPhotoBytes) return null;
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  };
+
+  const ascii = (bytes, start, length) =>
+    String.fromCharCode(...bytes.subarray(start, start + length));
+
+  // Size of a complete PNG without EXIF data, else null.
+  const pngSize = (bytes, view) => {
+    if (bytes.length < 33 || ascii(bytes, 0, 8) !== "\x89PNG\r\n\x1a\n") return null;
+    if (ascii(bytes, 12, 4) !== "IHDR") return null;
+    const size = { width: view.getUint32(16), height: view.getUint32(20) };
+    for (let at = 8; at + 12 <= bytes.length; ) {
+      const type = ascii(bytes, at + 4, 4);
+      if (type === "eXIf") return null;
+      if (type === "IEND") return size;
+      at += 12 + view.getUint32(at);
+    }
+    return null;
+  };
+
+  // Size of a complete JPEG without EXIF data, else null. Walks the
+  // segments up to the first frame header like the server does.
+  const jpegSize = (bytes, view) => {
+    const end = bytes.length;
+    if (end < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
+    if (bytes[end - 2] !== 0xff || bytes[end - 1] !== 0xd9) return null;
+    let at = 2;
+    while (at + 4 <= end) {
+      if (bytes[at] !== 0xff) return null;
+      const marker = bytes[at + 1];
+      if (marker === 0xff) {
+        at += 1;
+      } else if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+        at += 2;
+      } else {
+        const length = view.getUint16(at + 2);
+        if (length < 2) return null;
+        if (marker === 0xe1 && ascii(bytes, at + 4, 6) === "Exif\0\0") return null;
+        const frame =
+          marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker);
+        if (frame) {
+          if (at + 9 > end) return null;
+          return { height: view.getUint16(at + 5), width: view.getUint16(at + 7) };
+        }
+        if (marker === 0xda || marker === 0xd9) return null;
+        at += 2 + length;
+      }
+    }
+    return null;
+  };
+
+  const makePlaceholder = (uri) => {
+    const [prefix, encoded] = uri.split(",");
+    const bytes = decodeBase64(encoded);
+    if (!bytes) return null;
+    const view = new DataView(bytes.buffer);
+    const size = prefix.includes("png") ? pngSize(bytes, view) : jpegSize(bytes, view);
+    if (!size) return null;
+    const { width, height } = size;
+    if (width < 1 || height < 1 || width > maxPhotoSide || height > maxPhotoSide) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#d4d4d4";
+    context.fillRect(0, 0, width, height);
+    const placeholder = canvas.toDataURL("image/png");
+    return placeholder.startsWith("data:image/png;base64,") && placeholder.length < uri.length
+      ? placeholder
+      : null;
+  };
+
+  const placeholderFor = (uri) => {
+    if (!placeholders.has(uri)) {
+      // Keep the last few photos, enough for requests still in flight.
+      if (placeholders.size >= 4) {
+        const [oldest, placeholder] = placeholders.entries().next().value;
+        placeholders.delete(oldest);
+        realPhotos.delete(placeholder);
+      }
+      const placeholder = makePlaceholder(uri);
+      placeholders.set(uri, placeholder);
+      if (placeholder) realPhotos.set(placeholder, uri);
+    }
+    return placeholders.get(uri);
+  };
+
+  const leanPaths = ["/editor/validate", "/editor/preview"];
+
+  document.addEventListener("htmx:configRequest", (event) => {
+    const data = event.detail.formData;
+    if (!leanPaths.includes(event.detail.path) || !data) return;
+    const yaml = data.get("yaml");
+    if (typeof yaml !== "string" || !yaml.includes(";base64,")) return;
+    const lean = yaml.replace(photoPattern, (uri) => placeholderFor(uri) ?? uri);
+    if (lean !== yaml) data.set("yaml", lean);
+  });
+
+  document.addEventListener("htmx:beforeSwap", (event) => {
+    let html = event.detail.serverResponse;
+    if (typeof html !== "string" || !html.includes(";base64,")) return;
+    for (const [placeholder, real] of realPhotos) {
+      if (html.includes(placeholder)) html = html.split(placeholder).join(real);
+    }
+    event.detail.serverResponse = html;
   });
 })();
