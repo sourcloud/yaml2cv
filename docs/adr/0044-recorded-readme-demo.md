@@ -7,7 +7,8 @@
 
 The README describes the editor in prose only. A short animation of the main
 interactions (editing YAML with a live preview, a validation error, the
-visual mode, switching theme and colour, downloading the PDF) shows what the
+visual mode, switching theme, adding a photo, changing the colour,
+downloading the PDF) shows what the
 application does faster than text. The UI keeps changing, so a demo recorded
 by hand would go stale and be tedious to redo.
 
@@ -35,6 +36,9 @@ running server and converts the video with ffmpeg (12 fps, 900 px wide,
   default shell and CI stay as they are.
 - gifski would give smaller GIFs but did not build on macOS from nixpkgs at
   the time; ffmpeg's palette filters are good enough.
+- The photo is an illustrated portrait the script draws as SVG and saves as
+  JPEG before recording, so the demo shows no real person and adds no image
+  to the repository.
 - `dev/demo/` is excluded from the container build context.
 
 ## Consequences
