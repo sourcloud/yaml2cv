@@ -46,6 +46,10 @@ inserting skeletons of nested content.
   value whether it is the default, show below the list.
 - Inserting a key writes `key: `, or `key:` when its value is a nested
   mapping or list. Nothing else is inserted.
+- Enter keeps the indentation of the current line, counting list dashes
+  as spaces so the next key lines up with the item's first key, and adds
+  one level after a line that opens a block (`key:`, `key: |`, `key: >`).
+  With the list open, Enter inserts the option instead.
 - The textarea refers to the list with `aria-controls`,
   `aria-autocomplete="list"` and `aria-activedescendant`.
 

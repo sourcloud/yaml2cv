@@ -2,7 +2,8 @@
 //
 // - Textareas marked with `data-tab-indent`: Tab inserts spaces instead of
 //   moving focus. Press Escape first to let the next Tab leave the field, so
-//   keyboard users are never trapped.
+//   keyboard users are never trapped. Enter keeps the line's indentation,
+//   one level more after `key:` (ADR 0045).
 // - Line-number gutters (`data-gutter-for`, ADR 0021) follow the line count
 //   and scroll position of their textarea.
 // - Buttons with `data-jump-field`, `data-jump-line` and `data-jump-column`
@@ -65,6 +66,35 @@
     // execCommand keeps the browser's undo history intact.
     if (!document.execCommand("insertText", false, indent)) {
       field.setRangeText(indent, field.selectionStart, field.selectionEnd, "end");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
+
+  // The indentation for a new line after `before`, the text left of the
+  // cursor on its line (ADR 0045): the line's own, with list dashes as
+  // spaces so the next key lines up with the item's first key, and one
+  // level more after a line opening a block (`key:`, `key: |`, `key: >-`).
+  const newlineIndent = (before, unit) => {
+    const content = before.replace(/ +#.*$/, "").trimEnd();
+    const lead = /^( *(?:- +)*)/.exec(before)[1].length;
+    const opens = /(^|[^:]):$/.test(content) || /: *[|>][-+0-9]*$/.test(content);
+    return " ".repeat(lead + (opens ? unit : 0));
+  };
+
+  document.addEventListener("keydown", (event) => {
+    const field = event.target;
+    if (!(field instanceof HTMLTextAreaElement) || !field.dataset.tabIndent) return;
+    if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    if (event.isComposing) return;
+    const start = field.selectionStart;
+    const before = field.value.slice(field.value.lastIndexOf("\n", start - 1) + 1, start);
+    const text = "\n" + newlineIndent(before, Number(field.dataset.tabIndent) || 2);
+    event.preventDefault();
+    // execCommand keeps the browser's undo history intact.
+    if (!document.execCommand("insertText", false, text)) {
+      field.setRangeText(text, field.selectionStart, field.selectionEnd, "end");
       field.dispatchEvent(new Event("input", { bubbles: true }));
     }
   });
