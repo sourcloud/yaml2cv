@@ -50,3 +50,5 @@ for the process.
 | [0042](0042-lean-visual-mode.md) | Lean requests and no second wait in visual mode | Accepted |
 | [0043](0043-forget-removed-photos.md) | Forget a removed photo in the editor script | Accepted |
 | [0044](0044-recorded-readme-demo.md) | Record the README demo with a script | Accepted |
+| [0045](0045-schema-completion-in-the-yaml-editor.md) | Complete schema keys and values in the YAML editor | Accepted |
+| [0046](0046-show-pickers-in-the-readme-demo.md) | Show select lists and the file picker in the README demo | Accepted |
