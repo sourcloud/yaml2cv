@@ -7,8 +7,10 @@ to PDF using [Typst](https://typst.app). It ships as a lightweight, stateless
 web application with an HTTP API and a browser-based editor with live
 validation and preview.
 
-Written in [Gleam](https://gleam.run) on the BEAM. Design decisions are
-documented as [architecture decision records](docs/adr/).
+Written in [Gleam](https://gleam.run) on the BEAM. The
+[architecture documentation](docs/architecture.md) describes how it is built;
+design decisions are documented as
+[architecture decision records](docs/adr/).
 
 ![Editing a CV in yaml2cv: YAML with live preview, a validation error, the
 visual editor, theme and colour, PDF download](docs/demo.gif)

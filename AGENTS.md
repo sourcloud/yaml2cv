@@ -6,8 +6,9 @@ Instructions for AI coding agents (and humans) working in this repository.
 
 yaml2cv renders CVs written in YAML to PDF. It is a stateless Gleam web
 application (Erlang target) built on Wisp + Mist, with a pluggable renderer
-whose first backend is Typst. Architecture decisions live in `docs/adr/`;
-read them before changing anything structural.
+whose first backend is Typst. `docs/architecture.md` describes the system
+as it is (arc42 with C4 diagrams, ADR 0047); architecture decisions live in
+`docs/adr/`. Read both before changing anything structural.
 
 ## Working mode
 
@@ -23,6 +24,9 @@ The project is developed iteratively in a question–answer loop with the owner.
    Superseding a decision means writing a new ADR and marking the old one
    `Superseded by NNNN`; never rewrite history in an accepted ADR.
 3. **Keep the roadmap current.** Tick milestones in `README.md` when done.
+4. **Keep the architecture document current.** A change to modules,
+   interfaces, runtime flows, configuration or deployment updates
+   `docs/architecture.md` in the same commit or the one right after.
 
 ## Test-driven development
 

@@ -57,6 +57,9 @@ pinned tools. When the environment changes (after `direnv allow` or a
 - **Green before commit.** `just check`.
 - **Design decisions** are documented as ADRs in [`docs/adr/`](docs/adr/).
   Propose a new ADR for any structural change.
+- **Architecture** is described in
+  [`docs/architecture.md`](docs/architecture.md). Update it when a change
+  affects modules, interfaces, runtime flows, configuration or deployment.
 
 More detail in [AGENTS.md](AGENTS.md).
 
