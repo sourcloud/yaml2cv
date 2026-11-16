@@ -1,6 +1,6 @@
 # 0047. Document the architecture with arc42 and C4
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-15
 
 ## Context
