@@ -3,7 +3,7 @@ import gleam/list
 import gleam/string
 import yaml2cv/cli.{type Io, Io}
 import yaml2cv/cli/arguments.{
-  File, Help, Render, Stdin, Stdout, ToFile, Validate,
+  File, Help, Json, Render, Stdin, Stdout, Text, ToFile, Validate,
 }
 import yaml2cv/render.{
   type RenderError, CompileFailed, Renderer, RendererUnavailable,
@@ -93,7 +93,7 @@ pub fn render_writes_files_test() {
           #(File("a.yaml"), ToFile("a.pdf")),
           #(File("b.yaml"), ToFile("b.pdf")),
         ],
-        json: False,
+        errors: Text,
       ),
       [#("a.yaml", valid_cv), #("b.yaml", valid_cv)],
       "",
@@ -110,7 +110,7 @@ pub fn render_writes_files_test() {
 pub fn render_stdin_to_stdout_test() {
   let assert #(0, [StdoutBytes(<<"%PDF">>)]) =
     run(
-      Render(jobs: [#(Stdin, Stdout)], json: False),
+      Render(jobs: [#(Stdin, Stdout)], errors: Text),
       [],
       valid_cv,
       Ok(<<"%PDF">>),
@@ -125,7 +125,7 @@ pub fn invalid_cv_is_reported_and_others_still_render_test() {
           #(File("bad.yaml"), ToFile("bad.pdf")),
           #(File("good.yaml"), ToFile("good.pdf")),
         ],
-        json: False,
+        errors: Text,
       ),
       [#("bad.yaml", invalid_cv), #("good.yaml", valid_cv)],
       "",
@@ -139,7 +139,7 @@ pub fn invalid_cv_is_reported_and_others_still_render_test() {
 pub fn syntax_error_has_location_test() {
   let assert #(1, events) =
     run(
-      Validate(inputs: [Stdin], json: False),
+      Validate(inputs: [Stdin], errors: Text),
       [],
       "person:\n  name: [unclosed\n",
       Ok(<<>>),
@@ -150,7 +150,7 @@ pub fn syntax_error_has_location_test() {
 pub fn missing_file_exits_with_2_test() {
   let assert #(2, events) =
     run(
-      Validate(inputs: [File("nope.yaml"), File("bad.yaml")], json: False),
+      Validate(inputs: [File("nope.yaml"), File("bad.yaml")], errors: Text),
       [#("bad.yaml", invalid_cv)],
       "",
       Ok(<<>>),
@@ -162,7 +162,7 @@ pub fn missing_file_exits_with_2_test() {
 pub fn unwritable_output_exits_with_2_test() {
   let assert #(2, events) =
     run(
-      Render(jobs: [#(File("a.yaml"), ToFile("readonly/a.pdf"))], json: False),
+      Render(jobs: [#(File("a.yaml"), ToFile("readonly/a.pdf"))], errors: Text),
       [#("a.yaml", valid_cv)],
       "",
       Ok(<<"%PDF">>),
@@ -174,7 +174,7 @@ pub fn unwritable_output_exits_with_2_test() {
 pub fn render_failure_includes_backend_output_test() {
   let assert #(1, events) =
     run(
-      Render(jobs: [#(File("a.yaml"), ToFile("a.pdf"))], json: False),
+      Render(jobs: [#(File("a.yaml"), ToFile("a.pdf"))], errors: Text),
       [#("a.yaml", valid_cv)],
       "",
       Error(CompileFailed("error: boom")),
@@ -186,7 +186,7 @@ pub fn render_failure_includes_backend_output_test() {
 pub fn validate_reports_valid_files_test() {
   let assert #(0, events) =
     run(
-      Validate(inputs: [File("a.yaml")], json: False),
+      Validate(inputs: [File("a.yaml")], errors: Text),
       [#("a.yaml", valid_cv)],
       "",
       Ok(<<>>),
@@ -197,7 +197,7 @@ pub fn validate_reports_valid_files_test() {
 pub fn json_reports_problems_with_file_test() {
   let assert #(1, events) =
     run(
-      Validate(inputs: [File("bad.yaml"), File("a.yaml")], json: True),
+      Validate(inputs: [File("bad.yaml"), File("a.yaml")], errors: Json),
       [#("bad.yaml", invalid_cv), #("a.yaml", valid_cv)],
       "",
       Ok(<<>>),
@@ -209,7 +209,7 @@ pub fn json_reports_problems_with_file_test() {
 pub fn json_reports_render_problems_test() {
   let assert #(1, events) =
     run(
-      Render(jobs: [#(Stdin, Stdout)], json: True),
+      Render(jobs: [#(Stdin, Stdout)], errors: Json),
       [],
       valid_cv,
       Error(RendererUnavailable("no typst")),
@@ -221,7 +221,7 @@ pub fn json_reports_render_problems_test() {
 
 pub fn json_reports_file_errors_test() {
   let assert #(2, events) =
-    run(Validate(inputs: [File("nope.yaml")], json: True), [], "", Ok(<<>>))
+    run(Validate(inputs: [File("nope.yaml")], errors: Json), [], "", Ok(<<>>))
   let assert "{\"type\":\"/problems/file-error\",\"title\":\"File error\",\"detail\":\"cannot read: no such file\",\"file\":\"nope.yaml\"}\n" =
     stderr(events)
 }
@@ -230,7 +230,7 @@ pub fn invalid_utf8_is_invalid_yaml_test() {
   let events = process.new_subject()
   let io = Io(..fake_io([], "", events), read_stdin: fn() { Ok(<<0xff>>) })
   let assert 1 =
-    cli.run(Validate(inputs: [Stdin], json: False), renderer(Ok(<<>>)), io)
+    cli.run(Validate(inputs: [Stdin], errors: Text), renderer(Ok(<<>>)), io)
   let assert "<stdin>: not valid UTF-8\n" = stderr(drain(events, []))
 }
 
@@ -246,7 +246,7 @@ pub fn render_reports_configuration_errors_test() {
   let events = process.new_subject()
   let assert 2 =
     cli.run(
-      Render(jobs: [#(File("a.yaml"), ToFile("a.pdf"))], json: False),
+      Render(jobs: [#(File("a.yaml"), ToFile("a.pdf"))], errors: Text),
       fn() { Error(["TYPST_PATH must not be empty"]) },
       fake_io([#("a.yaml", valid_cv)], "", events),
     )
@@ -258,7 +258,7 @@ pub fn validate_does_not_need_a_renderer_test() {
   let events = process.new_subject()
   let assert 0 =
     cli.run(
-      Validate(inputs: [File("a.yaml")], json: False),
+      Validate(inputs: [File("a.yaml")], errors: Text),
       fn() { Error(["broken"]) },
       fake_io([#("a.yaml", valid_cv)], "", events),
     )

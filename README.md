@@ -199,8 +199,8 @@ podman run --rm --network none -u "$(id -u):$(id -g)" \
 
 ```text
 yaml2cv [serve]                                        start the server (default)
-yaml2cv render [--json] [-o FILE | --out-dir DIR] INPUT...
-yaml2cv validate [--json] INPUT...
+yaml2cv render [--error-format FORMAT] [-o FILE | --out-dir DIR] INPUT...
+yaml2cv validate [--error-format FORMAT] INPUT...
 yaml2cv help
 ```
 
@@ -210,7 +210,8 @@ yaml2cv help
   `render - < cv.yaml > cv.pdf` works too.
 - Every input is processed even if one fails. Problems go to standard
   error, one line each (`cv.yaml: person.name: is required`); with
-  `--json` as one RFC 9457 problem per line, with a `file` member.
+  `--error-format json` as one RFC 9457 problem per line, with a `file`
+  member.
 - Exit status: `0` success, `1` invalid CV or render failure, `2` usage
   error or a file that cannot be read or written.
 - `-u` makes the PDFs belong to you instead of the image's user;
@@ -327,7 +328,7 @@ yaml2cv follows [Semantic Versioning](https://semver.org). From 1.0.0 on,
 these interfaces change incompatibly only in a new major version: CV schema
 version 1, the HTTP API under `/api/v1` with its problem types, the
 environment variables above, and the command line (commands, options,
-output names, `--json` output, exit codes; ADR 0048). How a CV looks within a theme, error message
+output names, the JSON error format, exit codes; ADR 0048). How a CV looks within a theme, error message
 wording, the editor and the admin listener may change in any release.
 Only the latest release gets fixes. Details are in
 [ADR 0033](docs/adr/0033-stability-promise-for-1-0.md).

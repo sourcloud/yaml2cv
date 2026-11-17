@@ -1,5 +1,5 @@
 import yaml2cv/cli/arguments.{
-  File, Help, Render, Serve, Stdin, Stdout, ToFile, Validate,
+  File, Help, Json, Render, Serve, Stdin, Stdout, Text, ToFile, Validate,
 }
 
 pub fn no_arguments_start_the_server_test() {
@@ -25,7 +25,7 @@ pub fn render_writes_pdf_next_to_input_test() {
       #(File("dir/cv.yml"), ToFile("dir/cv.pdf")),
       #(File("notes.txt"), ToFile("notes.txt.pdf")),
     ],
-    json: False,
+    errors: Text,
   )) = arguments.parse(["render", "cv-en.yaml", "dir/cv.yml", "notes.txt"])
 }
 
@@ -33,11 +33,11 @@ pub fn render_needs_an_input_test() {
   let assert Error("render needs at least one input") =
     arguments.parse(["render"])
   let assert Error("validate needs at least one input") =
-    arguments.parse(["validate", "--json"])
+    arguments.parse(["validate", "--error-format", "json"])
 }
 
 pub fn render_stdin_goes_to_stdout_test() {
-  let assert Ok(Render(jobs: [#(Stdin, Stdout)], json: False)) =
+  let assert Ok(Render(jobs: [#(Stdin, Stdout)], errors: Text)) =
     arguments.parse(["render", "-"])
 }
 
@@ -73,10 +73,11 @@ pub fn out_dir_test() {
       #(File("de/cv.yaml"), ToFile("build/cv.pdf")),
       #(File("cv-en.yml"), ToFile("build/cv-en.pdf")),
     ],
-    json: True,
+    errors: Json,
   )) =
     arguments.parse([
-      "render", "--json", "--out-dir", "build/", "de/cv.yaml", "cv-en.yml",
+      "render", "--error-format", "json", "--out-dir", "build/", "de/cv.yaml",
+      "cv-en.yml",
     ])
   let assert Ok(Render(jobs: [#(File("a.yaml"), ToFile("out/a.pdf"))], ..)) =
     arguments.parse(["render", "--out-dir=out", "a.yaml"])
@@ -110,8 +111,8 @@ pub fn double_dash_ends_options_test() {
 }
 
 pub fn validate_test() {
-  let assert Ok(Validate(inputs: [File("a.yaml"), Stdin], json: True)) =
-    arguments.parse(["validate", "a.yaml", "-", "--json"])
+  let assert Ok(Validate(inputs: [File("a.yaml"), Stdin], errors: Json)) =
+    arguments.parse(["validate", "a.yaml", "-", "--error-format", "json"])
 }
 
 pub fn validate_has_no_output_options_test() {
@@ -119,4 +120,27 @@ pub fn validate_has_no_output_options_test() {
     arguments.parse(["validate", "-o", "x", "a.yaml"])
   let assert Error("validate does not write files; --out-dir is not allowed") =
     arguments.parse(["validate", "--out-dir", "x", "a.yaml"])
+}
+
+pub fn error_format_test() {
+  let assert Ok(Validate(errors: Json, ..)) =
+    arguments.parse(["validate", "--error-format=json", "a.yaml"])
+  let assert Ok(Validate(errors: Text, ..)) =
+    arguments.parse([
+      "validate",
+      "--error-format",
+      "json",
+      "--error-format",
+      "text",
+      "a.yaml",
+    ])
+  let assert Error("--error-format must be text or json, got \"xml\"") =
+    arguments.parse(["validate", "--error-format", "xml", "a.yaml"])
+  let assert Error("--error-format needs a value") =
+    arguments.parse(["validate", "a.yaml", "--error-format"])
+}
+
+pub fn json_flag_is_gone_test() {
+  let assert Error("unknown option \"--json\"") =
+    arguments.parse(["validate", "--json", "a.yaml"])
 }

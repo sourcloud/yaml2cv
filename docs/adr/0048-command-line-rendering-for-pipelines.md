@@ -40,8 +40,8 @@ image's entrypoint passes extra arguments through, so
 **Commands.**
 
 ```text
-yaml2cv render [--json] [-o FILE | --out-dir DIR] INPUT...
-yaml2cv validate [--json] INPUT...
+yaml2cv render [--error-format FORMAT] [-o FILE | --out-dir DIR] INPUT...
+yaml2cv validate [--error-format FORMAT] INPUT...
 ```
 
 - Every input is processed, even after one fails. `-` reads standard
@@ -55,7 +55,7 @@ yaml2cv validate [--json] INPUT...
   `--out-dir` exclude each other and are not accepted by `validate`.
 - Existing output files are overwritten.
 - Progress (`cv.yaml: wrote cv.pdf`, `cv.yaml: valid`) goes to standard
-  error, so standard output carries only a PDF. With `--json` there is no
+  error, so standard output carries only a PDF. With `--error-format json` there is no
   progress output, so standard error holds only problems.
 - Standard input cannot be combined with `--out-dir`, since it has no
   name to derive the output from.
@@ -69,13 +69,17 @@ cv.yaml: person.name: is required
 cv.yaml: rendering failed
 ```
 
-With `--json`, every failed input instead produces one line on standard
-error holding the RFC 9457 problem the HTTP API would return (ADR 0010),
-with an extra `file` member. Render failures use the same problem types
+With `--error-format json` (default `text`), every failed input instead
+produces one line on standard error holding the RFC 9457 problem the HTTP
+API would return (ADR 0010), with an extra `file` member. Render failures use the same problem types
 as the API. Errors about files rather than the CV (an unreadable input,
 an unwritable output) have no API equivalent; they use the type
 `/problems/file-error` with `title`, `detail` and `file` and, as RFC 9457
 allows, no `status`.
+
+The option is not called `--json`: for a tool named yaml2cv that reads
+as if the input were JSON. `--error-format` names what it changes and can
+take further formats later.
 
 **Exit codes.** `0` all inputs succeeded; `1` at least one CV is invalid
 or could not be rendered; `2` a usage error or an input that could not be
@@ -98,7 +102,7 @@ podman run --rm --network none -u "$(id -u):$(id -g)" \
 ```
 
 **Stability.** The subcommands, flags, default output names, the
-`--json` format and the exit codes join the stable interfaces of
+JSON error format and the exit codes join the stable interfaces of
 ADR 0033. The wording of text messages does not, like error messages of
 the API.
 

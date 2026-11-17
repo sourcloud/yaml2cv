@@ -8,8 +8,8 @@ import gleam/list
 import gleam/result
 import gleam/string
 import yaml2cv/cli/arguments.{
-  type Command, type Input, type Target, File, Help, Render, Serve, Stdin,
-  Stdout, ToFile, Validate,
+  type Command, type ErrorFormat, type Input, type Target, File, Help, Json,
+  Render, Serve, Stdin, Stdout, Text, ToFile, Validate,
 }
 import yaml2cv/cv.{type Cv}
 import yaml2cv/cv/decode.{
@@ -63,7 +63,7 @@ pub fn run(
       io.write_stdout(<<arguments.usage:utf8>>)
       exit_ok
     }
-    Render(jobs:, json:) ->
+    Render(jobs:, errors:) ->
       case renderer() {
         Error(errors) -> {
           list.each(errors, fn(error) {
@@ -83,7 +83,7 @@ pub fn run(
             }
             int.max(
               status,
-              finish(outcome, input, json, io, fn() {
+              finish(outcome, input, errors, io, fn() {
                 case target {
                   ToFile(path) -> "wrote " <> path
                   Stdout -> ""
@@ -92,10 +92,10 @@ pub fn run(
             )
           })
       }
-    Validate(inputs:, json:) ->
+    Validate(inputs:, errors:) ->
       list.fold(inputs, exit_ok, fn(status, input) {
         let outcome = load(input, io) |> result.replace(Nil)
-        int.max(status, finish(outcome, input, json, io, fn() { "valid" }))
+        int.max(status, finish(outcome, input, errors, io, fn() { "valid" }))
       })
   }
 }
@@ -134,7 +134,7 @@ fn write(target: Target, pdf: BitArray, io: Io) -> Result(Nil, Failure) {
 fn finish(
   outcome: Result(Nil, Failure),
   input: Input,
-  json: Bool,
+  errors: ErrorFormat,
   io: Io,
   progress: fn() -> String,
 ) -> Int {
@@ -142,20 +142,20 @@ fn finish(
     File(path) -> path
     Stdin -> "<stdin>"
   }
-  case outcome, json {
-    Ok(Nil), True -> exit_ok
-    Ok(Nil), False -> {
+  case outcome, errors {
+    Ok(Nil), Json -> exit_ok
+    Ok(Nil), Text -> {
       case progress() {
         "" -> Nil
         message -> io.write_stderr(name <> ": " <> message <> "\n")
       }
       exit_ok
     }
-    Error(failure), True -> {
+    Error(failure), Json -> {
       io.write_stderr(json.to_string(failure_json(failure, name)) <> "\n")
       status(failure)
     }
-    Error(failure), False -> {
+    Error(failure), Text -> {
       failure_lines(failure, name)
       |> list.each(fn(line) { io.write_stderr(line <> "\n") })
       status(failure)

@@ -13,9 +13,17 @@ pub type Command {
   /// Print the usage.
   Help
   /// Render every input to its target.
-  Render(jobs: List(#(Input, Target)), json: Bool)
+  Render(jobs: List(#(Input, Target)), errors: ErrorFormat)
   /// Validate every input.
-  Validate(inputs: List(Input), json: Bool)
+  Validate(inputs: List(Input), errors: ErrorFormat)
+}
+
+/// How problems are reported on standard error.
+pub type ErrorFormat {
+  /// One line of text per problem.
+  Text
+  /// One RFC 9457 problem document per line.
+  Json
 }
 
 /// Where a CV is read from.
@@ -35,17 +43,19 @@ pub const usage =
   "Usage:
   yaml2cv [serve]
       Start the HTTP server (the default).
-  yaml2cv render [--json] [-o FILE | --out-dir DIR] INPUT...
+  yaml2cv render [--error-format FORMAT] [-o FILE | --out-dir DIR] INPUT...
       Render CVs to PDF. cv.yaml becomes cv.pdf next to it, - reads
       standard input and writes standard output. -o FILE names the output
       of a single input (- for standard output), --out-dir DIR writes all
       PDFs into an existing directory.
-  yaml2cv validate [--json] INPUT...
+  yaml2cv validate [--error-format FORMAT] INPUT...
       Check CVs without rendering them.
   yaml2cv help
       Show this text.
 
-  --json  report problems as RFC 9457 JSON, one per line on standard error
+  --error-format text|json
+      How problems are reported on standard error: one line of text each
+      (the default), or one RFC 9457 JSON problem per line.
 
 Exit status: 0 success, 1 invalid CV or render failure, 2 usage or file error.
 "
@@ -55,7 +65,7 @@ type Options {
     inputs: List(Input),
     output: Result(String, Nil),
     out_dir: Result(String, Nil),
-    json: Bool,
+    errors: ErrorFormat,
   )
 }
 
@@ -83,7 +93,7 @@ fn options(
 ) -> Result(Options, String) {
   use options <- result.try(collect(
     arguments,
-    Options([], Error(Nil), Error(Nil), False),
+    Options([], Error(Nil), Error(Nil), Text),
   ))
   let inputs = list.reverse(options.inputs)
   use <- bool.guard(inputs == [], Error(command <> " needs at least one input"))
@@ -109,7 +119,11 @@ fn collect(
           }),
         ),
       )
-    ["--json", ..rest] -> collect(rest, Options(..options, json: True))
+    ["--error-format", value, ..rest] | ["--error-format=" <> value, ..rest] -> {
+      use errors <- result.try(error_format(value))
+      collect(rest, Options(..options, errors:))
+    }
+    ["--error-format"] -> Error("--error-format needs a value")
     ["-o", value, ..rest] ->
       collect(rest, Options(..options, output: Ok(value)))
     ["-o"] -> Error("-o needs a value")
@@ -124,6 +138,17 @@ fn collect(
       Error("unknown option " <> string.inspect(option))
     [path, ..rest] ->
       collect(rest, Options(..options, inputs: [File(path), ..options.inputs]))
+  }
+}
+
+fn error_format(value: String) -> Result(ErrorFormat, String) {
+  case value {
+    "text" -> Ok(Text)
+    "json" -> Ok(Json)
+    _ ->
+      Error(
+        "--error-format must be text or json, got " <> string.inspect(value),
+      )
   }
 }
 
@@ -159,14 +184,14 @@ fn render(options: Options) -> Result(Command, String) {
       )
   })
   use _ <- result.try(unique_targets(jobs, []))
-  Ok(Render(jobs:, json: options.json))
+  Ok(Render(jobs:, errors: options.errors))
 }
 
 fn validate(options: Options) -> Result(Command, String) {
   case options.output, options.out_dir {
     Ok(_), _ -> Error("validate does not write files; -o is not allowed")
     _, Ok(_) -> Error("validate does not write files; --out-dir is not allowed")
-    _, _ -> Ok(Validate(inputs: options.inputs, json: options.json))
+    _, _ -> Ok(Validate(inputs: options.inputs, errors: options.errors))
   }
 }
 

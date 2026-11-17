@@ -31,7 +31,7 @@ yaml2cv render - < "$tmp/cv-en.yaml" > "$tmp/stdout.pdf"
 echo "ok   render stdin to stdout"
 
 status=0
-yaml2cv validate --json bad.yaml 2> "$tmp/err" || status=$?
+yaml2cv validate --error-format json bad.yaml 2> "$tmp/err" || status=$?
 [ "$status" -eq 1 ] || { echo "validate exited with $status, expected 1" >&2; exit 1; }
 grep -q '"type":"/problems/invalid-cv"' "$tmp/err" || { echo "no invalid-cv problem" >&2; exit 1; }
 echo "ok   validate"
