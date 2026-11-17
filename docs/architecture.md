@@ -129,6 +129,7 @@ flowchart TB
     author["CV author<br/><i>[Person]</i><br/>Writes and renders a CV"]:::person
     client["API client<br/><i>[Software System]</i><br/>Script or pipeline that<br/>validates or renders CVs"]:::external
     operator["Operator<br/><i>[Person]</i><br/>Deploys and watches instances"]:::person
+    pipeline["CI pipeline<br/><i>[Software System]</i><br/>Renders CVs kept in a<br/>repository, no server"]:::external
 
     yaml2cv["yaml2cv<br/><i>[Software System]</i><br/>Validates CVs written in YAML<br/>and renders them to PDF"]:::system
 
@@ -138,6 +139,7 @@ flowchart TB
     author -- "edits CV, downloads PDF<br/><i>[HTTPS, browser]</i>" --> yaml2cv
     client -- "POST YAML, gets PDF or problem<br/><i>[HTTPS, JSON/PDF]</i>" --> yaml2cv
     operator -- "reads instance document<br/><i>[HTTP, admin port]</i>" --> yaml2cv
+    pipeline -- "runs render, validate<br/><i>[command line, files]</i>" --> yaml2cv
     yaml2cv -- "sends heartbeats<br/><i>[UDP, JSON]</i>" --> collector
     collector -. "follows links<br/><i>[HTTP, admin port]</i>" .-> yaml2cv
     author -. "follows source link<br/><i>[HTTPS]</i>" .-> github
@@ -152,6 +154,7 @@ flowchart TB
 | --- | --- | --- |
 | CV author | YAML typed into the editor, or a `cv.yaml` imported in the browser; a photo picked in the browser | Validation status, SVG page preview, PDF download, `cv.yaml` download |
 | API client | YAML request body (`application/yaml`, `text/yaml`, `text/plain`) | `application/pdf`, `{"valid": true}` or RFC 9457 problem details |
+| CI pipeline | Arguments, CV files or standard input (ADR 0048) | PDF files or standard output, problems on standard error, exit status |
 | Operator | Environment variables, admin HTTP requests | Instance document (JSON), logs |
 | Heartbeat collector | — | One UDP datagram per interval with name, version, address, status and admin links |
 | GitHub | — (nothing is fetched at run time) | The editor footer links to the commit and the repository |
@@ -166,6 +169,7 @@ is the optional heartbeat.
 | Public listener, `PORT` (8000) | Plain HTTP/1.1 | TLS and per-client rate limiting belong to a reverse proxy in front. |
 | Admin listener, `ADMIN_PORT` (9000) | Plain HTTP/1.1 | Bound to `127.0.0.1` by default; never expose it to the internet. |
 | Heartbeat, `PHONE_HOME_TARGET` | UDP, one JSON datagram | Fire and forget; send errors are logged. |
+| Command line | Arguments, files, standard input and output, exit status | Selected by arguments; no listener, works with `--network none` (ADR 0048). |
 | Typst | Child process through an Erlang port | Arguments only, no shell; job directory as working directory. |
 
 ---
@@ -196,10 +200,11 @@ flowchart TB
     client["API client<br/><i>[Software System]</i>"]:::external
     operator["Operator<br/><i>[Person]</i>"]:::person
     collector["Heartbeat collector<br/><i>[Software System]</i>"]:::external
+    pipeline["CI pipeline<br/><i>[Software System]</i>"]:::external
 
     subgraph boundary["yaml2cv [Software System]"]
         browser["Browser editor<br/><i>[Container: HTML, htmx, JavaScript]</i><br/>Editor page, visual blocks,<br/>completion, photo cropping"]:::container
-        service["yaml2cv service<br/><i>[Container: Gleam on BEAM, Wisp, Mist]</i><br/>Validates, renders, serves the editor,<br/>API and admin listener"]:::container
+        service["yaml2cv service<br/><i>[Container: Gleam on BEAM, Wisp, Mist]</i><br/>Validates, renders, serves the editor,<br/>API and admin listener; or runs<br/>one command-line command"]:::container
         typst["Typst compiler<br/><i>[Container: Typst CLI, one process per render]</i><br/>Compiles a theme with the CV JSON<br/>to PDF or SVG pages"]:::container
         jobs[("Job directories<br/><i>[Container: file system, WORK_DIR]</i><br/>One private temporary<br/>directory per render")]:::container
         assets[("Application assets<br/><i>[Container: priv directory, read-only]</i><br/>Themes, fonts, static files,<br/>example CV, notices")]:::container
@@ -209,6 +214,7 @@ flowchart TB
     browser -- "page, htmx fragments, PDF<br/><i>[HTTP, HTML/form posts]</i>" --> service
     client -- "validate, render<br/><i>[HTTP, YAML/JSON/PDF]</i>" --> service
     operator -- "instance document<br/><i>[HTTP, admin port]</i>" --> service
+    pipeline -- "render, validate<br/><i>[command line, files]</i>" --> service
     service -- "heartbeat<br/><i>[UDP]</i>" --> collector
     service -- "writes cv.json, photo, theme;<br/>reads PDF or SVG; deletes" --> jobs
     service -- "starts with timeout<br/><i>[Erlang port]</i>" --> typst
@@ -223,7 +229,7 @@ flowchart TB
 | Container | Responsibility | Source |
 | --- | --- | --- |
 | Browser editor | Renders the server's HTML; htmx posts the form on input and swaps fragments. `editor.js` adds indentation, line numbers, jump to error, schema completion, the YAML file menu, photo cropping and re-encoding, and the photo placeholder for previews. `theme.js` and `language.js` remember the colour theme and UI language in `localStorage`. | `priv/static/` |
-| yaml2cv service | The Gleam application: configuration, HTTP routing, decoding, rendering orchestration, editor pages, admin listener, heartbeat. | `src/` |
+| yaml2cv service | The Gleam application: configuration, HTTP routing, decoding, rendering orchestration, editor pages, admin listener, heartbeat. Started with `render` or `validate`, the same binary works on files instead and exits (ADR 0048). | `src/` |
 | Typst compiler | Turns `cv.typ` plus `cv.json` (and the photo) into `cv.pdf` or `page-NN.svg`. Runs with `--root .`, `--ignore-system-fonts` and only the bundled fonts. | external binary, `TYPST_PATH` |
 | Job directories | Hold the inputs and outputs of exactly one render. Mode `0700`, removed whatever the outcome. | `WORK_DIR` |
 | Application assets | Typst themes (`themes/<name>/cv.typ`), Inter fonts, CSS/JS/htmx, the example CV, `notices.json` (image builds only). | `priv/` |
@@ -258,7 +264,8 @@ flowchart TB
     end
 
     subgraph ops["Start-up and operations"]
-        main["yaml2cv<br/><i>[Component: entry point]</i><br/>Boot, supervision tree"]:::container
+        main["yaml2cv<br/><i>[Component: entry point]</i><br/>Dispatch by arguments, boot,<br/>supervision tree"]:::container
+        cli["cli, cli/arguments<br/><i>[Component]</i><br/>Command-line render<br/>and validate"]:::container
         config["config, build, notices<br/><i>[Component]</i><br/>Environment, revision,<br/>licence data"]:::container
         observe["observe/*<br/><i>[Component]</i><br/>Admin listener, document,<br/>network, system, heartbeat"]:::container
     end
@@ -267,6 +274,10 @@ flowchart TB
     main --> router
     main --> observe
     main --> limiter
+    main --> cli
+    cli --> decode
+    cli --> renderer
+    cli --> api
     router --> api
     router --> editor
     router --> ui
@@ -296,7 +307,7 @@ flowchart TB
 | --- | --- |
 | `router` | Single entry for public HTTP requests. Middleware in order: access log, crash rescue, `HEAD`, gzip (`compress`), security headers, static files under `/static`. Dispatches by path; adds `vary` headers for localised responses. Holds a `Context` with every dependency (renderer, limits, build, example CV, notices) so tests can swap them. |
 | `api` | `POST /api/v1/validate` and `/render`: checks content type and body size, decodes, renders, maps decode and render errors to problem types. |
-| `problem` | Builds RFC 9457 `application/problem+json` responses. |
+| `problem` | Maps decode and render errors to RFC 9457 problems and builds `application/problem+json` responses; the command line reuses the mapping. |
 | `editor` | The editor page (`GET /`), language switch (`POST /`), `POST /editor/preview` (status plus out-of-band preview), `POST /editor/download`. |
 | `visual`, `visual_form` | `POST /editor/visual` turns YAML into blocks; `POST /editor/visual/update` turns the posted block form back into YAML (ADR 0024). |
 | `ui/*` | One module per UI component, each paired with `priv/static/css/components/<name>.css`; builds markup with `lustre/element` as a pure HTML builder (ADR 0011). |
@@ -329,7 +340,9 @@ flowchart TB
 
 | Module | Responsibility |
 | --- | --- |
-| `yaml2cv` | `main`: loads configuration, reads the example CV and notices, starts the supervision tree; exits with status 1 on any start-up error. |
+| `yaml2cv` | `main`: parses the arguments. Without arguments or with `serve` it loads configuration, reads the example CV and notices, starts the supervision tree, and exits with status 1 on any start-up error. Otherwise it runs `cli` with real files and standard I/O (`yaml2cv_stdio_ffi.erl`) and halts with its exit status. |
+| `cli/arguments` | Parses the arguments into `Serve`, `Help`, `Render` (input/target pairs) or `Validate`; derives output names and rejects ambiguous combinations (ADR 0048). |
+| `cli` | Runs a command with injected I/O: reads each input, decodes, renders with Typst (no limiter), writes the PDF, reports problems as text or RFC 9457 JSON, returns the exit status. |
 | `config` | Parses and validates every environment variable; collects all errors; warns about risky combinations (e.g. heartbeat with a loopback admin listener). |
 | `build` | Interprets `GIT_REVISION` as clean, modified (`-dirty`) or unknown for the footer (ADR 0031). |
 | `notices` | Reads `priv/notices.json` (shared format with the generator in `dev/notices.gleam`). |
@@ -525,6 +538,21 @@ A collector treats an instance as missing after `HEARTBEAT_MIA_MS` of
 silence and can follow the absolute admin URLs in the payload. Send errors
 are logged and never stop the service (ADR 0020).
 
+### 6.6 Render CVs from the command line
+
+1. `main` parses the arguments; anything but none or `serve` selects the
+   command line. A usage error prints the usage and halts with 2.
+2. For `render`, `config.load` builds an unlimited Typst renderer; errors
+   halt with 2. `validate` needs no renderer.
+3. Each input is read (file or standard input), decoded and, for
+   `render`, rendered and written to its target (file or standard output).
+   A failing input is reported and the next one is processed.
+4. The VM halts with the highest exit status: 0 all fine, 1 invalid CV or
+   render failure, 2 file error.
+
+Nothing listens on a port, so the container can run with `--network none`
+in a CI job (ADR 0048).
+
 ---
 
 ## 7. Deployment view
@@ -567,6 +595,7 @@ flowchart TB
 | Probes | `GET /healthz` on the public port for liveness and readiness. |
 | Admin listener | Loopback by default; reachable from outside only with `ADMIN_BIND_ADDRESS` and a published port. |
 | Licences | `/app/THIRD_PARTY_NOTICES.md`, `/app/licenses/`, and `/licenses` in the UI. |
+| Command line | The same image renders files when given arguments, e.g. in a CI job: `--network none`, the caller's user (`-u`) and a mounted working directory (ADR 0048). |
 
 ### 7.2 Image build
 
@@ -595,7 +624,7 @@ flowchart LR
     dev["Developer<br/><i>nix develop / direnv</i><br/>just check"] -- "push / PR" --> ci
     subgraph gh["GitHub Actions"]
         ci["ci.yml<br/>deps-check, format,<br/>type-check, tests<br/><i>in the Nix dev shell</i>"]
-        image["image.yml<br/>build amd64 image,<br/>smoke test"]
+        image["image.yml<br/>build amd64 image,<br/>server and command-line<br/>smoke tests"]
         release["release.yml (tag v*)<br/>tag = gleam.toml version →<br/>CI → multi-arch build + push →<br/>SLSA attestation → GitHub Release"]
     end
     dev -- "tag vX.Y.Z" --> release
@@ -775,7 +804,7 @@ important ones by topic:
 | Platform and tooling | [0002](adr/0002-use-gleam-on-the-erlang-target.md) Gleam on BEAM · [0005](adr/0005-nix-flake-dev-environment.md) Nix flake · [0008](adr/0008-own-yaml-bindings-over-yamerl.md) own YAML bindings · [0014](adr/0014-upgrade-to-erlang-otp-29.md) OTP 29 |
 | Rendering | [0003](adr/0003-pluggable-renderer-with-typst-backend.md) pluggable renderer · [0009](adr/0009-typst-renderer-execution-and-themes.md) execution, limits, themes · [0015](adr/0015-minimal-theme.md), [0030](adr/0030-photo-centred-creative-themes.md) themes · [0035](adr/0035-machine-readable-pdf-text.md), [0037](adr/0037-single-reading-order-in-every-theme.md) machine-readable PDFs |
 | CV schema | [0007](adr/0007-cv-schema-version-1.md) schema v1 · [0028](adr/0028-profile-photo.md) photo · [0036](adr/0036-cv-language-and-candidate-metadata.md) language and metadata |
-| HTTP API and operation | [0010](adr/0010-http-api.md) API, configuration, limits · [0019](adr/0019-svg-preview-and-gzip.md) gzip · [0020](adr/0020-phone-home-observability.md) admin and heartbeat · [0033](adr/0033-stability-promise-for-1-0.md) stability promise |
+| HTTP API, command line and operation | [0010](adr/0010-http-api.md) API, configuration, limits · [0019](adr/0019-svg-preview-and-gzip.md) gzip · [0020](adr/0020-phone-home-observability.md) admin and heartbeat · [0033](adr/0033-stability-promise-for-1-0.md) stability promise · [0048](adr/0048-command-line-rendering-for-pipelines.md) command line |
 | Editor | [0004](adr/0004-server-rendered-web-app-with-wisp-and-htmx.md) Wisp and htmx · [0011](adr/0011-browser-editor.md) editor and components · [0024](adr/0024-visual-block-editor.md) visual editor · [0025](adr/0025-ui-localisation.md) localisation · [0039](adr/0039-lean-preview-requests.md), [0041](adr/0041-one-request-for-status-and-preview.md) lean previews · [0045](adr/0045-schema-completion-in-the-yaml-editor.md) completion |
 | Build, release, supply chain | [0013](adr/0013-container-image-and-release.md) image and releases · [0023](adr/0023-release-notes-from-conventional-commits.md) release notes · [0027](adr/0027-lockfile-drift-check.md) lockfile check · [0031](adr/0031-build-provenance-and-source-link.md) provenance · [0032](adr/0032-complete-notices-and-licenses-page.md) notices |
 | Documentation | [0001](adr/0001-record-architecture-decisions.md) ADRs · [0047](adr/0047-architecture-documentation-with-arc42-and-c4.md) this document |
