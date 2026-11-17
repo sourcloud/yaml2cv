@@ -53,4 +53,4 @@ for the process.
 | [0045](0045-schema-completion-in-the-yaml-editor.md) | Complete schema keys and values in the YAML editor | Accepted |
 | [0046](0046-show-pickers-in-the-readme-demo.md) | Show select lists and the file picker in the README demo | Accepted |
 | [0047](0047-architecture-documentation-with-arc42-and-c4.md) | Document the architecture with arc42 and C4 | Accepted |
-| [0048](0048-command-line-rendering-for-pipelines.md) | Render and validate CVs from the command line | Proposed |
+| [0048](0048-command-line-rendering-for-pipelines.md) | Render and validate CVs from the command line | Accepted |

@@ -1,6 +1,6 @@
 # 0048. Render and validate CVs from the command line
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-16
 
 ## Context
