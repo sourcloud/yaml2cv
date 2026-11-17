@@ -1,5 +1,8 @@
-//// Entry point: loads the configuration and starts the supervision tree.
+//// Entry point: without arguments, or with `serve`, loads the
+//// configuration and starts the supervision tree; otherwise runs the
+//// command line (ADR 0048).
 
+import argv
 import gleam/bit_array
 import gleam/erlang/process
 import gleam/int
@@ -13,6 +16,8 @@ import simplifile
 import wisp
 import wisp/wisp_mist
 import yaml2cv/build.{Build}
+import yaml2cv/cli
+import yaml2cv/cli/arguments.{Serve}
 import yaml2cv/config.{type Config}
 import yaml2cv/notices.{type Component}
 import yaml2cv/observe/admin
@@ -25,6 +30,45 @@ import yaml2cv/render/typst
 import yaml2cv/web/router.{Context}
 
 pub fn main() -> Nil {
+  case arguments.parse(argv.load().arguments) {
+    Ok(Serve) -> serve()
+    Ok(command) -> halt(cli.run(command, renderer, stdio()))
+    Error(message) -> halt(cli.usage_error(message, stdio()))
+  }
+}
+
+/// A Typst renderer configured from the environment, without the limiter:
+/// the command line renders one CV at a time.
+fn renderer() {
+  config.load()
+  |> result.map(fn(config) { typst.new(config.typst) })
+}
+
+fn stdio() -> cli.Io {
+  cli.Io(
+    read_file: fn(path) {
+      simplifile.read_bits(path) |> result.map_error(simplifile.describe_error)
+    },
+    read_stdin:,
+    write_file: fn(path, bytes) {
+      simplifile.write_bits(path, bytes)
+      |> result.map_error(simplifile.describe_error)
+    },
+    write_stdout:,
+    write_stderr:,
+  )
+}
+
+@external(erlang, "yaml2cv_stdio_ffi", "read_stdin")
+fn read_stdin() -> Result(BitArray, String)
+
+@external(erlang, "yaml2cv_stdio_ffi", "write_stdout")
+fn write_stdout(bytes: BitArray) -> Nil
+
+@external(erlang, "yaml2cv_stdio_ffi", "write_stderr")
+fn write_stderr(text: String) -> Nil
+
+fn serve() -> Nil {
   wisp.configure_logger()
   case boot() {
     Ok(config) -> {
