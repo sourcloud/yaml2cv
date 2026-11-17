@@ -245,7 +245,7 @@ jobs:
           docker run --rm --network none -u "$(id -u):$(id -g)" \
             -v "$PWD:/work" -w /work ghcr.io/sourcloud/yaml2cv:1 \
             render --out-dir out cv-*.yaml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cv
           path: out/*.pdf
