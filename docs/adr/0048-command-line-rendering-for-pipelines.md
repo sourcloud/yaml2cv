@@ -55,7 +55,10 @@ yaml2cv validate [--json] INPUT...
   `--out-dir` exclude each other and are not accepted by `validate`.
 - Existing output files are overwritten.
 - Progress (`cv.yaml: wrote cv.pdf`, `cv.yaml: valid`) goes to standard
-  error, so standard output carries only a PDF.
+  error, so standard output carries only a PDF. With `--json` there is no
+  progress output, so standard error holds only problems.
+- Standard input cannot be combined with `--out-dir`, since it has no
+  name to derive the output from.
 
 **Errors.** As text on standard error, one line per problem, prefixed with
 the file name (`<stdin>` for standard input):
@@ -69,7 +72,10 @@ cv.yaml: rendering failed
 With `--json`, every failed input instead produces one line on standard
 error holding the RFC 9457 problem the HTTP API would return (ADR 0010),
 with an extra `file` member. Render failures use the same problem types
-as the API.
+as the API. Errors about files rather than the CV (an unreadable input,
+an unwritable output) have no API equivalent; they use the type
+`/problems/file-error` with `title`, `detail` and `file` and, as RFC 9457
+allows, no `status`.
 
 **Exit codes.** `0` all inputs succeeded; `1` at least one CV is invalid
 or could not be rendered; `2` a usage error or an input that could not be
@@ -103,5 +109,9 @@ the API.
 - `argv` moves from a development to a runtime dependency.
 - The problem documents are built in one place and shared by the API and
   the command line.
+- Standard input and output are switched to latin1 encoding by the
+  command line, so PDF bytes pass through the Erlang I/O system unchanged.
+- The image build runs a command-line smoke test
+  (`scripts/cli-smoke-test.sh`) next to the server smoke test.
 - A GitHub Action or a template repository can wrap the command later
   without changing it.

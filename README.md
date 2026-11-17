@@ -5,7 +5,7 @@ Keep your CV as structured data, get a typeset PDF back.
 yaml2cv takes a CV written in a small YAML schema, validates it and renders it
 to PDF using [Typst](https://typst.app). It ships as a lightweight, stateless
 web application with an HTTP API and a browser-based editor with live
-validation and preview.
+validation and preview, and as a command line for pipelines.
 
 Written in [Gleam](https://gleam.run) on the BEAM. The
 [architecture documentation](docs/architecture.md) describes how it is built;
@@ -186,6 +186,95 @@ The YAML body must be sent as `application/yaml`, `text/yaml` or
 The full list of problem types is in
 [ADR 0010](docs/adr/0010-http-api.md).
 
+## Command line
+
+Given arguments, the same program and image render or validate files
+instead of starting the server (ADR 0048):
+
+```sh
+podman run --rm --network none -u "$(id -u):$(id -g)" \
+  -v "$PWD:/work" -w /work ghcr.io/sourcloud/yaml2cv:1 \
+  render cv-en.yaml cv-de.yaml          # writes cv-en.pdf, cv-de.pdf
+```
+
+```text
+yaml2cv [serve]                                        start the server (default)
+yaml2cv render [--json] [-o FILE | --out-dir DIR] INPUT...
+yaml2cv validate [--json] INPUT...
+yaml2cv help
+```
+
+- `cv.yaml` becomes `cv.pdf` next to it. `-o FILE` names the output of a
+  single input, `--out-dir DIR` collects all PDFs in an existing
+  directory. `-` reads standard input and writes standard output, so
+  `render - < cv.yaml > cv.pdf` works too.
+- Every input is processed even if one fails. Problems go to standard
+  error, one line each (`cv.yaml: person.name: is required`); with
+  `--json` as one RFC 9457 problem per line, with a `file` member.
+- Exit status: `0` success, `1` invalid CV or render failure, `2` usage
+  error or a file that cannot be read or written.
+- `-u` makes the PDFs belong to you instead of the image's user;
+  `--network none` is possible because nothing is fetched or sent.
+  `TYPST_PATH`, `WORK_DIR` and `RENDER_TIMEOUT_MS` apply as for the server.
+
+From a source checkout: `gleam run -- render cv.yaml`.
+
+### Rendering in CI
+
+Keep the CV in a **private** repository and let a workflow render it on
+every push: one branch per focus (`backend`, `management`), tags for the
+versions you sent out. Example for GitHub Actions,
+`.github/workflows/cv.yml`:
+
+```yaml
+name: CV
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write   # only for the release on tags; else: read
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Render
+        run: |
+          mkdir -p out
+          docker run --rm --network none -u "$(id -u):$(id -g)" \
+            -v "$PWD:/work" -w /work ghcr.io/sourcloud/yaml2cv:1 \
+            render --out-dir out cv-*.yaml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cv
+          path: out/*.pdf
+          retention-days: 7
+      - name: Attach to a release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" out/*.pdf --title "$GITHUB_REF_NAME" --notes ""
+```
+
+An invalid CV fails the job and the log names the offending paths. Run
+`validate` in a pull-request workflow to check changes before merging.
+
+Privacy:
+
+- The CV never leaves the runner: the container has no network, and
+  yaml2cv sends nothing anywhere (the optional heartbeat is off unless
+  `PHONE_HOME_TARGET` is set, and carries no CV data).
+- Everyone with read access to the repository can download artifacts and
+  releases. Keep the repository private and the artifact retention short.
+- Git keeps every committed version, including a photo in `person.photo`;
+  removing it later means rewriting history.
+- GitHub-hosted runners run on GitHub's machines; use a self-hosted runner
+  if that is too much.
+- Pin the image by digest (`ghcr.io/sourcloud/yaml2cv@sha256:...`) and
+  check it with `gh attestation verify` (see
+  [Verifying an image](#verifying-an-image)); Dependabot or Renovate can
+  keep the pin current. Pin the actions to commit SHAs as well.
+
 ## Configuration
 
 All settings are environment variables:
@@ -236,8 +325,9 @@ can reach. The format is documented in
 
 yaml2cv follows [Semantic Versioning](https://semver.org). From 1.0.0 on,
 these interfaces change incompatibly only in a new major version: CV schema
-version 1, the HTTP API under `/api/v1` with its problem types, and the
-environment variables above. How a CV looks within a theme, error message
+version 1, the HTTP API under `/api/v1` with its problem types, the
+environment variables above, and the command line (commands, options,
+output names, `--json` output, exit codes; ADR 0048). How a CV looks within a theme, error message
 wording, the editor and the admin listener may change in any release.
 Only the latest release gets fixes. Details are in
 [ADR 0033](docs/adr/0033-stability-promise-for-1-0.md).
@@ -262,6 +352,8 @@ Only the latest release gets fixes. Details are in
   (ADR 0031)
 - [x] M14 — 1.0: stability promise (ADR 0033), security policy, major-version
   image tag
+- [x] M15 — Command line for pipelines: render and validate files, CI
+  example (ADR 0048)
 
 ## Security
 
