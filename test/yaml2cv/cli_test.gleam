@@ -44,7 +44,11 @@ fn fake_io(
 }
 
 fn renderer(result: Result(BitArray, RenderError)) {
-  Renderer(render_pdf: fn(_) { result }, render_svg_pages: fn(_) { Ok([]) })
+  fn() {
+    Ok(
+      Renderer(render_pdf: fn(_) { result }, render_svg_pages: fn(_) { Ok([]) }),
+    )
+  }
 }
 
 fn drain(events: Subject(Event), acc: List(Event)) -> List(Event) {
@@ -236,4 +240,26 @@ pub fn usage_error_test() {
     cli.usage_error("unknown command \"x\"", fake_io([], "", events))
   let assert "yaml2cv: unknown command \"x\"\n\nUsage:" <> _ =
     stderr(drain(events, []))
+}
+
+pub fn render_reports_configuration_errors_test() {
+  let events = process.new_subject()
+  let assert 2 =
+    cli.run(
+      Render(jobs: [#(File("a.yaml"), ToFile("a.pdf"))], json: False),
+      fn() { Error(["TYPST_PATH must not be empty"]) },
+      fake_io([#("a.yaml", valid_cv)], "", events),
+    )
+  let assert "yaml2cv: invalid configuration: TYPST_PATH must not be empty\n" =
+    stderr(drain(events, []))
+}
+
+pub fn validate_does_not_need_a_renderer_test() {
+  let events = process.new_subject()
+  let assert 0 =
+    cli.run(
+      Validate(inputs: [File("a.yaml")], json: False),
+      fn() { Error(["broken"]) },
+      fake_io([#("a.yaml", valid_cv)], "", events),
+    )
 }

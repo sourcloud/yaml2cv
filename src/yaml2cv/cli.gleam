@@ -49,8 +49,14 @@ type Failure {
 }
 
 /// Runs a command-line command and returns the exit status. `Serve` is
-/// handled by the caller and does nothing here.
-pub fn run(command: Command, renderer: Renderer, io: Io) -> Int {
+/// handled by the caller and does nothing here. `renderer` is only called
+/// by `Render`, so a broken configuration does not stop `Validate`; its
+/// errors are messages for the user.
+pub fn run(
+  command: Command,
+  renderer: fn() -> Result(Renderer, List(String)),
+  io: Io,
+) -> Int {
   case command {
     Serve -> exit_ok
     Help -> {
@@ -58,25 +64,34 @@ pub fn run(command: Command, renderer: Renderer, io: Io) -> Int {
       exit_ok
     }
     Render(jobs:, json:) ->
-      list.fold(jobs, exit_ok, fn(status, job) {
-        let #(input, target) = job
-        let outcome = {
-          use cv <- result.try(load(input, io))
-          use pdf <- result.try(
-            renderer.render_pdf(cv) |> result.map_error(RenderFailed),
-          )
-          write(target, pdf, io)
+      case renderer() {
+        Error(errors) -> {
+          list.each(errors, fn(error) {
+            io.write_stderr("yaml2cv: invalid configuration: " <> error <> "\n")
+          })
+          exit_usage
         }
-        int.max(
-          status,
-          finish(outcome, input, json, io, fn() {
-            case target {
-              ToFile(path) -> "wrote " <> path
-              Stdout -> ""
+        Ok(renderer) ->
+          list.fold(jobs, exit_ok, fn(status, job) {
+            let #(input, target) = job
+            let outcome = {
+              use cv <- result.try(load(input, io))
+              use pdf <- result.try(
+                renderer.render_pdf(cv) |> result.map_error(RenderFailed),
+              )
+              write(target, pdf, io)
             }
-          }),
-        )
-      })
+            int.max(
+              status,
+              finish(outcome, input, json, io, fn() {
+                case target {
+                  ToFile(path) -> "wrote " <> path
+                  Stdout -> ""
+                }
+              }),
+            )
+          })
+      }
     Validate(inputs:, json:) ->
       list.fold(inputs, exit_ok, fn(status, input) {
         let outcome = load(input, io) |> result.replace(Nil)
