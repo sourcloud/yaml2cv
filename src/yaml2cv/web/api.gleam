@@ -9,11 +9,9 @@ import gleam/list
 import gleam/string
 import wisp.{type Request, type Response}
 import yaml2cv/cv.{type Cv}
-import yaml2cv/cv/decode.{
-  DocumentTooComplex, DocumentTooLarge, SchemaError, SyntaxError,
-}
+import yaml2cv/cv/decode
 import yaml2cv/render.{type RenderError, type Renderer}
-import yaml2cv/web/problem.{type Problem}
+import yaml2cv/web/problem
 
 const yaml_content_types = ["application/yaml", "text/yaml", "text/plain"]
 
@@ -62,17 +60,18 @@ fn require_cv(
   use <- require_yaml_content_type(request)
   let request = wisp.set_max_body_size(request, max_body_bytes)
   case wisp.read_body_bits(request) {
-    Error(Nil) -> problem.to_response(content_too_large())
+    Error(Nil) -> problem.to_response(problem.content_too_large())
     Ok(body) ->
       case bit_array.to_string(body) {
         Error(Nil) ->
-          problem.to_response(invalid_yaml(
+          problem.to_response(problem.invalid_yaml(
             "The request body is not valid UTF-8.",
           ))
         Ok(source) ->
           case decode.from_yaml(source) {
             Ok(cv) -> next(cv)
-            Error(errors) -> problem.to_response(decode_problem(errors))
+            Error(errors) ->
+              problem.to_response(problem.from_decode_errors(errors))
           }
       }
   }
@@ -112,93 +111,18 @@ fn require_yaml_content_type(
   }
 }
 
-fn decode_problem(errors: List(decode.DecodeError)) -> Problem {
-  case errors {
-    [SyntaxError(message:, line:, column:), ..] ->
-      invalid_yaml(message)
-      |> problem.with("line", json.int(line))
-      |> problem.with("column", json.int(column))
-    [DocumentTooLarge(..), ..] | [DocumentTooComplex, ..] -> content_too_large()
-    _ ->
-      problem.new(
-        slug: "invalid-cv",
-        title: "Invalid CV",
-        status: 422,
-        detail: "The CV does not match the schema.",
-      )
-      |> problem.with(
-        "errors",
-        json.array(errors, fn(error) {
-          case error {
-            SchemaError(path:, problem:) ->
-              json.object([
-                #("path", json.string(path)),
-                #("message", json.string(decode.describe(problem))),
-              ])
-            // Syntax and size errors never mix with schema errors.
-            SyntaxError(..) | DocumentTooLarge(..) | DocumentTooComplex ->
-              json.null()
-          }
-        }),
-      )
-  }
-}
-
-fn invalid_yaml(detail: String) -> Problem {
-  problem.new(slug: "invalid-yaml", title: "Invalid YAML", status: 422, detail:)
-}
-
-fn content_too_large() -> Problem {
-  problem.new(
-    slug: "content-too-large",
-    title: "Content too large",
-    status: 413,
-    detail: "The CV document is too large or nested too deeply.",
-  )
-}
-
 fn render_error(error: RenderError) -> Response {
   case error {
-    render.Overloaded -> {
-      wisp.log_warning("render rejected: server overloaded")
-      problem.new(
-        slug: "overloaded",
-        title: "Server busy",
-        status: 503,
-        detail: "Too many CVs are being rendered right now. Try again shortly.",
-      )
-      |> problem.to_response
-      |> response.set_header("retry-after", retry_after)
-    }
-    render.TimedOut -> {
-      wisp.log_warning("render timed out")
-      problem.new(
-        slug: "render-timeout",
-        title: "Rendering timed out",
-        status: 503,
-        detail: "Rendering the CV took too long.",
-      )
-      |> problem.to_response
-    }
-    render.RendererUnavailable(reason:) -> {
+    render.Overloaded -> wisp.log_warning("render rejected: server overloaded")
+    render.TimedOut -> wisp.log_warning("render timed out")
+    render.RendererUnavailable(reason:) ->
       wisp.log_error("renderer unavailable: " <> reason)
-      problem.new(
-        slug: "renderer-unavailable",
-        title: "Renderer unavailable",
-        status: 503,
-        detail: "The PDF renderer is currently unavailable.",
-      )
-      |> problem.to_response
-    }
-    render.CompileFailed(output:) -> {
-      wisp.log_error("render failed: " <> output)
-      problem.new(
-        slug: "render-failed",
-        title: "Rendering failed",
-        status: 500,
-        detail: "The CV could not be rendered.",
-      )
-      |> problem.to_response
-    }
+    render.CompileFailed(output:) -> wisp.log_error("render failed: " <> output)
+  }
+  let response = problem.to_response(problem.from_render_error(error))
+  case error {
+    render.Overloaded ->
+      response.set_header(response, "retry-after", retry_after)
+    _ -> response
   }
 }
